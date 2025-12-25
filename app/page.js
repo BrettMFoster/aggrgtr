@@ -1,265 +1,246 @@
 export default function Home() {
   return (
-    <main style={styles.main}>
+    <main>
+      {/* Navigation */}
       <nav style={styles.nav}>
         <div style={styles.logo}>aggrgtr</div>
-        <a href="#waitlist" style={styles.navButton}>Join Waitlist</a>
+        <a href="#waitlist" style={styles.navLink}>Get Early Access</a>
       </nav>
 
+      {/* Hero */}
       <section style={styles.hero}>
-        <h1 style={styles.heroTitle}>
-          Public Data.<br />
-          <span style={styles.accent}>Small Business Pricing.</span>
-        </h1>
-        <p style={styles.heroSubtitle}>
-          Clean, structured government data without the enterprise price tag.
-          FBI crime stats, census demographics, school ratings, and more.
+        <h1 style={styles.h1}>Government data, simplified.</h1>
+        <p style={styles.subtitle}>
+          Clean, structured public data for small businesses.
+          Crime statistics, census demographics, and school ratings —
+          without the enterprise price tag.
         </p>
-        <div style={styles.pricing}>
-          Starting at <span style={styles.price}>$49/mo</span> vs $2,000+/mo enterprise alternatives
+        <div style={styles.cta}>
+          <a href="#waitlist" style={styles.primaryBtn}>Join the Waitlist</a>
+          <span style={styles.pricing}>Plans starting at $49/mo</span>
         </div>
       </section>
 
-      <section style={styles.dataSection}>
-        <h2 style={styles.sectionTitle}>Data Categories</h2>
-        <div style={styles.dataGrid}>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>📊</div>
-            <h3 style={styles.cardTitle}>Crime Statistics</h3>
-            <p style={styles.cardDesc}>FBI UCR data by county, cleaned and normalized per capita</p>
+      {/* Problem/Solution */}
+      <section style={styles.section}>
+        <div style={styles.container}>
+          <h2 style={styles.h2}>The problem</h2>
+          <p style={styles.paragraph}>
+            Government data is free but messy. Cleaning FBI crime data or Census demographics
+            takes hours. Enterprise solutions cost $2,000+/month. Small businesses get left out.
+          </p>
+          <h2 style={{...styles.h2, marginTop: '48px'}}>Our solution</h2>
+          <p style={styles.paragraph}>
+            We clean and normalize public data sources so you can focus on insights, not data wrangling.
+            Download ready-to-use datasets or access via API.
+          </p>
+        </div>
+      </section>
+
+      {/* Data Sources */}
+      <section style={{...styles.section, background: '#fafafa'}}>
+        <div style={styles.container}>
+          <h2 style={styles.h2}>Available Data</h2>
+          <div style={styles.grid}>
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>Crime Statistics</h3>
+              <p style={styles.cardText}>FBI UCR data by county, cleaned and normalized per capita</p>
+            </div>
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>Census Demographics</h3>
+              <p style={styles.cardText}>Population, income, age, and housing data from ACS</p>
+            </div>
+            <div style={styles.card}>
+              <h3 style={styles.cardTitle}>School Districts</h3>
+              <p style={styles.cardText}>Test scores, ratings, and spending per student</p>
+            </div>
           </div>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>👥</div>
-            <h3 style={styles.cardTitle}>Census Demographics</h3>
-            <p style={styles.cardDesc}>Population, income, age, housing from ACS</p>
-          </div>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>🏫</div>
-            <h3 style={styles.cardTitle}>School Districts</h3>
-            <p style={styles.cardDesc}>Test scores, ratings, spending per student</p>
-          </div>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>🏗️</div>
-            <h3 style={styles.cardTitle}>Building Permits</h3>
-            <p style={styles.cardDesc}>Construction activity and trends</p>
-            <span style={styles.comingSoon}>Coming Soon</span>
-          </div>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>🍽️</div>
-            <h3 style={styles.cardTitle}>Health Inspections</h3>
-            <p style={styles.cardDesc}>Restaurant inspection scores nationwide</p>
-            <span style={styles.comingSoon}>Coming Soon</span>
-          </div>
-          <div style={styles.dataCard}>
-            <div style={styles.cardIcon}>📋</div>
-            <h3 style={styles.cardTitle}>Business Licenses</h3>
-            <p style={styles.cardDesc}>New business filings and permits</p>
-            <span style={styles.comingSoon}>Coming Soon</span>
+          <p style={styles.comingSoon}>More datasets coming soon: building permits, health inspections, business licenses</p>
+        </div>
+      </section>
+
+      {/* Who it's for */}
+      <section style={styles.section}>
+        <div style={styles.container}>
+          <h2 style={styles.h2}>Built for</h2>
+          <div style={styles.tagContainer}>
+            {['Real Estate Agents', 'Insurance Underwriters', 'Small Investors', 'Researchers', 'Journalists', 'Startups'].map(tag => (
+              <span key={tag} style={styles.tag}>{tag}</span>
+            ))}
           </div>
         </div>
       </section>
 
-      <section style={styles.whoSection}>
-        <h2 style={styles.sectionTitle}>Built For</h2>
-        <div style={styles.whoGrid}>
-          <div style={styles.whoCard}>Real Estate Agents</div>
-          <div style={styles.whoCard}>Insurance Underwriters</div>
-          <div style={styles.whoCard}>Small Investors</div>
-          <div style={styles.whoCard}>Researchers</div>
-          <div style={styles.whoCard}>Journalists</div>
-          <div style={styles.whoCard}>Startups</div>
+      {/* Waitlist */}
+      <section id="waitlist" style={{...styles.section, background: '#fafafa'}}>
+        <div style={styles.container}>
+          <h2 style={styles.h2}>Get early access</h2>
+          <p style={styles.paragraph}>Join the waitlist for launch updates and early-bird pricing.</p>
+          <form style={styles.form} action="https://formspree.io/f/placeholder" method="POST">
+            <input
+              type="email"
+              name="email"
+              placeholder="you@company.com"
+              required
+              style={styles.input}
+            />
+            <button type="submit" style={styles.submitBtn}>Join Waitlist</button>
+          </form>
         </div>
       </section>
 
-      <section id="waitlist" style={styles.waitlist}>
-        <h2 style={styles.sectionTitle}>Get Early Access</h2>
-        <p style={styles.waitlistText}>
-          Join the waitlist for launch updates and early-bird pricing.
-        </p>
-        <form style={styles.form} action="https://formspree.io/f/placeholder" method="POST">
-          <input
-            type="email"
-            name="email"
-            placeholder="you@company.com"
-            required
-            style={styles.input}
-          />
-          <button type="submit" style={styles.submitButton}>
-            Join Waitlist
-          </button>
-        </form>
-      </section>
-
+      {/* Footer */}
       <footer style={styles.footer}>
-        <p>&copy; 2025 aggrgtr. Data aggregation for the rest of us.</p>
+        <p>© 2025 aggrgtr</p>
       </footer>
     </main>
   )
 }
 
 const styles = {
-  main: {
-    minHeight: '100vh',
-  },
   nav: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '20px 40px',
-    maxWidth: '1200px',
+    padding: '24px 48px',
+    maxWidth: '1100px',
     margin: '0 auto',
   },
   logo: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    letterSpacing: '-1px',
+    fontSize: '20px',
+    fontWeight: '600',
+    letterSpacing: '-0.5px',
   },
-  navButton: {
-    background: 'rgba(255,255,255,0.1)',
-    padding: '10px 20px',
-    borderRadius: '8px',
+  navLink: {
     fontSize: '14px',
-    transition: 'background 0.2s',
+    color: '#666',
   },
   hero: {
     textAlign: 'center',
-    padding: '80px 20px 60px',
+    padding: '80px 24px 100px',
+    maxWidth: '700px',
+    margin: '0 auto',
+  },
+  h1: {
+    fontSize: '48px',
+    fontWeight: '600',
+    letterSpacing: '-1.5px',
+    marginBottom: '24px',
+    lineHeight: '1.1',
+  },
+  subtitle: {
+    fontSize: '18px',
+    color: '#555',
+    marginBottom: '40px',
+    lineHeight: '1.7',
+  },
+  cta: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  primaryBtn: {
+    background: '#0a0a0a',
+    color: '#fff',
+    padding: '14px 32px',
+    borderRadius: '6px',
+    fontSize: '15px',
+    fontWeight: '500',
+  },
+  pricing: {
+    fontSize: '14px',
+    color: '#888',
+  },
+  section: {
+    padding: '80px 24px',
+  },
+  container: {
     maxWidth: '800px',
     margin: '0 auto',
   },
-  heroTitle: {
-    fontSize: 'clamp(36px, 6vw, 64px)',
-    fontWeight: 'bold',
-    lineHeight: '1.1',
-    marginBottom: '24px',
+  h2: {
+    fontSize: '28px',
+    fontWeight: '600',
+    letterSpacing: '-0.5px',
+    marginBottom: '16px',
   },
-  accent: {
-    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  heroSubtitle: {
-    fontSize: '18px',
-    color: 'rgba(255,255,255,0.7)',
-    lineHeight: '1.6',
-    marginBottom: '32px',
-  },
-  pricing: {
+  paragraph: {
     fontSize: '16px',
-    color: 'rgba(255,255,255,0.6)',
+    color: '#555',
+    lineHeight: '1.7',
   },
-  price: {
-    color: '#00ff88',
-    fontWeight: 'bold',
-    fontSize: '20px',
-  },
-  dataSection: {
-    padding: '60px 20px',
-    maxWidth: '1000px',
-    margin: '0 auto',
-  },
-  sectionTitle: {
-    fontSize: '32px',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: '40px',
-  },
-  dataGrid: {
+  grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '20px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+    gap: '24px',
+    marginTop: '32px',
   },
-  dataCard: {
-    background: 'rgba(255,255,255,0.05)',
-    borderRadius: '12px',
+  card: {
+    background: '#fff',
+    border: '1px solid #eaeaea',
+    borderRadius: '8px',
     padding: '24px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    position: 'relative',
-  },
-  cardIcon: {
-    fontSize: '32px',
-    marginBottom: '12px',
   },
   cardTitle: {
-    fontSize: '18px',
+    fontSize: '16px',
     fontWeight: '600',
     marginBottom: '8px',
   },
-  cardDesc: {
+  cardText: {
     fontSize: '14px',
-    color: 'rgba(255,255,255,0.6)',
-    lineHeight: '1.5',
+    color: '#666',
+    lineHeight: '1.6',
   },
   comingSoon: {
-    position: 'absolute',
-    top: '16px',
-    right: '16px',
-    background: 'rgba(0,217,255,0.2)',
-    color: '#00d9ff',
-    fontSize: '11px',
-    padding: '4px 8px',
-    borderRadius: '4px',
-    fontWeight: '600',
-  },
-  whoSection: {
-    padding: '60px 20px',
-    maxWidth: '800px',
-    margin: '0 auto',
-  },
-  whoGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-    gap: '12px',
-  },
-  whoCard: {
-    background: 'rgba(255,255,255,0.05)',
-    padding: '16px',
-    borderRadius: '8px',
-    textAlign: 'center',
+    marginTop: '32px',
     fontSize: '14px',
-    border: '1px solid rgba(255,255,255,0.1)',
+    color: '#888',
+    fontStyle: 'italic',
   },
-  waitlist: {
-    padding: '80px 20px',
-    textAlign: 'center',
-    background: 'rgba(0,0,0,0.2)',
+  tagContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '12px',
+    marginTop: '24px',
   },
-  waitlistText: {
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: '32px',
+  tag: {
+    background: '#f5f5f5',
+    border: '1px solid #eaeaea',
+    padding: '8px 16px',
+    borderRadius: '20px',
+    fontSize: '14px',
+    color: '#444',
   },
   form: {
     display: 'flex',
     gap: '12px',
-    justifyContent: 'center',
+    marginTop: '32px',
     flexWrap: 'wrap',
-    maxWidth: '500px',
-    margin: '0 auto',
   },
   input: {
-    padding: '14px 20px',
-    fontSize: '16px',
-    borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.2)',
-    background: 'rgba(255,255,255,0.1)',
-    color: '#fff',
+    padding: '14px 16px',
+    fontSize: '15px',
+    border: '1px solid #ddd',
+    borderRadius: '6px',
     minWidth: '280px',
     outline: 'none',
   },
-  submitButton: {
-    padding: '14px 32px',
-    fontSize: '16px',
-    fontWeight: '600',
-    borderRadius: '8px',
+  submitBtn: {
+    background: '#0a0a0a',
+    color: '#fff',
+    padding: '14px 28px',
+    borderRadius: '6px',
+    fontSize: '15px',
+    fontWeight: '500',
     border: 'none',
-    background: 'linear-gradient(90deg, #00d9ff, #00ff88)',
-    color: '#1a1a2e',
     cursor: 'pointer',
   },
   footer: {
-    padding: '40px 20px',
+    padding: '40px 24px',
     textAlign: 'center',
-    color: 'rgba(255,255,255,0.4)',
     fontSize: '14px',
+    color: '#888',
+    borderTop: '1px solid #eaeaea',
   },
 }
