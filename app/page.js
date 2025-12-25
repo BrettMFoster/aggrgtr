@@ -38,7 +38,7 @@ export default function Home() {
       </section>
 
       {/* Data Sources */}
-      <section style={{...styles.section, background: '#fafafa'}}>
+      <section style={{...styles.section, background: '#161616'}}>
         <div style={styles.container}>
           <h2 style={styles.h2}>Available Data</h2>
           <div style={styles.grid}>
@@ -72,7 +72,7 @@ export default function Home() {
       </section>
 
       {/* Waitlist */}
-      <section id="waitlist" style={{...styles.section, background: '#fafafa'}}>
+      <section id="waitlist" style={{...styles.section, background: '#161616'}}>
         <div style={styles.container}>
           <h2 style={styles.h2}>Get early access</h2>
           <p style={styles.paragraph}>Join the waitlist for launch updates and early-bird pricing.</p>
@@ -110,10 +110,11 @@ const styles = {
     fontSize: '20px',
     fontWeight: '600',
     letterSpacing: '-0.5px',
+    color: '#fff',
   },
   navLink: {
     fontSize: '14px',
-    color: '#666',
+    color: '#888',
   },
   hero: {
     textAlign: 'center',
@@ -127,10 +128,11 @@ const styles = {
     letterSpacing: '-1.5px',
     marginBottom: '24px',
     lineHeight: '1.1',
+    color: '#fff',
   },
   subtitle: {
     fontSize: '18px',
-    color: '#555',
+    color: '#999',
     marginBottom: '40px',
     lineHeight: '1.7',
   },
@@ -141,8 +143,8 @@ const styles = {
     gap: '16px',
   },
   primaryBtn: {
-    background: '#0a0a0a',
-    color: '#fff',
+    background: '#fff',
+    color: '#0f0f0f',
     padding: '14px 32px',
     borderRadius: '6px',
     fontSize: '15px',
@@ -150,7 +152,7 @@ const styles = {
   },
   pricing: {
     fontSize: '14px',
-    color: '#888',
+    color: '#666',
   },
   section: {
     padding: '80px 24px',
@@ -164,10 +166,11 @@ const styles = {
     fontWeight: '600',
     letterSpacing: '-0.5px',
     marginBottom: '16px',
+    color: '#fff',
   },
   paragraph: {
     fontSize: '16px',
-    color: '#555',
+    color: '#999',
     lineHeight: '1.7',
   },
   grid: {
@@ -177,8 +180,8 @@ const styles = {
     marginTop: '32px',
   },
   card: {
-    background: '#fff',
-    border: '1px solid #eaeaea',
+    background: '#1a1a1a',
+    border: '1px solid #2a2a2a',
     borderRadius: '8px',
     padding: '24px',
   },
@@ -186,16 +189,17 @@ const styles = {
     fontSize: '16px',
     fontWeight: '600',
     marginBottom: '8px',
+    color: '#fff',
   },
   cardText: {
     fontSize: '14px',
-    color: '#666',
+    color: '#888',
     lineHeight: '1.6',
   },
   comingSoon: {
     marginTop: '32px',
     fontSize: '14px',
-    color: '#888',
+    color: '#666',
     fontStyle: 'italic',
   },
   tagContainer: {
@@ -205,12 +209,12 @@ const styles = {
     marginTop: '24px',
   },
   tag: {
-    background: '#f5f5f5',
-    border: '1px solid #eaeaea',
+    background: '#1a1a1a',
+    border: '1px solid #2a2a2a',
     padding: '8px 16px',
     borderRadius: '20px',
     fontSize: '14px',
-    color: '#444',
+    color: '#aaa',
   },
   form: {
     display: 'flex',
@@ -221,14 +225,16 @@ const styles = {
   input: {
     padding: '14px 16px',
     fontSize: '15px',
-    border: '1px solid #ddd',
+    border: '1px solid #333',
     borderRadius: '6px',
     minWidth: '280px',
     outline: 'none',
+    background: '#1a1a1a',
+    color: '#fff',
   },
   submitBtn: {
-    background: '#0a0a0a',
-    color: '#fff',
+    background: '#fff',
+    color: '#0f0f0f',
     padding: '14px 28px',
     borderRadius: '6px',
     fontSize: '15px',
@@ -240,7 +246,7 @@ const styles = {
     padding: '40px 24px',
     textAlign: 'center',
     fontSize: '14px',
-    color: '#888',
-    borderTop: '1px solid #eaeaea',
+    color: '#555',
+    borderTop: '1px solid #1a1a1a',
   },
 }
