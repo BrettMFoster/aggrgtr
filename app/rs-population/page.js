@@ -212,7 +212,7 @@ export default function RSPopulation() {
         </div>
       </nav>
 
-      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto', paddingLeft: '0' }}>
+      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
         <aside style={{ width: '100px', padding: '12px 0 12px 8px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '16px' }}>
