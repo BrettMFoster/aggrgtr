@@ -218,8 +218,11 @@ export default function RSPopulation() {
     for (let i = 0; i < filteredData.length; i++) {
       const d = filteredData[i]
       let key
-      if (viewMode === 'year' || viewMode === 'all') {
-        // Band by MONTH for year/all views
+      if (viewMode === 'all') {
+        // Band by YEAR for all time view
+        key = d.timestamp.getFullYear()
+      } else if (viewMode === 'year') {
+        // Band by MONTH for year view
         key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
       } else if (viewMode === 'week' || viewMode === 'month') {
         key = d.timestamp.toISOString().split('T')[0] // day
