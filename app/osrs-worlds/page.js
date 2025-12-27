@@ -89,15 +89,61 @@ export default function OSRSWorlds() {
   const types = data?.summary?.byType ? Object.keys(data.summary.byType).sort() : []
   const sortedWorlds = getSortedWorlds()
 
-  // All activities sorted by player count (no limit)
-  const allActivities = data?.summary?.byActivity
-    ? Object.entries(data.summary.byActivity)
-        .sort((a, b) => b[1].players - a[1].players)
-    : []
+  // Calculate filtered stats based on current filters
+  const getFilteredStats = () => {
+    if (!data?.worlds) return { activities: [], regions: {}, freeTotal: 0, membersTotal: 0 }
 
-  // Free vs Members totals
-  const freeTotal = data?.summary?.byType?.['Free']?.players || 0
-  const membersTotal = data?.summary?.byType?.['Members']?.players || 0
+    let worlds = [...data.worlds]
+
+    // Apply filters
+    if (filterRegion !== 'all') {
+      worlds = worlds.filter(w => w.location === filterRegion)
+    }
+    if (filterType !== 'all') {
+      worlds = worlds.filter(w => w.world_type === filterType)
+    }
+
+    // Calculate activities from filtered worlds
+    const activityMap = {}
+    const regionMap = {}
+    let freeTotal = 0
+    let membersTotal = 0
+
+    for (const w of worlds) {
+      // Activities
+      const activity = w.activity && w.activity !== '-' ? w.activity : 'General'
+      if (!activityMap[activity]) activityMap[activity] = { count: 0, players: 0 }
+      activityMap[activity].count++
+      activityMap[activity].players += w.players
+
+      // Regions
+      if (!regionMap[w.location]) regionMap[w.location] = { count: 0, players: 0 }
+      regionMap[w.location].count++
+      regionMap[w.location].players += w.players
+
+      // Free vs Members
+      if (w.world_type === 'Free') {
+        freeTotal += w.players
+      } else if (w.world_type === 'Members') {
+        membersTotal += w.players
+      }
+    }
+
+    const activities = Object.entries(activityMap).sort((a, b) => b[1].players - a[1].players)
+
+    return { activities, regions: regionMap, freeTotal, membersTotal }
+  }
+
+  const filteredStats = getFilteredStats()
+  const allActivities = filteredStats.activities
+  const freeTotal = filteredStats.freeTotal
+  const membersTotal = filteredStats.membersTotal
+  const filteredRegions = filteredStats.regions
+
+  // KPI totals based on filtered data
+  const filteredTotalPlayers = sortedWorlds.reduce((sum, w) => sum + w.players, 0)
+  const filteredWorldCount = sortedWorlds.length
+  const filteredAvgPerWorld = filteredWorldCount > 0 ? Math.round(filteredTotalPlayers / filteredWorldCount) : 0
 
   // Format timestamp for display
   const formatTimestamp = (ts) => {
@@ -225,15 +271,15 @@ export default function OSRSWorlds() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Total Players</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#4ade80' }}>{data?.totalPlayers?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#4ade80' }}>{filteredTotalPlayers.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Active Worlds</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#60a5fa' }}>{data?.count || '-'}</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#60a5fa' }}>{filteredWorldCount}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Avg Per World</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#fff' }}>{data?.count ? Math.round(data.totalPlayers / data.count).toLocaleString() : '-'}</div>
+                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Last Updated</div>
@@ -298,7 +344,7 @@ export default function OSRSWorlds() {
                 {/* By Region */}
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>By Region</h3>
-                  {data?.summary?.byRegion && Object.entries(data.summary.byRegion)
+                  {Object.entries(filteredRegions)
                     .sort((a, b) => b[1].players - a[1].players)
                     .map(([region, stats]) => (
                       <div key={region} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
