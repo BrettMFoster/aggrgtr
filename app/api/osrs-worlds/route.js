@@ -163,6 +163,7 @@ export async function GET(request) {
       count: worlds.length,
       totalPlayers,
       timestamp: worlds[0]?.timestamp,
+      cachedAt: Date.now() / 1000, // When this response was generated (cache may serve this for 15min)
       summary: {
         byRegion,
         byType,

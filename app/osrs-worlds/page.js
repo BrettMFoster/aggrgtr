@@ -189,6 +189,15 @@ export default function OSRSWorlds() {
     return date.toLocaleTimeString()
   }
 
+  // Calculate cache age in minutes
+  const getCacheAge = () => {
+    if (!data?.cachedAt) return null
+    const ageSeconds = (Date.now() / 1000) - data.cachedAt
+    const ageMinutes = Math.floor(ageSeconds / 60)
+    if (ageMinutes < 1) return 'just now'
+    return `${ageMinutes}m ago`
+  }
+
   // Render mini chart for world history
   const renderHistoryChart = () => {
     if (!worldHistory || worldHistory.length === 0) return null
@@ -379,9 +388,12 @@ export default function OSRSWorlds() {
                   <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Last Updated</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Cache Age</div>
                   <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#4ade80' }}>
-                    {formatTimestamp(data?.timestamp)}
+                    {getCacheAge() || '-'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+                    Data: {formatTimestamp(data?.timestamp)}
                   </div>
                 </div>
               </div>
