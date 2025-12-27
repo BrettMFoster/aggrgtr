@@ -32,9 +32,9 @@ export async function POST(request) {
       return Response.json({ error: 'Email already subscribed' }, { status: 409 })
     }
 
-    // Append new email
+    // Append new email (email, subscribed_at, unsubscribed_at)
     const timestamp = new Date().toISOString()
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Subscriptions!A:B:append?valueInputOption=USER_ENTERED`
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Subscriptions!A:C:append?valueInputOption=USER_ENTERED`
 
     const response = await fetch(url, {
       method: 'POST',
@@ -43,7 +43,7 @@ export async function POST(request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        values: [[email.toLowerCase(), timestamp]]
+        values: [[email.toLowerCase(), timestamp, '']]
       })
     })
 
@@ -83,7 +83,7 @@ export async function DELETE(request) {
     const token = tokenResult.token
 
     // Get all emails to find the row number
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Subscriptions!A:B`
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Subscriptions!A:C`
     const response = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -102,31 +102,28 @@ export async function DELETE(request) {
       return Response.json({ error: 'Email not found' }, { status: 404 })
     }
 
-    // Delete the row (rowIndex + 1 for 1-based sheets indexing)
-    const deleteUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`
-    const deleteResponse = await fetch(deleteUrl, {
-      method: 'POST',
+    // Check if already unsubscribed
+    if (rows[rowIndex][2]) {
+      return Response.json({ error: 'Already unsubscribed' }, { status: 409 })
+    }
+
+    // Update column C with unsubscribe timestamp (rowIndex + 1 for 1-based sheets indexing)
+    const timestamp = new Date().toISOString()
+    const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Subscriptions!C${rowIndex + 1}?valueInputOption=USER_ENTERED`
+    const updateResponse = await fetch(updateUrl, {
+      method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        requests: [{
-          deleteDimension: {
-            range: {
-              sheetId: await getSheetId(token, SPREADSHEET_ID, 'Subscriptions'),
-              dimension: 'ROWS',
-              startIndex: rowIndex,
-              endIndex: rowIndex + 1
-            }
-          }
-        }]
+        values: [[timestamp]]
       })
     })
 
-    if (!deleteResponse.ok) {
-      const error = await deleteResponse.text()
-      console.error('Delete error:', error)
+    if (!updateResponse.ok) {
+      const error = await updateResponse.text()
+      console.error('Unsubscribe error:', error)
       return Response.json({ error: 'Failed to unsubscribe' }, { status: 500 })
     }
 
@@ -171,7 +168,7 @@ async function ensureSubscriptionsSheet(token, spreadsheetId) {
     })
 
     // Add headers
-    const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Subscriptions!A1:B1?valueInputOption=USER_ENTERED`
+    const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Subscriptions!A1:C1?valueInputOption=USER_ENTERED`
     await fetch(headerUrl, {
       method: 'PUT',
       headers: {
@@ -179,7 +176,7 @@ async function ensureSubscriptionsSheet(token, spreadsheetId) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        values: [['email', 'timestamp']]
+        values: [['email', 'subscribed_at', 'unsubscribed_at']]
       })
     })
   }
@@ -195,19 +192,6 @@ async function getExistingEmails(token, spreadsheetId) {
 
   const data = await response.json()
   return (data.values || []).map(row => row[0]?.toLowerCase()).filter(Boolean)
-}
-
-async function getSheetId(token, spreadsheetId, sheetName) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`
-  const response = await fetch(url, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  })
-
-  if (!response.ok) return 0
-
-  const data = await response.json()
-  const sheet = data.sheets?.find(s => s.properties?.title === sheetName)
-  return sheet?.properties?.sheetId || 0
 }
 
 function getCredentials() {
