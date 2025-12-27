@@ -7,32 +7,38 @@ export async function GET(request) {
     const sheet = searchParams.get('sheet') || 'Data'
 
     // Get service account credentials from environment
-    let privateKey = process.env.GOOGLE_PRIVATE_KEY || ''
+    // Option 1: Full JSON as single env var (preferred)
+    // Option 2: Individual env vars (fallback)
+    let credentials
 
-    // Handle various newline formats from Vercel env vars
-    if (privateKey.includes('\\n')) {
-      privateKey = privateKey.split('\\n').join('\n')
+    if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON) {
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON)
+      } catch (e) {
+        return Response.json({ error: 'Invalid JSON in GOOGLE_SERVICE_ACCOUNT_JSON', rows: [] }, { status: 500 })
+      }
+    } else {
+      let privateKey = process.env.GOOGLE_PRIVATE_KEY || ''
+      if (privateKey.includes('\\n')) {
+        privateKey = privateKey.split('\\n').join('\n')
+      }
+      if (privateKey && !privateKey.includes('-----BEGIN')) {
+        privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`
+      }
+      credentials = {
+        type: 'service_account',
+        project_id: process.env.GOOGLE_PROJECT_ID,
+        private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+        private_key: privateKey,
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        auth_uri: 'https://accounts.google.com/o/oauth2/auth',
+        token_uri: 'https://oauth2.googleapis.com/token',
+      }
     }
 
-    // Add PEM headers if missing (user may have pasted just the key body)
-    if (privateKey && !privateKey.includes('-----BEGIN')) {
-      privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`
-    }
-
-    const credentials = {
-      type: 'service_account',
-      project_id: process.env.GOOGLE_PROJECT_ID,
-      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
-      private_key: privateKey,
-      client_email: process.env.GOOGLE_CLIENT_EMAIL,
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-      token_uri: 'https://oauth2.googleapis.com/token',
-    }
-
-    // Debug: check if key is present
-    if (!privateKey || privateKey.length < 100) {
-      return Response.json({ error: 'Private key not configured correctly', rows: [] }, { status: 500 })
+    if (!credentials.private_key || !credentials.client_email) {
+      return Response.json({ error: 'Missing credentials', rows: [] }, { status: 500 })
     }
 
     // Get access token
