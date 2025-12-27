@@ -212,11 +212,11 @@ export default function RSPopulation() {
         </div>
       </nav>
 
-      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto', paddingLeft: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '120px', padding: '12px 4px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '100px', padding: '12px 0 12px 8px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase', paddingLeft: '6px' }}>Time Range</div>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {viewModes.map(mode => (
                 <button
@@ -240,8 +240,8 @@ export default function RSPopulation() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', paddingLeft: '6px' }}>Data Source</div>
-            <p style={{ fontSize: '12px', color: '#fff', margin: 0, lineHeight: '1.4', paddingLeft: '6px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase' }}>Data Source</div>
+            <p style={{ fontSize: '12px', color: '#fff', margin: 0, lineHeight: '1.4' }}>
               Scraped from official RuneScape pages every 15 minutes.
             </p>
           </div>
