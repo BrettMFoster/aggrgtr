@@ -82,12 +82,13 @@ export async function GET(request) {
     // Parse based on sheet type
     let data
     if (sheet === 'Historical') {
-      // Historical sheet from Misplaced Items:
-      // A(0): Date, B(1): OSRS_Avg, C(2): OSRS_Min, D(3): OSRS_Peak, E(4): RS3_Avg, F(5): RS3_Min, G(6): RS3_Peak
+      // Historical sheet columns (0-indexed):
+      // 0=date, 1=osrs_avg, 2=osrs_min, 3=osrs_peak, 4=rs3_avg, 5=rs3_min, 6=rs3_peak
+      // FIXED: Use column index 4 for RS3 (not 1 or 2)
       data = rows.slice(1).map(row => {
         const timestamp = row[0]
-        const osrs = parseInt(row[1]) || 0
-        const rs3 = parseInt(row[4]) || 0
+        const osrs = parseInt(row[1]) || 0  // Column B = osrs_avg
+        const rs3 = parseInt(row[4]) || 0   // Column E = rs3_avg (index 4, NOT 1!)
         const total = osrs + rs3
 
         let isoTimestamp
