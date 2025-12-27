@@ -236,7 +236,7 @@ export default function RSPopulation() {
         <aside style={{ width: '130px', padding: '12px 8px 12px 32px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {viewModes.map(mode => (
                 <button
                   key={mode.id}
@@ -245,9 +245,9 @@ export default function RSPopulation() {
                     background: viewMode === mode.id ? '#222' : 'transparent',
                     border: 'none',
                     color: '#fff',
-                    padding: '4px 6px',
+                    padding: '6px 8px',
                     borderRadius: '4px',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     cursor: 'pointer',
                     textAlign: 'left',
                     fontWeight: viewMode === mode.id ? '600' : '400'
