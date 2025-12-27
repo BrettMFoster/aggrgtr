@@ -125,6 +125,7 @@ export default function OSRSWorlds() {
               {types.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+          <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 15 minutes.</div>
         </aside>
 
         {/* Main */}
@@ -244,9 +245,8 @@ export default function OSRSWorlds() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between' }}>
-        <div>Data scraped from official RuneScape pages every 15 minutes.</div>
-        <div>aggrgtr 2025</div>
+      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', textAlign: 'right' }}>
+        aggrgtr 2025
       </footer>
     </div>
   )
