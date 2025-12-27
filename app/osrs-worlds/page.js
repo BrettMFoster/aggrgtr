@@ -271,15 +271,19 @@ export default function OSRSWorlds() {
           </>
         )}
 
-        {/* X-axis labels */}
+        {/* X-axis labels - show 6 evenly spaced timestamps */}
         {worldHistory.length > 0 && (
           <>
-            <text x="50" y="200" fill="#888" fontSize="10" textAnchor="middle">
-              {new Date(parseFloat(worldHistory[0].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </text>
-            <text x="750" y="200" fill="#888" fontSize="10" textAnchor="middle">
-              {new Date(parseFloat(worldHistory[worldHistory.length - 1].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-            </text>
+            {[0, 0.2, 0.4, 0.6, 0.8, 1].map((pct, i) => {
+              const idx = Math.floor(pct * (worldHistory.length - 1))
+              const x = 50 + pct * 700
+              const date = new Date(parseFloat(worldHistory[idx].timestamp) * 1000)
+              return (
+                <text key={i} x={x} y="200" fill="#888" fontSize="10" textAnchor="middle">
+                  {date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </text>
+              )
+            })}
           </>
         )}
       </svg>
