@@ -291,12 +291,6 @@ export default function RSPopulation() {
               ))}
             </div>
           </div>
-          <div>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase' }}>Data Source</div>
-            <p style={{ fontSize: '12px', color: '#fff', margin: 0, lineHeight: '1.4' }}>
-              Scraped from official RuneScape pages every 15 minutes.
-            </p>
-          </div>
         </aside>
 
         {/* Main */}
@@ -486,7 +480,8 @@ export default function RSPopulation() {
       </div>
 
       <footer style={{ borderTop: '1px solid #222', padding: '24px', textAlign: 'center', fontSize: '12px', color: '#fff' }}>
-        aggrgtr 2025
+        <div style={{ marginBottom: '8px' }}>Data scraped from official RuneScape pages every 15 minutes.</div>
+        <div>aggrgtr 2025</div>
       </footer>
     </div>
   )
