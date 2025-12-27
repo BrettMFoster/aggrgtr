@@ -1,11 +1,6 @@
 // API route to fetch OSRS world data from BigQuery
 // Uses service account credentials stored in environment variables
-// Caches response for 15 minutes to limit BigQuery queries
-
-// In-memory cache for world data (15 minutes)
-let worldsCache = null
-let worldsCacheTime = 0
-const CACHE_DURATION = 15 * 60 * 1000 // 15 minutes in ms
+// Frontend polls every 15 minutes to limit BigQuery queries
 
 export async function GET(request) {
   try {
@@ -91,16 +86,6 @@ export async function GET(request) {
       return Response.json({ worldId: parseInt(worldId), history })
     }
 
-    // Check cache first (only for main worlds list, not history)
-    const now = Date.now()
-    if (worldsCache && (now - worldsCacheTime) < CACHE_DURATION) {
-      // Return cached data with current cachedAt time so frontend can calculate age
-      return Response.json({
-        ...worldsCache,
-        cachedAt: worldsCacheTime / 1000
-      })
-    }
-
     // Query BigQuery for latest snapshot
     const query = `
       SELECT timestamp, world_id, world_name, players, location, world_type, activity, game
@@ -171,8 +156,7 @@ export async function GET(request) {
       byActivity[activity].players += w.players
     }
 
-    // Store in cache
-    worldsCache = {
+    return Response.json({
       worlds,
       count: worlds.length,
       totalPlayers,
@@ -182,12 +166,6 @@ export async function GET(request) {
         byType,
         byActivity
       }
-    }
-    worldsCacheTime = Date.now()
-
-    return Response.json({
-      ...worldsCache,
-      cachedAt: worldsCacheTime / 1000
     })
 
   } catch (error) {

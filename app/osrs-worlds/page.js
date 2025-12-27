@@ -49,7 +49,7 @@ export default function OSRSWorlds() {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 60 * 1000)
+    const interval = setInterval(fetchData, 15 * 60 * 1000) // Poll every 15 minutes to protect BigQuery
     return () => clearInterval(interval)
   }, [])
 
@@ -196,11 +196,12 @@ export default function OSRSWorlds() {
     return date.toLocaleTimeString()
   }
 
-  // Calculate cache age in minutes
-  const getCacheAge = () => {
-    if (!data?.cachedAt) return null
-    const ageSeconds = (Date.now() / 1000) - data.cachedAt
-    const ageMinutes = Math.floor(ageSeconds / 60)
+  // Calculate data age from scrape timestamp
+  const getDataAge = () => {
+    if (!data?.timestamp) return '-'
+    const dataTime = parseFloat(data.timestamp) * 1000
+    const ageMs = Date.now() - dataTime
+    const ageMinutes = Math.floor(ageMs / 60000)
     if (ageMinutes < 1) return 'just now'
     return `${ageMinutes}m ago`
   }
@@ -395,12 +396,9 @@ export default function OSRSWorlds() {
                   <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Cache Age</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Data Age</div>
                   <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#4ade80' }}>
-                    {getCacheAge() || '-'}
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
-                    Data: {formatTimestamp(data?.timestamp)}
+                    {getDataAge()}
                   </div>
                 </div>
               </div>
