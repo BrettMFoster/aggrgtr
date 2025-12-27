@@ -272,6 +272,13 @@ export default function RSPopulation() {
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
         <aside style={{ width: '150px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <a href="/rs-population" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>Population</a>
+              <a href="/osrs-worlds" style={{ background: 'transparent', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
+            </div>
+          </div>
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -484,8 +491,8 @@ export default function RSPopulation() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px', textAlign: 'center', fontSize: '12px', color: '#fff' }}>
-        <div style={{ marginBottom: '8px' }}>Data scraped from official RuneScape pages every 15 minutes.</div>
+      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between' }}>
+        <div>Data scraped from official RuneScape pages every 15 minutes.</div>
         <div>aggrgtr 2025</div>
       </footer>
     </div>
