@@ -169,11 +169,15 @@ export default function RSPopulation() {
       if (allMonths.length <= maxLabels) {
         return allMonths
       }
-      // Pick evenly spaced indices from allMonths
+      // Pick evenly spaced indices from allMonths, skip first if partial month
       const result = []
-      for (let i = 0; i < maxLabels; i++) {
-        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
-        result.push(allMonths[idx])
+      // Start from index 1 if first month has very few data points (partial month)
+      const startIdx = allMonths.length > 1 && allMonths[0].index < 5 ? 1 : 0
+      const monthsToUse = allMonths.slice(startIdx)
+      const labelsToShow = Math.min(maxLabels, monthsToUse.length)
+      for (let i = 0; i < labelsToShow; i++) {
+        const idx = Math.floor((i / (labelsToShow - 1)) * (monthsToUse.length - 1))
+        result.push(monthsToUse[idx])
       }
       return result
     }
@@ -240,7 +244,7 @@ export default function RSPopulation() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '130px', padding: '12px 8px 12px 32px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '150px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
