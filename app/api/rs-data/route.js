@@ -89,27 +89,28 @@ export async function GET(request) {
       const rs3Idx = headers.findIndex(h => h && h.toLowerCase().includes('rs3') && h.toLowerCase().includes('avg'))
       const totalIdx = headers.findIndex(h => h && h.toLowerCase().includes('total') && h.toLowerCase().includes('avg'))
 
-      // Fallback indices if headers don't match expected pattern
+      // Historical sheet columns: Date (0), OSRS (1), OSRS_Min (2), Total (3)
+      // RS3 doesn't have its own column - calculate from total - osrs
       const osrsCol = osrsIdx >= 0 ? osrsIdx : 1
-      const rs3Col = rs3Idx >= 0 ? rs3Idx : 4
-      const totalCol = totalIdx >= 0 ? totalIdx : 7
+      const rs3Col = rs3Idx >= 0 ? rs3Idx : -1  // No RS3 column, will calculate
+      const totalCol = totalIdx >= 0 ? totalIdx : 3
 
       data = rows.slice(1).map(row => {
         const timestamp = row[0]
-        const osrs = parseInt(row[osrsCol]) || 0
-        let rs3 = parseInt(row[rs3Col]) || 0
+        let osrs = parseInt(row[osrsCol]) || 0
+        let rs3 = rs3Col >= 0 ? (parseInt(row[rs3Col]) || 0) : 0
         let total = parseInt(row[totalCol]) || 0
 
-        // Calculate missing values from what we have
-        // If rs3 is 0 but we have total and osrs, derive rs3
+        // Calculate missing values
+        // RS3 = total - osrs when we have both
         if (rs3 === 0 && total > 0 && osrs > 0 && total > osrs) {
           rs3 = total - osrs
         }
-        // If osrs is 0 but we have total and rs3, derive osrs
+        // OSRS = total - rs3 when we have both
         if (osrs === 0 && total > 0 && rs3 > 0 && total > rs3) {
           osrs = total - rs3
         }
-        // If total is 0, calculate from osrs + rs3
+        // Total = osrs + rs3 when missing
         if (total === 0 && (osrs > 0 || rs3 > 0)) {
           total = osrs + rs3
         }
