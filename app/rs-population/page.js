@@ -164,20 +164,25 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      // Select evenly spaced months
+      // Select evenly spaced months, skip partial months at edges
       const maxLabels = viewMode === 'all' ? 16 : 12
-      if (allMonths.length <= maxLabels) {
-        // Skip first if it's a partial month (too close to edge)
-        if (allMonths.length > 1 && allMonths[0].index < 10) {
-          return allMonths.slice(1)
-        }
-        return allMonths
+
+      // Check if first month is partial (starts late in the data)
+      const skipFirst = allMonths.length > 1 && allMonths[0].index < 10
+      // Check if last month is partial (ends early - few data points in that month)
+      const lastMonthDataPoints = filteredData.length - 1 - allMonths[allMonths.length - 1].index
+      const skipLast = allMonths.length > 1 && lastMonthDataPoints < 10
+
+      // Trim partial months from edges
+      let monthsToUse = allMonths
+      if (skipFirst) monthsToUse = monthsToUse.slice(1)
+      if (skipLast) monthsToUse = monthsToUse.slice(0, -1)
+
+      if (monthsToUse.length <= maxLabels) {
+        return monthsToUse
       }
-      // Pick evenly spaced indices from allMonths, skip first if partial month
+      // Pick evenly spaced indices from monthsToUse
       const result = []
-      // Start from index 1 if first month has very few data points (partial month)
-      const startIdx = allMonths.length > 1 && allMonths[0].index < 10 ? 1 : 0
-      const monthsToUse = allMonths.slice(startIdx)
       const labelsToShow = Math.min(maxLabels, monthsToUse.length)
       for (let i = 0; i < labelsToShow; i++) {
         const idx = Math.floor((i / (labelsToShow - 1)) * (monthsToUse.length - 1))
