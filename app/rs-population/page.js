@@ -177,7 +177,7 @@ export default function RSPopulation() {
     }
 
     if (viewMode === 'year') {
-      // Year view: show months with years, evenly spaced
+      // Year view: show months, skip first partial month to avoid collision
       const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < filteredData.length; i++) {
@@ -189,14 +189,19 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
+      // Skip first month if it's partial (less than 10 data points before next month)
+      let monthsToUse = allMonths
+      if (allMonths.length > 1 && allMonths[0].index < 10) {
+        monthsToUse = allMonths.slice(1)
+      }
       const maxLabels = 12
-      if (allMonths.length <= maxLabels) {
-        return allMonths
+      if (monthsToUse.length <= maxLabels) {
+        return monthsToUse
       }
       const result = []
       for (let i = 0; i < maxLabels; i++) {
-        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
-        result.push(allMonths[idx])
+        const idx = Math.floor((i / (maxLabels - 1)) * (monthsToUse.length - 1))
+        result.push(monthsToUse[idx])
       }
       return result
     }
