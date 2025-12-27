@@ -214,9 +214,9 @@ export default function RSPopulation() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Sidebar */}
-        <aside style={{ width: '160px', padding: '16px 8px', borderRight: '1px solid #222' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase' }}>Time Range</div>
+        <aside style={{ width: '120px', padding: '12px 4px', borderRight: '1px solid #222' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase', paddingLeft: '6px' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {viewModes.map(mode => (
                 <button
@@ -226,7 +226,7 @@ export default function RSPopulation() {
                     background: viewMode === mode.id ? '#222' : 'transparent',
                     border: 'none',
                     color: '#fff',
-                    padding: '6px 8px',
+                    padding: '4px 6px',
                     borderRadius: '4px',
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -240,8 +240,8 @@ export default function RSPopulation() {
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Data Source</div>
-            <p style={{ fontSize: '13px', color: '#fff', margin: 0, lineHeight: '1.5' }}>
+            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', paddingLeft: '6px' }}>Data Source</div>
+            <p style={{ fontSize: '12px', color: '#fff', margin: 0, lineHeight: '1.4', paddingLeft: '6px' }}>
               Scraped from official RuneScape pages every 15 minutes.
             </p>
           </div>
