@@ -134,7 +134,7 @@ export default function RSPopulation() {
   const peakOsrsDate = peakOsrsPoint?.timestamp
   const peakRs3Date = peakRs3Point?.timestamp
 
-  // Rolling averages from raw data
+  // Rolling averages from raw data - separate for OSRS and RS3
   const now = new Date()
   const thirtyDaysAgo = now.getTime() - 30 * 24 * 60 * 60 * 1000
   const oneYearAgo = now.getTime() - 365 * 24 * 60 * 60 * 1000
@@ -142,11 +142,17 @@ export default function RSPopulation() {
   const last30Days = data.filter(d => d.timestamp.getTime() > thirtyDaysAgo)
   const lastYear = data.filter(d => d.timestamp.getTime() > oneYearAgo)
 
-  const avg30DayTotal = last30Days.length > 0
-    ? Math.round(last30Days.reduce((sum, d) => sum + d.total, 0) / last30Days.length)
+  const avg30DayOsrs = last30Days.length > 0
+    ? Math.round(last30Days.reduce((sum, d) => sum + d.osrs, 0) / last30Days.length)
     : 0
-  const avgYearTotal = lastYear.length > 0
-    ? Math.round(lastYear.reduce((sum, d) => sum + d.total, 0) / lastYear.length)
+  const avg30DayRs3 = last30Days.length > 0
+    ? Math.round(last30Days.reduce((sum, d) => sum + d.rs3, 0) / last30Days.length)
+    : 0
+  const avgYearOsrs = lastYear.length > 0
+    ? Math.round(lastYear.reduce((sum, d) => sum + d.osrs, 0) / lastYear.length)
+    : 0
+  const avgYearRs3 = lastYear.length > 0
+    ? Math.round(lastYear.reduce((sum, d) => sum + d.rs3, 0) / lastYear.length)
     : 0
 
   const viewModes = [
@@ -528,12 +534,8 @@ export default function RSPopulation() {
                 </div>
               </div>
 
-              {/* Summary stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '8px' : '16px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Avg Total (Period)</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#fff' }}>{avgTotal.toLocaleString()}</div>
-                </div>
+              {/* Summary stats - Peaks row */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '8px' : '16px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak OSRS</div>
                   <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{peakOsrs.toLocaleString()}</div>
@@ -541,7 +543,7 @@ export default function RSPopulation() {
                     {peakOsrsDate ? peakOsrsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                   </div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center', gridColumn: isMobile ? 'span 2' : 'auto' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak RS3</div>
                   <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{peakRs3.toLocaleString()}</div>
                   <div style={{ fontSize: isMobile ? '10px' : '12px', color: '#888', marginTop: '4px' }}>
@@ -549,18 +551,28 @@ export default function RSPopulation() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '16px' }}>
+
+              {/* Rolling 30-Day Averages */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '8px' : '16px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>30-Day Avg</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#fff' }}>{avg30DayTotal.toLocaleString()}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>30-Day Avg OSRS</div>
+                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{avg30DayOsrs.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>1-Year Avg</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#fff' }}>{avgYearTotal.toLocaleString()}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>30-Day Avg RS3</div>
+                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{avg30DayRs3.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center', gridColumn: isMobile ? 'span 2' : 'auto' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Data Points</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#fff' }}>{filteredData.length.toLocaleString()}</div>
+              </div>
+
+              {/* Rolling 1-Year Averages */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '16px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>1-Year Avg OSRS</div>
+                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{avgYearOsrs.toLocaleString()}</div>
+                </div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>1-Year Avg RS3</div>
+                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{avgYearRs3.toLocaleString()}</div>
                 </div>
               </div>
             </>
