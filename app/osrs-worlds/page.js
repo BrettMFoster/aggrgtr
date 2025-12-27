@@ -1,6 +1,23 @@
 'use client'
 import { useState, useEffect } from 'react'
 
+const scrollbarStyles = `
+  .dark-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .dark-scrollbar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+    border-radius: 4px;
+  }
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+  }
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #444;
+  }
+`
+
 export default function OSRSWorlds() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -13,6 +30,7 @@ export default function OSRSWorlds() {
   const [worldHistory, setWorldHistory] = useState(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [hoveredWorld, setHoveredWorld] = useState(null)
+  const [hoveredPoint, setHoveredPoint] = useState(null)
 
   useEffect(() => {
     fetchData()
@@ -171,17 +189,19 @@ export default function OSRSWorlds() {
     const minPlayers = Math.min(...worldHistory.map(h => h.players))
     const range = maxPlayers - minPlayers || 1
 
-    const points = worldHistory.map((h, i) => {
+    const pointsData = worldHistory.map((h, i) => {
       const x = 50 + (i / (worldHistory.length - 1 || 1)) * 700
       const y = 180 - ((h.players - minPlayers) / range) * 150
-      return `${x},${y}`
-    }).join(' ')
+      return { x, y, players: h.players, timestamp: h.timestamp, index: i }
+    })
+
+    const pointsStr = pointsData.map(p => `${p.x},${p.y}`).join(' ')
 
     return (
-      <svg width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="none">
+      <svg width="100%" height="220" viewBox="0 0 800 220" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
         {/* Y-axis labels */}
-        <text x="45" y="35" fill="#888" fontSize="11" textAnchor="end">{maxPlayers}</text>
-        <text x="45" y="180" fill="#888" fontSize="11" textAnchor="end">{minPlayers}</text>
+        <text x="45" y="35" fill="#888" fontSize="11" textAnchor="end">{maxPlayers.toLocaleString()}</text>
+        <text x="45" y="180" fill="#888" fontSize="11" textAnchor="end">{minPlayers.toLocaleString()}</text>
 
         {/* Grid lines */}
         <line x1="50" y1="30" x2="750" y2="30" stroke="#333" strokeWidth="1" />
@@ -190,25 +210,74 @@ export default function OSRSWorlds() {
 
         {/* Area fill */}
         <path
-          d={`M 50,180 L ${points} L 750,180 Z`}
+          d={`M 50,180 L ${pointsStr} L 750,180 Z`}
           fill="rgba(74, 222, 128, 0.2)"
         />
 
         {/* Line */}
         <polyline
-          points={points}
+          points={pointsStr}
           fill="none"
           stroke="#4ade80"
           strokeWidth="2"
         />
 
+        {/* Interactive data points */}
+        {pointsData.map((p, i) => (
+          <circle
+            key={i}
+            cx={p.x}
+            cy={p.y}
+            r={hoveredPoint === i ? 6 : 4}
+            fill={hoveredPoint === i ? '#fff' : '#4ade80'}
+            stroke={hoveredPoint === i ? '#4ade80' : 'none'}
+            strokeWidth="2"
+            style={{ cursor: 'pointer', transition: 'r 0.1s ease' }}
+            onMouseEnter={() => setHoveredPoint(i)}
+          />
+        ))}
+
+        {/* Tooltip */}
+        {hoveredPoint !== null && pointsData[hoveredPoint] && (
+          <>
+            <rect
+              x={Math.min(Math.max(pointsData[hoveredPoint].x - 60, 5), 680)}
+              y={Math.max(pointsData[hoveredPoint].y - 50, 5)}
+              width="120"
+              height="40"
+              rx="4"
+              fill="#222"
+              stroke="#444"
+            />
+            <text
+              x={Math.min(Math.max(pointsData[hoveredPoint].x, 65), 740)}
+              y={Math.max(pointsData[hoveredPoint].y - 32, 23)}
+              fill="#4ade80"
+              fontSize="14"
+              fontWeight="600"
+              textAnchor="middle"
+            >
+              {pointsData[hoveredPoint].players.toLocaleString()} players
+            </text>
+            <text
+              x={Math.min(Math.max(pointsData[hoveredPoint].x, 65), 740)}
+              y={Math.max(pointsData[hoveredPoint].y - 16, 39)}
+              fill="#888"
+              fontSize="11"
+              textAnchor="middle"
+            >
+              {new Date(parseFloat(pointsData[hoveredPoint].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </text>
+          </>
+        )}
+
         {/* X-axis labels */}
         {worldHistory.length > 0 && (
           <>
-            <text x="50" y="195" fill="#888" fontSize="10" textAnchor="middle">
+            <text x="50" y="200" fill="#888" fontSize="10" textAnchor="middle">
               {new Date(parseFloat(worldHistory[0].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </text>
-            <text x="750" y="195" fill="#888" fontSize="10" textAnchor="middle">
+            <text x="750" y="200" fill="#888" fontSize="10" textAnchor="middle">
               {new Date(parseFloat(worldHistory[worldHistory.length - 1].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </text>
           </>
@@ -219,6 +288,7 @@ export default function OSRSWorlds() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
+      <style>{scrollbarStyles}</style>
       {/* Nav */}
       <nav style={{ borderBottom: '1px solid #222', padding: '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
         <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: '18px' }}>aggrgtr</a>
@@ -321,7 +391,7 @@ export default function OSRSWorlds() {
                   {historyLoading ? (
                     <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>Loading history...</div>
                   ) : worldHistory && worldHistory.length > 0 ? (
-                    <div style={{ height: '200px' }}>
+                    <div style={{ height: '220px' }}>
                       {renderHistoryChart()}
                     </div>
                   ) : (
@@ -340,7 +410,7 @@ export default function OSRSWorlds() {
                 {/* All Activities - scrollable */}
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Activities</h3>
-                  <div style={{ maxHeight: '300px', overflow: 'auto', paddingRight: '8px' }}>
+                  <div className="dark-scrollbar" style={{ maxHeight: '300px', overflow: 'auto', paddingRight: '12px' }}>
                     {allActivities.map(([activity, stats]) => (
                       <div key={activity} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
                         <span style={{ color: '#fff', fontSize: '14px' }}>{activity}</span>
@@ -403,7 +473,7 @@ export default function OSRSWorlds() {
                     <span style={{ fontWeight: '400', color: '#888', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>
                   </h3>
                 </div>
-                <div style={{ maxHeight: '500px', overflow: 'auto' }}>
+                <div className="dark-scrollbar" style={{ maxHeight: '500px', overflow: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ position: 'sticky', top: 0, background: '#111' }}>
                       <tr>
