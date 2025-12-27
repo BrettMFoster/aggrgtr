@@ -23,6 +23,9 @@ export async function POST(request) {
     const SPREADSHEET_ID = '1leax3zpwjGRtYI9-OS80LLHAYMPWI4aXII3FnJHKQkw'
     const token = tokenResult.token
 
+    // Ensure Subscriptions sheet exists
+    await ensureSubscriptionsSheet(token, SPREADSHEET_ID)
+
     // Check if email already exists
     const existingEmails = await getExistingEmails(token, SPREADSHEET_ID)
     if (existingEmails.includes(email.toLowerCase())) {
@@ -132,6 +135,53 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Unsubscribe error:', error)
     return Response.json({ error: error.message }, { status: 500 })
+  }
+}
+
+async function ensureSubscriptionsSheet(token, spreadsheetId) {
+  // Check if Subscriptions sheet exists
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`
+  const response = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  })
+
+  if (!response.ok) return
+
+  const data = await response.json()
+  const hasSubscriptions = data.sheets?.some(s => s.properties?.title === 'Subscriptions')
+
+  if (!hasSubscriptions) {
+    // Create Subscriptions sheet with headers
+    const createUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`
+    await fetch(createUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        requests: [{
+          addSheet: {
+            properties: {
+              title: 'Subscriptions'
+            }
+          }
+        }]
+      })
+    })
+
+    // Add headers
+    const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Subscriptions!A1:B1?valueInputOption=USER_ENTERED`
+    await fetch(headerUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        values: [['email', 'timestamp']]
+      })
+    })
   }
 }
 
