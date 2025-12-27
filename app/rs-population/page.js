@@ -326,17 +326,23 @@ export default function RSPopulation() {
                         <rect
                           x="50" y="40" width="840" height="280"
                           fill="transparent"
-                          style={{ cursor: 'crosshair' }}
+                          style={{ cursor: 'crosshair', pointerEvents: 'all' }}
                           onMouseMove={(e) => {
-                            const svgRect = e.currentTarget.closest('svg').getBoundingClientRect()
+                            const svg = e.currentTarget.closest('svg')
+                            const svgRect = svg.getBoundingClientRect()
+                            const chartContainer = svg.parentElement.getBoundingClientRect()
                             const mouseX = e.clientX - svgRect.left
-                            const relX = (mouseX / svgRect.width) * 900
+                            const scaleX = 900 / svgRect.width
+                            const relX = mouseX * scaleX
                             const dataIndex = Math.round(((relX - 50) / 840) * (filteredData.length - 1))
                             const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
                             const d = filteredData[clampedIndex]
                             if (d) {
                               setHoveredPoint(d)
-                              setTooltipPos({ x: mouseX, y: e.clientY - svgRect.top })
+                              // Position tooltip relative to container
+                              const tooltipX = Math.min(e.clientX - chartContainer.left, chartContainer.width - 180)
+                              const tooltipY = e.clientY - chartContainer.top
+                              setTooltipPos({ x: Math.max(10, tooltipX), y: Math.max(10, tooltipY - 80) })
                             }
                           }}
                           onMouseLeave={() => setHoveredPoint(null)}
@@ -609,15 +615,15 @@ const styles = {
     marginBottom: '32px',
   },
   h1: {
-    fontSize: '36px',
+    fontSize: '42px',
     fontWeight: '700',
     letterSpacing: '-0.5px',
     marginBottom: '12px',
-    color: '#fff',
+    color: '#ffffff',
   },
   subtitle: {
-    fontSize: '16px',
-    color: '#fff',
+    fontSize: '18px',
+    color: '#ffffff',
     margin: 0,
   },
   loading: {
