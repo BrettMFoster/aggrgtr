@@ -36,7 +36,11 @@ export async function GET(request) {
     }
 
     // Get access token
-    const token = await getAccessToken(credentials)
+    const tokenResult = await getAccessToken(credentials)
+    if (tokenResult.error) {
+      return Response.json({ error: `Token error: ${tokenResult.error}`, rows: [] }, { status: 500 })
+    }
+    const token = tokenResult.token
 
     const SPREADSHEET_ID = '1VmFRFnLJyAh5wD6DXIJPfX-bTxrg_ouzg4NJEzsBZUs'
     const range = `${sheet}!A:D`
@@ -94,21 +98,28 @@ export async function GET(request) {
 }
 
 async function getAccessToken(credentials) {
-  const jwt = await createJWT(credentials)
+  try {
+    const jwt = await createJWT(credentials)
 
-  const response = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  })
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: jwt,
+      }),
+    })
 
-  const data = await response.json()
-  return data.access_token
+    const data = await response.json()
+    if (data.error) {
+      return { error: `${data.error}: ${data.error_description}` }
+    }
+    return { token: data.access_token }
+  } catch (err) {
+    return { error: err.message }
+  }
 }
 
 async function createJWT(credentials) {
