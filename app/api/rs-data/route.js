@@ -100,9 +100,14 @@ export async function GET(request) {
         let rs3 = parseInt(row[rs3Col]) || 0
         let total = parseInt(row[totalCol]) || 0
 
-        // If rs3 is 0 but we have total and osrs, calculate it
-        if (rs3 === 0 && total > 0 && osrs > 0) {
+        // Calculate missing values from what we have
+        // If rs3 is 0 but we have total and osrs, derive rs3
+        if (rs3 === 0 && total > 0 && osrs > 0 && total > osrs) {
           rs3 = total - osrs
+        }
+        // If osrs is 0 but we have total and rs3, derive osrs
+        if (osrs === 0 && total > 0 && rs3 > 0 && total > rs3) {
+          osrs = total - rs3
         }
         // If total is 0, calculate from osrs + rs3
         if (total === 0 && (osrs > 0 || rs3 > 0)) {
