@@ -132,7 +132,14 @@ export default function RSPopulation() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const dataIndex = Math.round((x / chartWidth) * (filteredData.length - 1))
+    // Chart area starts at ~7% from left (60/900) and ends at ~98% (880/900)
+    const chartStartPct = 60 / 900
+    const chartEndPct = 880 / 900
+    const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
+    const chartAreaStart = chartWidth * chartStartPct
+    const relativeX = x - chartAreaStart
+    const pct = Math.max(0, Math.min(1, relativeX / chartAreaWidth))
+    const dataIndex = Math.round(pct * (filteredData.length - 1))
     const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
     setHoveredPoint(filteredData[clampedIndex])
     setMousePos({ x: e.clientX, y: e.clientY })
@@ -150,8 +157,10 @@ export default function RSPopulation() {
         text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
-      } else if (viewMode === 'year' || viewMode === 'all') {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      } else if (viewMode === 'year') {
+        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+      } else if (viewMode === 'all') {
+        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
       } else {
         text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
@@ -173,7 +182,7 @@ export default function RSPopulation() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Sidebar */}
-        <aside style={{ width: '200px', padding: '24px 16px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '160px', padding: '16px 8px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -185,7 +194,7 @@ export default function RSPopulation() {
                     background: viewMode === mode.id ? '#222' : 'transparent',
                     border: 'none',
                     color: '#fff',
-                    padding: '8px 12px',
+                    padding: '6px 8px',
                     borderRadius: '4px',
                     fontSize: '14px',
                     cursor: 'pointer',
@@ -220,17 +229,17 @@ export default function RSPopulation() {
               {/* KPI Cards - BIGGER */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase' }}>OSRS Players</div>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>OSRS Players</div>
                   <div style={{ fontSize: '48px', fontWeight: '700', color: '#4ade80' }}>{latest?.osrs?.toLocaleString() || '-'}</div>
                   <div style={{ fontSize: '14px', color: '#fff', marginTop: '8px' }}>Old School RuneScape</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase' }}>RS3 Players</div>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 Players</div>
                   <div style={{ fontSize: '48px', fontWeight: '700', color: '#60a5fa' }}>{latest?.rs3?.toLocaleString() || '-'}</div>
                   <div style={{ fontSize: '14px', color: '#fff', marginTop: '8px' }}>RuneScape 3</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase' }}>Total Online</div>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Online</div>
                   <div style={{ fontSize: '56px', fontWeight: '700', color: '#fff' }}>{latest?.total?.toLocaleString() || '-'}</div>
                   <div style={{ fontSize: '14px', color: '#4ade80', marginTop: '8px' }}>
                     {latest?.timestamp ? `Updated ${Math.floor((Date.now() - latest.timestamp.getTime()) / 60000)}m ago` : ''}
