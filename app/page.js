@@ -25,9 +25,10 @@ export default function Home() {
       id: 'fbi',
       title: 'FBI Crime Statistics',
       category: 'government',
-      status: 'available',
-      desc: 'Violent and property crime rates by county, normalized per 100k population. 2000-2023.',
-      stats: ['3,000+ counties', '23 years']
+      status: 'live',
+      desc: 'Violent and property crime from FBI NIBRS. Agency, county, and state level data.',
+      stats: ['13,000+ agencies', '2020-2024'],
+      link: '/fbi-crime'
     },
     {
       id: 'census',
