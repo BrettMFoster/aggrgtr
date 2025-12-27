@@ -150,7 +150,7 @@ export default function RSPopulation() {
   const getXAxisLabels = () => {
     if (filteredData.length === 0) return []
     const labels = []
-    const count = 6
+    const count = viewMode === 'all' ? 12 : viewMode === 'year' ? 10 : 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (filteredData.length - 1))
       const d = filteredData[idx]
