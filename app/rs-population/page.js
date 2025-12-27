@@ -153,6 +153,7 @@ export default function RSPopulation() {
 
     if (viewMode === 'year' || viewMode === 'all') {
       // For year/all views, show each month only once
+      const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < filteredData.length; i++) {
         const d = filteredData[i]
@@ -160,16 +161,21 @@ export default function RSPopulation() {
         if (!seenMonths.has(monthKey)) {
           seenMonths.add(monthKey)
           const text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
-          labels.push({ index: i, text })
+          allMonths.push({ index: i, text })
         }
       }
-      // Filter to show ~12-16 evenly spaced labels
+      // Select evenly spaced months
       const maxLabels = viewMode === 'all' ? 16 : 12
-      if (labels.length > maxLabels) {
-        const step = Math.ceil(labels.length / maxLabels)
-        return labels.filter((_, i) => i % step === 0)
+      if (allMonths.length <= maxLabels) {
+        return allMonths
       }
-      return labels
+      // Pick evenly spaced indices from allMonths
+      const result = []
+      for (let i = 0; i < maxLabels; i++) {
+        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
+        result.push(allMonths[idx])
+      }
+      return result
     }
 
     // For other views, use evenly spaced labels
@@ -200,7 +206,8 @@ export default function RSPopulation() {
       const d = filteredData[i]
       let key
       if (viewMode === 'year' || viewMode === 'all') {
-        key = d.timestamp.getFullYear()
+        // Band by MONTH for year/all views
+        key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
       } else if (viewMode === 'week' || viewMode === 'month') {
         key = d.timestamp.toISOString().split('T')[0] // day
       } else if (viewMode === 'live') {
