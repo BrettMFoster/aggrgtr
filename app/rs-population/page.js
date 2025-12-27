@@ -354,7 +354,7 @@ export default function RSPopulation() {
           <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: '500' }}>Donate</a>
           <a href="/subscribe" style={{ color: '#fff', textDecoration: 'none' }}>Subscribe</a>
           <a href="/" style={{ color: '#fff', textDecoration: 'none' }}>Datasets</a>
-          <a href="https://github.com/BrettMFoster/aggrgtr" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
+          <a href="#" style={{ color: '#fff', textDecoration: 'none' }}>GitHub</a>
         </div>
       </nav>
 
