@@ -7,6 +7,7 @@ export default function RSPopulation() {
   const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState('live')
   const [hoveredPoint, setHoveredPoint] = useState(null)
+  const [hoveredIndex, setHoveredIndex] = useState(-1)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const chartRef = useRef(null)
 
@@ -142,6 +143,7 @@ export default function RSPopulation() {
     const dataIndex = Math.round(pct * (filteredData.length - 1))
     const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
     setHoveredPoint(filteredData[clampedIndex])
+    setHoveredIndex(clampedIndex)
     setMousePos({ x: e.clientX, y: e.clientY })
   }
 
@@ -293,7 +295,7 @@ export default function RSPopulation() {
                   ref={chartRef}
                   style={{ height: '350px', position: 'relative', cursor: 'crosshair' }}
                   onMouseMove={handleMouseMove}
-                  onMouseLeave={() => setHoveredPoint(null)}
+                  onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
                   {filteredData.length > 0 && (
                     <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
@@ -362,9 +364,8 @@ export default function RSPopulation() {
                       />
 
                       {/* Hover indicator */}
-                      {hoveredPoint && (() => {
-                        const idx = filteredData.indexOf(hoveredPoint)
-                        const x = 60 + (idx / (filteredData.length - 1 || 1)) * 820
+                      {hoveredPoint && hoveredIndex >= 0 && (() => {
+                        const x = 60 + (hoveredIndex / (filteredData.length - 1 || 1)) * 820
                         return (
                           <>
                             <line x1={x} y1={40} x2={x} y2={310} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
