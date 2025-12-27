@@ -158,7 +158,7 @@ export default function RSPopulation() {
     { id: 'week', label: 'Week' },
     { id: 'month', label: 'Month' },
     { id: 'year', label: 'Year' },
-    { id: 'all', label: 'All Time' }
+    { id: 'all', label: 'All (2013+)' }
   ]
 
   return (
@@ -273,7 +273,7 @@ export default function RSPopulation() {
                               x2="890" y2={320 - pct * 280}
                               stroke="#222" strokeWidth="1"
                             />
-                            <text x="45" y={325 - pct * 280} fill="#ccc" fontSize="12" textAnchor="end">
+                            <text x="45" y={325 - pct * 280} fill="#fff" fontSize="14" fontWeight="600" textAnchor="end">
                               {Math.round(maxOsrs * pct / 1000)}k
                             </text>
                           </g>
@@ -285,8 +285,9 @@ export default function RSPopulation() {
                             key={i}
                             x={50 + (label.index / (filteredData.length - 1 || 1)) * 840}
                             y={340}
-                            fill="#ccc"
-                            fontSize="12"
+                            fill="#fff"
+                            fontSize="14"
+                            fontWeight="600"
                             textAnchor="middle"
                           >
                             {label.text}
@@ -321,39 +322,39 @@ export default function RSPopulation() {
                           strokeWidth="2"
                         />
 
-                        {/* Hover points - invisible but interactive */}
-                        {filteredData.map((d, i) => {
+                        {/* Invisible overlay for hover detection */}
+                        <rect
+                          x="50" y="40" width="840" height="280"
+                          fill="transparent"
+                          style={{ cursor: 'crosshair' }}
+                          onMouseMove={(e) => {
+                            const svgRect = e.currentTarget.closest('svg').getBoundingClientRect()
+                            const mouseX = e.clientX - svgRect.left
+                            const relX = (mouseX / svgRect.width) * 900
+                            const dataIndex = Math.round(((relX - 50) / 840) * (filteredData.length - 1))
+                            const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
+                            const d = filteredData[clampedIndex]
+                            if (d) {
+                              setHoveredPoint(d)
+                              setTooltipPos({ x: mouseX, y: e.clientY - svgRect.top })
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                        {/* Show hover indicator */}
+                        {hoveredPoint && (() => {
+                          const i = filteredData.indexOf(hoveredPoint)
                           const x = 50 + (i / (filteredData.length - 1 || 1)) * 840
-                          const yOsrs = 320 - (d.osrs / maxOsrs) * 280
+                          const yOsrs = 320 - (hoveredPoint.osrs / maxOsrs) * 280
+                          const yRs3 = 320 - (hoveredPoint.rs3 / maxOsrs) * 280
                           return (
-                            <g key={i}>
-                              <rect
-                                x={x - (840 / filteredData.length / 2)}
-                                y={40}
-                                width={840 / filteredData.length}
-                                height={280}
-                                fill="transparent"
-                                style={{ cursor: 'crosshair' }}
-                                onMouseEnter={(e) => {
-                                  setHoveredPoint(d)
-                                  const svgRect = e.currentTarget.closest('svg').getBoundingClientRect()
-                                  const chartRect = e.currentTarget.closest('svg').parentElement.getBoundingClientRect()
-                                  const relX = (x / 900) * svgRect.width
-                                  const relY = (yOsrs / 350) * svgRect.height
-                                  setTooltipPos({ x: relX, y: relY })
-                                }}
-                                onMouseLeave={() => setHoveredPoint(null)}
-                              />
-                              {hoveredPoint === d && (
-                                <>
-                                  <circle cx={x} cy={yOsrs} r="4" fill="#4ade80" />
-                                  <circle cx={x} cy={320 - (d.rs3 / maxOsrs) * 280} r="4" fill="#60a5fa" />
-                                  <line x1={x} y1={40} x2={x} y2={320} stroke="#444" strokeWidth="1" strokeDasharray="4" />
-                                </>
-                              )}
-                            </g>
+                            <>
+                              <line x1={x} y1={40} x2={x} y2={320} stroke="#555" strokeWidth="1" strokeDasharray="4" />
+                              <circle cx={x} cy={yOsrs} r="5" fill="#4ade80" />
+                              <circle cx={x} cy={yRs3} r="5" fill="#60a5fa" />
+                            </>
                           )
-                        })}
+                        })()}
                       </svg>
 
                       {/* Tooltip */}
@@ -554,9 +555,9 @@ const styles = {
     marginBottom: '32px',
   },
   sidebarTitle: {
-    fontSize: '11px',
-    fontWeight: '600',
-    color: '#666',
+    fontSize: '14px',
+    fontWeight: '700',
+    color: '#fff',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     marginBottom: '12px',
@@ -569,10 +570,10 @@ const styles = {
   sidebarBtn: {
     background: 'transparent',
     border: 'none',
-    color: '#888',
-    padding: '8px 0',
+    color: '#ccc',
+    padding: '10px 0',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '15px',
     cursor: 'pointer',
     textAlign: 'left',
   },
@@ -580,16 +581,17 @@ const styles = {
     background: '#1a1a1a',
     border: 'none',
     color: '#fff',
-    padding: '8px 12px',
+    padding: '10px 12px',
     marginLeft: '-12px',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
     textAlign: 'left',
   },
   sidebarText: {
-    fontSize: '12px',
-    color: '#666',
+    fontSize: '14px',
+    color: '#bbb',
     lineHeight: '1.5',
     margin: '0 0 8px 0',
   },
@@ -607,15 +609,15 @@ const styles = {
     marginBottom: '32px',
   },
   h1: {
-    fontSize: '28px',
-    fontWeight: '600',
+    fontSize: '36px',
+    fontWeight: '700',
     letterSpacing: '-0.5px',
-    marginBottom: '8px',
+    marginBottom: '12px',
     color: '#fff',
   },
   subtitle: {
-    fontSize: '14px',
-    color: '#666',
+    fontSize: '16px',
+    color: '#bbb',
     margin: 0,
   },
   loading: {
@@ -648,37 +650,37 @@ const styles = {
     borderColor: '#1a2a1a',
   },
   statLabel: {
-    fontSize: '13px',
-    color: '#aaa',
+    fontSize: '16px',
+    color: '#fff',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    marginBottom: '8px',
-    fontWeight: '500',
+    marginBottom: '10px',
+    fontWeight: '700',
   },
   statValueOsrs: {
-    fontSize: '32px',
-    fontWeight: '600',
+    fontSize: '40px',
+    fontWeight: '700',
     color: '#4ade80',
   },
   statValueRs3: {
-    fontSize: '32px',
-    fontWeight: '600',
+    fontSize: '40px',
+    fontWeight: '700',
     color: '#60a5fa',
   },
   statValueLarge: {
-    fontSize: '36px',
-    fontWeight: '600',
+    fontSize: '48px',
+    fontWeight: '700',
     color: '#fff',
   },
   statGame: {
-    fontSize: '11px',
-    color: '#555',
-    marginTop: '4px',
+    fontSize: '14px',
+    color: '#bbb',
+    marginTop: '6px',
   },
   statTime: {
-    fontSize: '11px',
-    color: '#4a4',
-    marginTop: '4px',
+    fontSize: '14px',
+    color: '#4ade80',
+    marginTop: '6px',
   },
   chartSection: {
     marginBottom: '24px',
@@ -696,15 +698,15 @@ const styles = {
     marginBottom: '16px',
   },
   chartTitle: {
-    fontSize: '16px',
-    fontWeight: '500',
+    fontSize: '22px',
+    fontWeight: '700',
     color: '#fff',
     margin: 0,
   },
   chartLegend: {
     display: 'flex',
     gap: '16px',
-    fontSize: '12px',
+    fontSize: '16px',
   },
   legendOsrs: {
     color: '#4ade80',
@@ -744,23 +746,24 @@ const styles = {
     textAlign: 'center',
   },
   summaryLabel: {
-    fontSize: '13px',
-    color: '#aaa',
-    marginBottom: '6px',
+    fontSize: '16px',
+    color: '#fff',
+    marginBottom: '8px',
+    fontWeight: '600',
   },
   summaryValue: {
-    fontSize: '18px',
-    fontWeight: '600',
+    fontSize: '24px',
+    fontWeight: '700',
     color: '#fff',
   },
   summaryValueOsrs: {
-    fontSize: '18px',
-    fontWeight: '600',
+    fontSize: '24px',
+    fontWeight: '700',
     color: '#4ade80',
   },
   summaryValueRs3: {
-    fontSize: '18px',
-    fontWeight: '600',
+    fontSize: '24px',
+    fontWeight: '700',
     color: '#60a5fa',
   },
   footer: {
@@ -781,32 +784,33 @@ const styles = {
     minWidth: '140px',
   },
   tooltipDate: {
-    fontSize: '11px',
-    color: '#aaa',
-    marginBottom: '8px',
-    borderBottom: '1px solid #333',
-    paddingBottom: '6px',
+    fontSize: '14px',
+    color: '#fff',
+    marginBottom: '10px',
+    borderBottom: '1px solid #444',
+    paddingBottom: '8px',
+    fontWeight: '600',
   },
   tooltipRow: {
-    fontSize: '12px',
-    color: '#e5e5e5',
-    marginBottom: '4px',
+    fontSize: '15px',
+    color: '#fff',
+    marginBottom: '6px',
   },
   tooltipOsrs: {
     color: '#4ade80',
-    fontWeight: '500',
+    fontWeight: '700',
   },
   tooltipRs3: {
     color: '#60a5fa',
-    fontWeight: '500',
+    fontWeight: '700',
   },
   tooltipTotal: {
-    fontSize: '12px',
+    fontSize: '16px',
     color: '#fff',
-    fontWeight: '600',
-    marginTop: '6px',
-    paddingTop: '6px',
-    borderTop: '1px solid #333',
+    fontWeight: '700',
+    marginTop: '8px',
+    paddingTop: '8px',
+    borderTop: '1px solid #444',
   },
   // Mobile styles
   pageContainerMobile: {
