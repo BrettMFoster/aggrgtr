@@ -349,7 +349,7 @@ export default function RSPopulation() {
                           const yRs3 = 320 - (hoveredPoint.rs3 / maxOsrs) * 280
                           return (
                             <>
-                              <line x1={x} y1={40} x2={x} y2={320} stroke="#555" strokeWidth="1" strokeDasharray="4" />
+                              <line x1={x} y1={40} x2={x} y2={320} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
                               <circle cx={x} cy={yOsrs} r="5" fill="#4ade80" />
                               <circle cx={x} cy={yRs3} r="5" fill="#60a5fa" />
                             </>
@@ -530,7 +530,7 @@ const styles = {
     alignItems: 'center',
   },
   navLink: {
-    color: '#888',
+    color: '#fff',
     textDecoration: 'none',
     fontSize: '14px',
   },
@@ -570,7 +570,7 @@ const styles = {
   sidebarBtn: {
     background: 'transparent',
     border: 'none',
-    color: '#ccc',
+    color: '#fff',
     padding: '10px 0',
     borderRadius: '6px',
     fontSize: '15px',
@@ -591,7 +591,7 @@ const styles = {
   },
   sidebarText: {
     fontSize: '14px',
-    color: '#bbb',
+    color: '#fff',
     lineHeight: '1.5',
     margin: '0 0 8px 0',
   },
@@ -617,13 +617,13 @@ const styles = {
   },
   subtitle: {
     fontSize: '16px',
-    color: '#bbb',
+    color: '#fff',
     margin: 0,
   },
   loading: {
     textAlign: 'center',
     padding: '80px 32px',
-    color: '#666',
+    color: '#fff',
   },
   error: {
     textAlign: 'center',
@@ -674,7 +674,7 @@ const styles = {
   },
   statGame: {
     fontSize: '14px',
-    color: '#bbb',
+    color: '#fff',
     marginTop: '6px',
   },
   statTime: {
@@ -728,7 +728,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    color: '#555',
+    color: '#fff',
   },
   summarySection: {
     marginBottom: '24px',
@@ -770,7 +770,7 @@ const styles = {
     padding: '24px',
     textAlign: 'center',
     fontSize: '12px',
-    color: '#333',
+    color: '#fff',
     borderTop: '1px solid #1a1a1a',
   },
   tooltip: {
@@ -848,20 +848,21 @@ const styles = {
   },
   sidebarBtnMobile: {
     background: 'transparent',
-    border: '1px solid #333',
-    color: '#888',
+    border: '1px solid #444',
+    color: '#fff',
     padding: '8px 12px',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '15px',
     cursor: 'pointer',
   },
   sidebarBtnActiveMobile: {
     background: '#1a1a1a',
-    border: '1px solid #333',
+    border: '1px solid #444',
     color: '#fff',
     padding: '8px 12px',
     borderRadius: '6px',
-    fontSize: '13px',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
   },
 }
