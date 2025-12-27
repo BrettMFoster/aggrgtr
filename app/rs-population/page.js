@@ -150,7 +150,7 @@ export default function RSPopulation() {
   const getXAxisLabels = () => {
     if (filteredData.length === 0) return []
     const labels = []
-    const count = viewMode === 'all' ? 12 : viewMode === 'year' ? 10 : 6
+    const count = viewMode === 'all' ? 16 : viewMode === 'year' ? 12 : 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (filteredData.length - 1))
       const d = filteredData[idx]
@@ -248,7 +248,7 @@ export default function RSPopulation() {
         </aside>
 
         {/* Main */}
-        <main style={{ flex: 1, padding: '32px' }}>
+        <main style={{ flex: 1, padding: '24px 20px' }}>
           <h1 style={{ fontSize: '36px', fontWeight: '700', color: '#fff', margin: '0 0 8px 0' }}>RuneScape Population Tracker</h1>
           <p style={{ fontSize: '16px', color: '#fff', margin: '0 0 32px 0' }}>Live player counts for Old School RuneScape and RuneScape 3</p>
 
@@ -293,7 +293,7 @@ export default function RSPopulation() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: '350px', position: 'relative', cursor: 'crosshair' }}
+                  style={{ height: '420px', position: 'relative', cursor: 'crosshair' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
