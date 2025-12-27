@@ -151,8 +151,8 @@ export default function RSPopulation() {
     if (filteredData.length === 0) return []
     const labels = []
 
-    if (viewMode === 'year' || viewMode === 'all') {
-      // For year/all views, show each month only once
+    if (viewMode === 'all') {
+      // All Time: show months with years, evenly spaced
       const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < filteredData.length; i++) {
@@ -164,13 +164,35 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      // Select evenly spaced months
-      const maxLabels = viewMode === 'all' ? 16 : 12
-
+      const maxLabels = 16
       if (allMonths.length <= maxLabels) {
         return allMonths
       }
-      // Pick evenly spaced indices
+      const result = []
+      for (let i = 0; i < maxLabels; i++) {
+        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
+        result.push(allMonths[idx])
+      }
+      return result
+    }
+
+    if (viewMode === 'year') {
+      // Year view: show months with years, evenly spaced
+      const allMonths = []
+      const seenMonths = new Set()
+      for (let i = 0; i < filteredData.length; i++) {
+        const d = filteredData[i]
+        const monthKey = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
+        if (!seenMonths.has(monthKey)) {
+          seenMonths.add(monthKey)
+          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
+          allMonths.push({ index: i, text })
+        }
+      }
+      const maxLabels = 12
+      if (allMonths.length <= maxLabels) {
+        return allMonths
+      }
       const result = []
       for (let i = 0; i < maxLabels; i++) {
         const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
