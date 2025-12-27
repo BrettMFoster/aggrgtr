@@ -49,7 +49,8 @@ export async function GET(request) {
     const token = tokenResult.token
 
     const SPREADSHEET_ID = '1VmFRFnLJyAh5wD6DXIJPfX-bTxrg_ouzg4NJEzsBZUs'
-    const range = `${sheet}!A:D`
+    const debug = searchParams.get('debug') === 'headers'
+    const range = `${sheet}!A:Z`
 
     // Fetch from Google Sheets API
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}`
@@ -69,27 +70,72 @@ export async function GET(request) {
     const json = await response.json()
     const rows = json.values || []
 
-    // Skip header row and parse data
-    const data = rows.slice(1).map(row => {
-      const timestamp = row[0]
-      const osrs = parseInt(row[1]) || 0
-      const rs3 = parseInt(row[2]) || 0
-      const total = parseInt(row[3]) || 0
+    // Debug mode - return headers
+    if (debug) {
+      return Response.json({
+        headers: rows[0],
+        sampleRow: rows[1],
+        rowCount: rows.length
+      })
+    }
 
-      let isoTimestamp
-      try {
-        isoTimestamp = new Date(timestamp).toISOString()
-      } catch {
-        return null
-      }
+    // Parse based on sheet type
+    let data
+    if (sheet === 'Historical') {
+      // Historical sheet from Misplaced Items: Date, OSRS_Avg, OSRS_Min, OSRS_Max, RS3_Avg, RS3_Min, RS3_Max, Total_Avg, etc.
+      // We'll use the avg columns
+      const headers = rows[0] || []
+      const osrsIdx = headers.findIndex(h => h && h.toLowerCase().includes('osrs') && h.toLowerCase().includes('avg'))
+      const rs3Idx = headers.findIndex(h => h && h.toLowerCase().includes('rs3') && h.toLowerCase().includes('avg'))
+      const totalIdx = headers.findIndex(h => h && h.toLowerCase().includes('total') && h.toLowerCase().includes('avg'))
 
-      return {
-        timestamp: isoTimestamp,
-        osrs,
-        rs3,
-        total
-      }
-    }).filter(d => d && d.timestamp)
+      // Fallback indices if headers don't match expected pattern
+      const osrsCol = osrsIdx >= 0 ? osrsIdx : 1
+      const rs3Col = rs3Idx >= 0 ? rs3Idx : 4
+      const totalCol = totalIdx >= 0 ? totalIdx : 7
+
+      data = rows.slice(1).map(row => {
+        const timestamp = row[0]
+        const osrs = parseInt(row[osrsCol]) || 0
+        let rs3 = parseInt(row[rs3Col]) || 0
+        let total = parseInt(row[totalCol]) || 0
+
+        // If rs3 is 0 but we have total and osrs, calculate it
+        if (rs3 === 0 && total > 0 && osrs > 0) {
+          rs3 = total - osrs
+        }
+        // If total is 0, calculate from osrs + rs3
+        if (total === 0 && (osrs > 0 || rs3 > 0)) {
+          total = osrs + rs3
+        }
+
+        let isoTimestamp
+        try {
+          isoTimestamp = new Date(timestamp).toISOString()
+        } catch {
+          return null
+        }
+
+        return { timestamp: isoTimestamp, osrs, rs3, total }
+      }).filter(d => d && d.timestamp)
+    } else {
+      // Data sheet: Timestamp, OSRS, RS3, Total (from our scraper)
+      data = rows.slice(1).map(row => {
+        const timestamp = row[0]
+        const osrs = parseInt(row[1]) || 0
+        const rs3 = parseInt(row[2]) || 0
+        const total = parseInt(row[3]) || 0
+
+        let isoTimestamp
+        try {
+          isoTimestamp = new Date(timestamp).toISOString()
+        } catch {
+          return null
+        }
+
+        return { timestamp: isoTimestamp, osrs, rs3, total }
+      }).filter(d => d && d.timestamp)
+    }
 
     return Response.json({
       rows: data,
