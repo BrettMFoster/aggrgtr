@@ -53,7 +53,7 @@ export async function GET(request) {
     if (!response.ok) {
       const error = await response.text()
       console.error('Sheets API error:', error)
-      return Response.json({ error: 'Failed to fetch sheet data', rows: [] }, { status: 500 })
+      return Response.json({ error: `Sheets API: ${error.substring(0, 200)}`, rows: [] }, { status: 500 })
     }
 
     const json = await response.json()
