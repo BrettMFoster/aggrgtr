@@ -150,7 +150,30 @@ export default function RSPopulation() {
   const getXAxisLabels = () => {
     if (filteredData.length === 0) return []
     const labels = []
-    const count = viewMode === 'all' ? 16 : viewMode === 'year' ? 12 : 6
+
+    if (viewMode === 'year' || viewMode === 'all') {
+      // For year/all views, show each month only once
+      const seenMonths = new Set()
+      for (let i = 0; i < filteredData.length; i++) {
+        const d = filteredData[i]
+        const monthKey = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
+        if (!seenMonths.has(monthKey)) {
+          seenMonths.add(monthKey)
+          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
+          labels.push({ index: i, text })
+        }
+      }
+      // Filter to show ~12-16 evenly spaced labels
+      const maxLabels = viewMode === 'all' ? 16 : 12
+      if (labels.length > maxLabels) {
+        const step = Math.ceil(labels.length / maxLabels)
+        return labels.filter((_, i) => i % step === 0)
+      }
+      return labels
+    }
+
+    // For other views, use evenly spaced labels
+    const count = 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (filteredData.length - 1))
       const d = filteredData[idx]
@@ -159,10 +182,6 @@ export default function RSPopulation() {
         text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
-      } else if (viewMode === 'year') {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
-      } else if (viewMode === 'all') {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
       } else {
         text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
