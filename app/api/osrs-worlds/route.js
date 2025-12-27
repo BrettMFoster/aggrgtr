@@ -83,7 +83,11 @@ export async function GET(request) {
         players: parseInt(row.f[1].v) || 0
       }))
 
-      return Response.json({ worldId: parseInt(worldId), history })
+      return Response.json({ worldId: parseInt(worldId), history }, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60'
+        }
+      })
     }
 
     // Query BigQuery for latest snapshot
@@ -165,6 +169,10 @@ export async function GET(request) {
         byRegion,
         byType,
         byActivity
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=60'
       }
     })
 

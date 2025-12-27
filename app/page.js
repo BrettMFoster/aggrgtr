@@ -108,9 +108,9 @@ export default function Home() {
           <div style={styles.aboutCard}>
             <h3 style={styles.aboutTitle}>What is this?</h3>
             <p style={styles.aboutText}>
-              A collection of public datasets I've cleaned up for my own projects.
-              Figured others might find them useful too. Everything here is either
-              from government sources or scraped from public APIs.
+              Aggregation of public data that is overneeded and underserviced.
+              Most data here is free, but datasets requiring significant time
+              and effort to compile will be available for a fee.
             </p>
           </div>
           <div style={styles.aboutCard}>
@@ -120,6 +120,15 @@ export default function Home() {
             </p>
             <a href="/subscribe" style={styles.subscribeLink}>
               Subscribe for updates →
+            </a>
+          </div>
+          <div style={styles.aboutCard}>
+            <h3 style={styles.aboutTitle}>Request data</h3>
+            <p style={styles.aboutText}>
+              Know of a dataset you'd like to see here? Contact me for pricing.
+            </p>
+            <a href="mailto:foster.brett.m@gmail.com" style={styles.subscribeLink}>
+              foster.brett.m@gmail.com
             </a>
           </div>
         </div>

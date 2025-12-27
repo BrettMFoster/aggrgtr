@@ -350,9 +350,11 @@ export default function RSPopulation() {
       {/* Nav */}
       <nav style={{ borderBottom: '1px solid #222', padding: '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
         <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: '18px' }}>aggrgtr</a>
-        <div style={{ display: 'flex', gap: '24px' }}>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: '500' }}>Donate</a>
+          <a href="/subscribe" style={{ color: '#fff', textDecoration: 'none' }}>Subscribe</a>
           <a href="/" style={{ color: '#fff', textDecoration: 'none' }}>Datasets</a>
-          <a href="/rs-population" style={{ color: '#fff', textDecoration: 'none' }}>RS Population</a>
+          <a href="https://github.com/BrettMFoster/aggrgtr" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
         </div>
       </nav>
 
