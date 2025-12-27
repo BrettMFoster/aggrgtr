@@ -360,8 +360,8 @@ export default function RSPopulation() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: isMobile ? '12px 16px' : '16px 32px',
-          maxWidth: '1400px',
+          padding: '16px 32px',
+          maxWidth: '1200px',
           margin: '0 auto',
         }}>
           <a href="/" style={{
@@ -382,14 +382,14 @@ export default function RSPopulation() {
         {/* Sidebar - horizontal on mobile */}
         <aside style={{
           width: isMobile ? '100%' : '180px',
-          padding: isMobile ? '12px 16px' : '32px 32px 32px 40px',
+          padding: isMobile ? '12px 16px' : '32px',
           borderRight: isMobile ? 'none' : '1px solid #1a1a1a',
           borderBottom: isMobile ? '1px solid #1a1a1a' : 'none',
           flexShrink: 0
         }}>
           {!isMobile && (
             <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '600', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dashboards</div>
+              <div style={{ fontSize: '12px', fontWeight: '600', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dashboards</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <a href="/rs-population" style={{ background: '#1a1a1a', border: '1px solid #333', color: '#e5e5e5', padding: '8px 10px', borderRadius: '6px', fontSize: '14px', textDecoration: 'none', fontWeight: '500' }}>Population</a>
                 <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid transparent', color: '#888', padding: '8px 10px', borderRadius: '6px', fontSize: '14px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
@@ -397,7 +397,7 @@ export default function RSPopulation() {
             </div>
           )}
           <div style={{ marginBottom: isMobile ? '0' : '16px' }}>
-            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '600', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Time Range</div>}
+            {!isMobile && <div style={{ fontSize: '12px', fontWeight: '600', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Time Range</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '4px', flexWrap: 'wrap' }}>
               {viewModes.map(mode => (
                 <button
