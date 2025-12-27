@@ -32,12 +32,19 @@ export default function OSRSWorlds() {
   const [hoveredWorld, setHoveredWorld] = useState(null)
   const [hoveredPoint, setHoveredPoint] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [, setTick] = useState(0) // Force re-render for cache age display
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Update cache age display every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 30000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
