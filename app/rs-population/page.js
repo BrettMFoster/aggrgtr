@@ -169,6 +169,36 @@ export default function RSPopulation() {
     return labels
   }
 
+  const getTimeBands = () => {
+    if (filteredData.length === 0) return []
+    const bands = []
+    let currentBandStart = 0
+    let currentKey = null
+
+    for (let i = 0; i < filteredData.length; i++) {
+      const d = filteredData[i]
+      let key
+      if (viewMode === 'year' || viewMode === 'all') {
+        key = d.timestamp.getFullYear()
+      } else if (viewMode === 'week' || viewMode === 'month') {
+        key = d.timestamp.toISOString().split('T')[0] // day
+      } else if (viewMode === 'live') {
+        key = d.timestamp.getHours()
+      }
+
+      if (currentKey === null) {
+        currentKey = key
+      } else if (key !== currentKey) {
+        bands.push({ start: currentBandStart, end: i - 1, key: currentKey })
+        currentBandStart = i
+        currentKey = key
+      }
+    }
+    // Push final band
+    bands.push({ start: currentBandStart, end: filteredData.length - 1, key: currentKey })
+    return bands
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
       {/* Nav */}
@@ -267,6 +297,22 @@ export default function RSPopulation() {
                 >
                   {filteredData.length > 0 && (
                     <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
+                      {/* Time period bands */}
+                      {getTimeBands().map((band, i) => {
+                        const x1 = 60 + (band.start / (filteredData.length - 1 || 1)) * 820
+                        const x2 = 60 + (band.end / (filteredData.length - 1 || 1)) * 820
+                        return (
+                          <rect
+                            key={i}
+                            x={x1}
+                            y={40}
+                            width={x2 - x1}
+                            height={270}
+                            fill={i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'}
+                          />
+                        )
+                      })}
+
                       {/* Y-axis grid and labels - WHITE */}
                       {[0, 0.25, 0.5, 0.75, 1].map(pct => (
                         <g key={pct}>
@@ -275,7 +321,7 @@ export default function RSPopulation() {
                         </g>
                       ))}
 
-                      {/* X-axis labels - WHITE, no years for year view */}
+                      {/* X-axis labels - WHITE */}
                       {getXAxisLabels().map((label, i) => (
                         <text
                           key={i}
