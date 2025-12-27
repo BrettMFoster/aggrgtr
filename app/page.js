@@ -2,10 +2,6 @@
 import { useState, useEffect } from 'react'
 
 export default function Home() {
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -14,33 +10,6 @@ export default function Home() {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to subscribe')
-        setLoading(false)
-        return
-      }
-
-      setSubmitted(true)
-    } catch (err) {
-      setError('Network error, please try again')
-    }
-    setLoading(false)
-  }
 
   const datasets = [
     {
@@ -84,8 +53,10 @@ export default function Home() {
       {/* Navigation */}
       <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
         <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: isMobile ? '16px' : '18px' }}>aggrgtr</a>
-        <div style={{ display: 'flex', gap: '24px' }}>
-          <a href="https://github.com" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: '500' }}>Donate</a>
+          <a href="/subscribe" style={{ color: '#fff', textDecoration: 'none' }}>Subscribe</a>
+          <a href="https://github.com/BrettMFoster/aggrgtr" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
         </div>
       </nav>
 
@@ -147,34 +118,15 @@ export default function Home() {
             <p style={styles.aboutText}>
               New datasets and API access coming soon.
             </p>
-            {submitted ? (
-              <p style={styles.successMsg}>Got it, thanks!</p>
-            ) : (
-              <>
-                <form onSubmit={handleSubmit} style={styles.form}>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    disabled={loading}
-                    style={styles.input}
-                  />
-                  <button type="submit" disabled={loading} style={styles.submitBtn}>
-                    {loading ? '...' : 'Subscribe'}
-                  </button>
-                </form>
-                {error && <p style={styles.errorMsg}>{error}</p>}
-              </>
-            )}
+            <a href="/subscribe" style={styles.subscribeLink}>
+              Subscribe for updates →
+            </a>
           </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer style={{ borderTop: '1px solid #222', padding: isMobile ? '16px' : '24px 32px', fontSize: '12px', color: '#999', textAlign: 'right' }}>
-        <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#999', textDecoration: 'none', marginRight: '16px' }}>Donate</a>
         aggrgtr 2025
       </footer>
     </main>
@@ -438,10 +390,11 @@ const styles = {
     color: '#4ade80',
     fontSize: '14px',
   },
-  errorMsg: {
-    color: '#f87171',
-    fontSize: '13px',
-    marginTop: '8px',
+  subscribeLink: {
+    color: '#4ade80',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '500',
   },
   footer: {
     padding: '32px',

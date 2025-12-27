@@ -20,7 +20,7 @@ export async function POST(request) {
       return Response.json({ error: 'Auth error' }, { status: 500 })
     }
 
-    const SPREADSHEET_ID = '1VmFRFnLJyAh5wD6DXIJPfX-bTxrg_ouzg4NJEzsBZUs'
+    const SPREADSHEET_ID = '1leax3zpwjGRtYI9-OS80LLHAYMPWI4aXII3FnJHKQkw'
     const token = tokenResult.token
 
     // Check if email already exists
@@ -76,7 +76,7 @@ export async function DELETE(request) {
       return Response.json({ error: 'Auth error' }, { status: 500 })
     }
 
-    const SPREADSHEET_ID = '1VmFRFnLJyAh5wD6DXIJPfX-bTxrg_ouzg4NJEzsBZUs'
+    const SPREADSHEET_ID = '1leax3zpwjGRtYI9-OS80LLHAYMPWI4aXII3FnJHKQkw'
     const token = tokenResult.token
 
     // Get all emails to find the row number
