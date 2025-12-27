@@ -160,9 +160,9 @@ export default function RSPopulation() {
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
       } else if (viewMode === 'year') {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
       } else if (viewMode === 'all') {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+        text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
       } else {
         text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
