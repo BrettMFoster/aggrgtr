@@ -128,10 +128,10 @@ export default function RSPopulation() {
     { id: 'all', label: 'All Time' }
   ]
 
-  const handleMouseMove = (e) => {
+  const handleInteraction = (clientX, clientY) => {
     if (!chartRef.current || filteredData.length === 0) return
     const rect = chartRef.current.getBoundingClientRect()
-    const x = e.clientX - rect.left
+    const x = clientX - rect.left
     const chartWidth = rect.width
     // Chart area starts at ~7% from left (60/900) and ends at ~98% (880/900)
     const chartStartPct = 60 / 900
@@ -144,7 +144,18 @@ export default function RSPopulation() {
     const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
     setHoveredPoint(filteredData[clampedIndex])
     setHoveredIndex(clampedIndex)
-    setMousePos({ x: e.clientX, y: e.clientY })
+    setMousePos({ x: clientX, y: clientY })
+  }
+
+  const handleMouseMove = (e) => {
+    handleInteraction(e.clientX, e.clientY)
+  }
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      e.preventDefault()
+      handleInteraction(e.touches[0].clientX, e.touches[0].clientY)
+    }
   }
 
   const getXAxisLabels = () => {
@@ -352,9 +363,12 @@ export default function RSPopulation() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: '420px', position: 'relative', cursor: 'crosshair' }}
+                  style={{ height: '420px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
+                  onTouchMove={handleTouchMove}
+                  onTouchStart={(e) => { if (e.touches && e.touches[0]) handleInteraction(e.touches[0].clientX, e.touches[0].clientY); }}
+                  onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
                   {filteredData.length > 0 && (
                     <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
@@ -436,12 +450,21 @@ export default function RSPopulation() {
                     </svg>
                   )}
 
-                  {/* Tooltip - fixed position */}
-                  {hoveredPoint && (
+                  {/* Tooltip - fixed position with edge detection */}
+                  {hoveredPoint && (() => {
+                    const tooltipWidth = 180
+                    const tooltipHeight = 120
+                    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1000
+                    const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 800
+                    const spaceOnRight = screenWidth - mousePos.x
+                    const spaceOnBottom = screenHeight - mousePos.y
+                    const left = spaceOnRight < tooltipWidth + 30 ? mousePos.x - tooltipWidth - 15 : mousePos.x + 15
+                    const top = spaceOnBottom < tooltipHeight + 20 ? mousePos.y - tooltipHeight : mousePos.y - 80
+                    return (
                     <div style={{
                       position: 'fixed',
-                      left: mousePos.x + 15,
-                      top: mousePos.y - 80,
+                      left: left,
+                      top: top,
                       background: '#1a1a1a',
                       border: '1px solid #444',
                       borderRadius: '8px',
@@ -464,7 +487,8 @@ export default function RSPopulation() {
                         Total: {hoveredPoint.total.toLocaleString()}
                       </div>
                     </div>
-                  )}
+                    )
+                  })()}
                 </div>
               </div>
 
