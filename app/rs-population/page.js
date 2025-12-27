@@ -380,7 +380,7 @@ export default function RSPopulation() {
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '28px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '8px' : '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 Players</div>
                   <div style={{ fontSize: isMobile ? '32px' : '48px', fontWeight: '700', color: '#60a5fa' }}>{latest?.rs3?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#fff', marginTop: '8px' }}>RuneScape 3</div>
+                  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#fff', marginTop: '8px', whiteSpace: 'nowrap' }}>RuneScape 3</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '28px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '8px' : '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Online</div>
