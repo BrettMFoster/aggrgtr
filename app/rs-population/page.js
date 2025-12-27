@@ -120,6 +120,27 @@ export default function RSPopulation() {
   const peakOsrs = Math.max(...filteredData.map(d => d.osrs), 0)
   const peakRs3 = Math.max(...filteredData.map(d => d.rs3), 0)
 
+  // Find peak dates
+  const peakOsrsPoint = filteredData.find(d => d.osrs === peakOsrs)
+  const peakRs3Point = filteredData.find(d => d.rs3 === peakRs3)
+  const peakOsrsDate = peakOsrsPoint?.timestamp
+  const peakRs3Date = peakRs3Point?.timestamp
+
+  // Rolling averages from raw data
+  const now = new Date()
+  const thirtyDaysAgo = now.getTime() - 30 * 24 * 60 * 60 * 1000
+  const oneYearAgo = now.getTime() - 365 * 24 * 60 * 60 * 1000
+
+  const last30Days = data.filter(d => d.timestamp.getTime() > thirtyDaysAgo)
+  const lastYear = data.filter(d => d.timestamp.getTime() > oneYearAgo)
+
+  const avg30DayTotal = last30Days.length > 0
+    ? Math.round(last30Days.reduce((sum, d) => sum + d.total, 0) / last30Days.length)
+    : 0
+  const avgYearTotal = lastYear.length > 0
+    ? Math.round(lastYear.reduce((sum, d) => sum + d.total, 0) / lastYear.length)
+    : 0
+
   const viewModes = [
     { id: 'live', label: 'Live (24h)' },
     { id: 'week', label: 'Week' },
@@ -493,18 +514,34 @@ export default function RSPopulation() {
               </div>
 
               {/* Summary stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '16px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Average Total</div>
+                  <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Average Total (Period)</div>
                   <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>{avgTotal.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Peak OSRS</div>
                   <div style={{ fontSize: '28px', fontWeight: '700', color: '#4ade80' }}>{peakOsrs.toLocaleString()}</div>
+                  <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                    {peakOsrsDate ? peakOsrsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
+                  </div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Peak RS3</div>
                   <div style={{ fontSize: '28px', fontWeight: '700', color: '#60a5fa' }}>{peakRs3.toLocaleString()}</div>
+                  <div style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>
+                    {peakRs3Date ? peakRs3Date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Rolling 30-Day Avg</div>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>{avg30DayTotal.toLocaleString()}</div>
+                </div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Rolling 1-Year Avg</div>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: '#fff' }}>{avgYearTotal.toLocaleString()}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', color: '#fff', marginBottom: '8px', fontWeight: '600' }}>Data Points</div>
