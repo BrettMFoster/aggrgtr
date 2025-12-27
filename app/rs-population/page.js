@@ -164,19 +164,15 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      // Select evenly spaced months, skip partial months at edges
+      // Select evenly spaced months, skip partial first month only
       const maxLabels = viewMode === 'all' ? 16 : 12
 
-      // Check if first month is partial (starts late in the data)
+      // Check if first month is partial (starts late in the data) - skip to avoid collision
       const skipFirst = allMonths.length > 1 && allMonths[0].index < 10
-      // Check if last month is partial (ends early - few data points in that month)
-      const lastMonthDataPoints = filteredData.length - 1 - allMonths[allMonths.length - 1].index
-      const skipLast = allMonths.length > 1 && lastMonthDataPoints < 10
 
-      // Trim partial months from edges
+      // Trim partial first month only - always keep last month to show current data
       let monthsToUse = allMonths
       if (skipFirst) monthsToUse = monthsToUse.slice(1)
-      if (skipLast) monthsToUse = monthsToUse.slice(0, -1)
 
       if (monthsToUse.length <= maxLabels) {
         return monthsToUse
