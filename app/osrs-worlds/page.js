@@ -12,6 +12,7 @@ export default function OSRSWorlds() {
   const [selectedWorld, setSelectedWorld] = useState(null)
   const [worldHistory, setWorldHistory] = useState(null)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [hoveredWorld, setHoveredWorld] = useState(null)
 
   useEffect(() => {
     fetchData()
@@ -339,7 +340,7 @@ export default function OSRSWorlds() {
                 {/* All Activities - scrollable */}
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Activities</h3>
-                  <div style={{ maxHeight: '300px', overflow: 'auto' }}>
+                  <div style={{ maxHeight: '300px', overflow: 'auto', paddingRight: '8px' }}>
                     {allActivities.map(([activity, stats]) => (
                       <div key={activity} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
                         <span style={{ color: '#fff', fontSize: '14px' }}>{activity}</span>
@@ -428,9 +429,16 @@ export default function OSRSWorlds() {
                         <tr
                           key={world.world_id}
                           onClick={() => fetchWorldHistory(world)}
+                          onMouseEnter={() => setHoveredWorld(world.world_id)}
+                          onMouseLeave={() => setHoveredWorld(null)}
                           style={{
-                            background: selectedWorld?.world_id === world.world_id ? 'rgba(74, 222, 128, 0.1)' : (i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'),
-                            cursor: 'pointer'
+                            background: selectedWorld?.world_id === world.world_id
+                              ? 'rgba(74, 222, 128, 0.15)'
+                              : hoveredWorld === world.world_id
+                                ? 'rgba(255, 255, 255, 0.08)'
+                                : (i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'),
+                            cursor: 'pointer',
+                            transition: 'background 0.15s ease'
                           }}
                         >
                           <td style={{ padding: '10px 16px', color: '#fff', fontSize: '14px' }}>{world.world_name}</td>
