@@ -82,38 +82,13 @@ export async function GET(request) {
     // Parse based on sheet type
     let data
     if (sheet === 'Historical') {
-      // Historical sheet from Misplaced Items: Date, OSRS_Avg, OSRS_Min, OSRS_Max, RS3_Avg, RS3_Min, RS3_Max, Total_Avg, etc.
-      // We'll use the avg columns
-      const headers = rows[0] || []
-      const osrsIdx = headers.findIndex(h => h && h.toLowerCase().includes('osrs') && h.toLowerCase().includes('avg'))
-      const rs3Idx = headers.findIndex(h => h && h.toLowerCase().includes('rs3') && h.toLowerCase().includes('avg'))
-      const totalIdx = headers.findIndex(h => h && h.toLowerCase().includes('total') && h.toLowerCase().includes('avg'))
-
-      // Historical sheet columns: Date (0), OSRS (1), OSRS_Min (2), Total (3)
-      // RS3 doesn't have its own column - calculate from total - osrs
-      const osrsCol = osrsIdx >= 0 ? osrsIdx : 1
-      const rs3Col = rs3Idx >= 0 ? rs3Idx : -1  // No RS3 column, will calculate
-      const totalCol = totalIdx >= 0 ? totalIdx : 3
-
+      // Historical sheet from Misplaced Items:
+      // A(0): Date, B(1): OSRS_Avg, C(2): OSRS_Min, D(3): OSRS_Peak, E(4): RS3_Avg, F(5): RS3_Min, G(6): RS3_Peak
       data = rows.slice(1).map(row => {
         const timestamp = row[0]
-        let osrs = parseInt(row[osrsCol]) || 0
-        let rs3 = rs3Col >= 0 ? (parseInt(row[rs3Col]) || 0) : 0
-        let total = parseInt(row[totalCol]) || 0
-
-        // Calculate missing values
-        // RS3 = total - osrs when we have both
-        if (rs3 === 0 && total > 0 && osrs > 0 && total > osrs) {
-          rs3 = total - osrs
-        }
-        // OSRS = total - rs3 when we have both
-        if (osrs === 0 && total > 0 && rs3 > 0 && total > rs3) {
-          osrs = total - rs3
-        }
-        // Total = osrs + rs3 when missing
-        if (total === 0 && (osrs > 0 || rs3 > 0)) {
-          total = osrs + rs3
-        }
+        const osrs = parseInt(row[1]) || 0
+        const rs3 = parseInt(row[4]) || 0
+        const total = osrs + rs3
 
         let isoTimestamp
         try {

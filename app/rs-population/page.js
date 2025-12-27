@@ -8,6 +8,14 @@ export default function RSPopulation() {
   const [viewMode, setViewMode] = useState('live') // live, day, week, month, year, all
   const [hoveredPoint, setHoveredPoint] = useState(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchData()
@@ -165,17 +173,19 @@ export default function RSPopulation() {
         </div>
       </nav>
 
-      <div style={styles.pageContainer}>
+      <div style={isMobile ? styles.pageContainerMobile : styles.pageContainer}>
         {/* Sidebar */}
-        <aside style={styles.sidebar}>
+        <aside style={isMobile ? styles.sidebarMobile : styles.sidebar}>
           <div style={styles.sidebarSection}>
             <h3 style={styles.sidebarTitle}>Time Range</h3>
-            <div style={styles.sidebarNav}>
+            <div style={isMobile ? styles.sidebarNavMobile : styles.sidebarNav}>
               {viewModes.map(mode => (
                 <button
                   key={mode.id}
                   onClick={() => setViewMode(mode.id)}
-                  style={viewMode === mode.id ? styles.sidebarBtnActive : styles.sidebarBtn}
+                  style={viewMode === mode.id ?
+                    (isMobile ? styles.sidebarBtnActiveMobile : styles.sidebarBtnActive) :
+                    (isMobile ? styles.sidebarBtnMobile : styles.sidebarBtn)}
                 >
                   {mode.label}
                 </button>
@@ -183,14 +193,16 @@ export default function RSPopulation() {
             </div>
           </div>
 
-          <div style={styles.sidebarSection}>
-            <h3 style={styles.sidebarTitle}>Data Source</h3>
-            <p style={styles.sidebarText}>
-              Scraped from official RuneScape pages every 15 minutes.
-            </p>
-          </div>
+          {!isMobile && (
+            <div style={styles.sidebarSection}>
+              <h3 style={styles.sidebarTitle}>Data Source</h3>
+              <p style={styles.sidebarText}>
+                Scraped from official RuneScape pages every 15 minutes.
+              </p>
+            </div>
+          )}
 
-          {latest && (
+          {!isMobile && latest && (
             <div style={styles.sidebarSection}>
               <h3 style={styles.sidebarTitle}>Last Update</h3>
               <p style={styles.sidebarText}>
@@ -201,7 +213,7 @@ export default function RSPopulation() {
         </aside>
 
         {/* Main Content */}
-        <div style={styles.content}>
+        <div style={isMobile ? styles.contentMobile : styles.content}>
           <header style={styles.header}>
             <h1 style={styles.h1}>RuneScape Population Tracker</h1>
             <p style={styles.subtitle}>
@@ -217,7 +229,7 @@ export default function RSPopulation() {
             <>
               {/* Current Stats */}
               <section style={styles.statsSection}>
-                <div style={styles.statsGrid}>
+                <div style={isMobile ? styles.statsGridMobile : styles.statsGrid}>
                   <div style={styles.statCard}>
                     <div style={styles.statLabel}>OSRS Players</div>
                     <div style={styles.statValueOsrs}>{latest?.osrs?.toLocaleString() || '-'}</div>
@@ -261,7 +273,7 @@ export default function RSPopulation() {
                               x2="890" y2={320 - pct * 280}
                               stroke="#222" strokeWidth="1"
                             />
-                            <text x="45" y={325 - pct * 280} fill="#999" fontSize="11" textAnchor="end">
+                            <text x="45" y={325 - pct * 280} fill="#ccc" fontSize="12" textAnchor="end">
                               {Math.round(maxOsrs * pct / 1000)}k
                             </text>
                           </g>
@@ -273,8 +285,8 @@ export default function RSPopulation() {
                             key={i}
                             x={50 + (label.index / (filteredData.length - 1 || 1)) * 840}
                             y={340}
-                            fill="#999"
-                            fontSize="10"
+                            fill="#ccc"
+                            fontSize="12"
                             textAnchor="middle"
                           >
                             {label.text}
@@ -324,11 +336,11 @@ export default function RSPopulation() {
                                 style={{ cursor: 'crosshair' }}
                                 onMouseEnter={(e) => {
                                   setHoveredPoint(d)
-                                  const rect = e.currentTarget.closest('svg').getBoundingClientRect()
-                                  setTooltipPos({
-                                    x: (x / 900) * rect.width,
-                                    y: (yOsrs / 350) * rect.height
-                                  })
+                                  const svgRect = e.currentTarget.closest('svg').getBoundingClientRect()
+                                  const chartRect = e.currentTarget.closest('svg').parentElement.getBoundingClientRect()
+                                  const relX = (x / 900) * svgRect.width
+                                  const relY = (yOsrs / 350) * svgRect.height
+                                  setTooltipPos({ x: relX, y: relY })
                                 }}
                                 onMouseLeave={() => setHoveredPoint(null)}
                               />
@@ -379,7 +391,7 @@ export default function RSPopulation() {
 
               {/* Stats Summary */}
               <section style={styles.summarySection}>
-                <div style={styles.summaryGrid}>
+                <div style={isMobile ? styles.summaryGridMobile : styles.summaryGrid}>
                   <div style={styles.summaryCard}>
                     <div style={styles.summaryLabel}>Average Total</div>
                     <div style={styles.summaryValue}>{avgTotal.toLocaleString()}</div>
@@ -558,7 +570,7 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: '#888',
-    padding: '8px 12px',
+    padding: '8px 0',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
@@ -569,6 +581,7 @@ const styles = {
     border: 'none',
     color: '#fff',
     padding: '8px 12px',
+    marginLeft: '-12px',
     borderRadius: '6px',
     fontSize: '13px',
     cursor: 'pointer',
@@ -635,11 +648,12 @@ const styles = {
     borderColor: '#1a2a1a',
   },
   statLabel: {
-    fontSize: '11px',
-    color: '#666',
+    fontSize: '13px',
+    color: '#aaa',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
     marginBottom: '8px',
+    fontWeight: '500',
   },
   statValueOsrs: {
     fontSize: '32px',
@@ -682,7 +696,7 @@ const styles = {
     marginBottom: '16px',
   },
   chartTitle: {
-    fontSize: '14px',
+    fontSize: '16px',
     fontWeight: '500',
     color: '#fff',
     margin: 0,
@@ -701,6 +715,7 @@ const styles = {
   chart: {
     height: '350px',
     position: 'relative',
+    overflow: 'visible',
   },
   svg: {
     width: '100%',
@@ -729,8 +744,8 @@ const styles = {
     textAlign: 'center',
   },
   summaryLabel: {
-    fontSize: '11px',
-    color: '#666',
+    fontSize: '13px',
+    color: '#aaa',
     marginBottom: '6px',
   },
   summaryValue: {
@@ -792,5 +807,57 @@ const styles = {
     marginTop: '6px',
     paddingTop: '6px',
     borderTop: '1px solid #333',
+  },
+  // Mobile styles
+  pageContainerMobile: {
+    display: 'flex',
+    flexDirection: 'column',
+    maxWidth: '100%',
+    margin: '0 auto',
+  },
+  sidebarMobile: {
+    width: '100%',
+    borderRight: 'none',
+    borderBottom: '1px solid #1a1a1a',
+    padding: '16px',
+  },
+  contentMobile: {
+    flex: 1,
+    padding: '16px',
+    minWidth: 0,
+  },
+  statsGridMobile: {
+    display: 'grid',
+    gridTemplateColumns: '1fr',
+    gap: '12px',
+  },
+  summaryGridMobile: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '8px',
+  },
+  sidebarNavMobile: {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  sidebarBtnMobile: {
+    background: 'transparent',
+    border: '1px solid #333',
+    color: '#888',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
+  },
+  sidebarBtnActiveMobile: {
+    background: '#1a1a1a',
+    border: '1px solid #333',
+    color: '#fff',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    fontSize: '13px',
+    cursor: 'pointer',
   },
 }
