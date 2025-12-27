@@ -89,9 +89,9 @@ export default function OSRSWorlds() {
   const types = data?.summary?.byType ? Object.keys(data.summary.byType).sort() : []
   const sortedWorlds = getSortedWorlds()
 
-  // Calculate filtered stats based on current filters
+  // Calculate filtered stats based on current filters AND selected world
   const getFilteredStats = () => {
-    if (!data?.worlds) return { activities: [], regions: {}, freeTotal: 0, membersTotal: 0 }
+    if (!data?.worlds) return { activities: [], regions: {}, freeTotal: 0, membersTotal: 0, totalPlayers: 0, worldCount: 0 }
 
     let worlds = [...data.worlds]
 
@@ -103,13 +103,21 @@ export default function OSRSWorlds() {
       worlds = worlds.filter(w => w.world_type === filterType)
     }
 
+    // If a world is selected, show only that world's stats
+    if (selectedWorld) {
+      worlds = worlds.filter(w => w.world_id === selectedWorld.world_id)
+    }
+
     // Calculate activities from filtered worlds
     const activityMap = {}
     const regionMap = {}
     let freeTotal = 0
     let membersTotal = 0
+    let totalPlayers = 0
 
     for (const w of worlds) {
+      totalPlayers += w.players
+
       // Activities
       const activity = w.activity && w.activity !== '-' ? w.activity : 'General'
       if (!activityMap[activity]) activityMap[activity] = { count: 0, players: 0 }
@@ -131,7 +139,7 @@ export default function OSRSWorlds() {
 
     const activities = Object.entries(activityMap).sort((a, b) => b[1].players - a[1].players)
 
-    return { activities, regions: regionMap, freeTotal, membersTotal }
+    return { activities, regions: regionMap, freeTotal, membersTotal, totalPlayers, worldCount: worlds.length }
   }
 
   const filteredStats = getFilteredStats()
@@ -140,9 +148,9 @@ export default function OSRSWorlds() {
   const membersTotal = filteredStats.membersTotal
   const filteredRegions = filteredStats.regions
 
-  // KPI totals based on filtered data
-  const filteredTotalPlayers = sortedWorlds.reduce((sum, w) => sum + w.players, 0)
-  const filteredWorldCount = sortedWorlds.length
+  // KPI totals - use filteredStats when world is selected, otherwise use sortedWorlds
+  const filteredTotalPlayers = selectedWorld ? filteredStats.totalPlayers : sortedWorlds.reduce((sum, w) => sum + w.players, 0)
+  const filteredWorldCount = selectedWorld ? filteredStats.worldCount : sortedWorlds.length
   const filteredAvgPerWorld = filteredWorldCount > 0 ? Math.round(filteredTotalPlayers / filteredWorldCount) : 0
 
   // Format timestamp for display
@@ -221,7 +229,7 @@ export default function OSRSWorlds() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '180px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '220px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
