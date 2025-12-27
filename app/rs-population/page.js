@@ -186,14 +186,6 @@ export default function RSPopulation() {
             <p style={styles.sidebarText}>
               Scraped from official RuneScape pages every 15 minutes.
             </p>
-            <a
-              href="https://docs.google.com/spreadsheets/d/1VmFRFnLJyAh5wD6DXIJPfX-bTxrg_ouzg4NJEzsBZUs"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={styles.sidebarLink}
-            >
-              View Raw Data
-            </a>
           </div>
 
           {latest && (
