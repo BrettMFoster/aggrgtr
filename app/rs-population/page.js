@@ -214,7 +214,7 @@ export default function RSPopulation() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '100px', padding: '12px 0 12px 8px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '130px', padding: '12px 8px 12px 32px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
