@@ -41,6 +41,20 @@ export async function GET(request) {
       return Response.json({ error: 'Missing credentials', rows: [] }, { status: 500 })
     }
 
+    // Debug: show key info (safe - only shows structure, not actual key)
+    const keyInfo = {
+      hasBegin: credentials.private_key.includes('-----BEGIN'),
+      hasEnd: credentials.private_key.includes('-----END'),
+      length: credentials.private_key.length,
+      first50: credentials.private_key.substring(0, 50),
+      hasNewlines: credentials.private_key.includes('\n'),
+      newlineCount: (credentials.private_key.match(/\n/g) || []).length,
+    }
+
+    if (searchParams.get('debug') === 'key') {
+      return Response.json({ keyInfo, email: credentials.client_email })
+    }
+
     // Get access token
     const tokenResult = await getAccessToken(credentials)
     if (tokenResult.error) {
