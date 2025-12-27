@@ -28,8 +28,8 @@ export default function Home() {
       title: 'FBI Crime Statistics',
       category: 'government',
       status: 'available',
-      desc: 'Violent and property crime rates by county, normalized per 100k population. 1985-2023.',
-      stats: ['3,000+ counties', '38 years'],
+      desc: 'Violent and property crime rates by county, normalized per 100k population. 2000-2023.',
+      stats: ['3,000+ counties', '23 years'],
       format: 'CSV'
     },
     {
@@ -99,10 +99,8 @@ export default function Home() {
                 <span style={styles.formatTag}>{dataset.format}</span>
                 {dataset.link ? (
                   <a href={dataset.link} style={styles.viewBtn}>View Dashboard</a>
-                ) : dataset.noDownload ? (
-                  <span style={styles.apiOnly}>API Access</span>
                 ) : dataset.status === 'available' ? (
-                  <button style={styles.downloadBtn}>Download Sample</button>
+                  <span style={styles.apiSoon}>API Coming Soon</span>
                 ) : (
                   <button style={styles.notifyBtn}>Notify Me</button>
                 )}
@@ -353,9 +351,9 @@ const styles = {
     fontSize: '12px',
     cursor: 'pointer',
   },
-  apiOnly: {
+  apiSoon: {
     fontSize: '12px',
-    color: '#4ade80',
+    color: '#888',
   },
   aboutSection: {
     padding: '64px 32px',
