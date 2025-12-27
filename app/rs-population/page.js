@@ -10,6 +10,8 @@ export default function RSPopulation() {
   const [hoveredIndex, setHoveredIndex] = useState(-1)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
   const [isMobile, setIsMobile] = useState(false)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const chartRef = useRef(null)
 
   useEffect(() => {
@@ -61,22 +63,61 @@ export default function RSPopulation() {
     }
   }
 
+  // Get available years from data
+  const getAvailableYears = () => {
+    if (data.length === 0) return []
+    const years = new Set()
+    for (const d of data) {
+      years.add(d.timestamp.getFullYear())
+    }
+    return Array.from(years).sort((a, b) => b - a) // newest first
+  }
+
+  // Get available months for selected year
+  const getAvailableMonths = () => {
+    if (data.length === 0) return []
+    const months = new Set()
+    for (const d of data) {
+      if (d.timestamp.getFullYear() === selectedYear) {
+        months.add(d.timestamp.getMonth())
+      }
+    }
+    return Array.from(months).sort((a, b) => a - b)
+  }
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December']
+
   const getFilteredData = () => {
     if (data.length === 0) return []
     const now = new Date()
-    const cutoffs = {
-      'live': 24 * 60 * 60 * 1000,
-      'week': 7 * 24 * 60 * 60 * 1000,
-      'month': 30 * 24 * 60 * 60 * 1000,
-      'year': 365 * 24 * 60 * 60 * 1000,
-      'all': Infinity
-    }
-    const cutoff = now.getTime() - cutoffs[viewMode]
-    let filtered = data.filter(d => d.timestamp.getTime() > cutoff)
-    if (viewMode === 'month' || viewMode === 'year' || viewMode === 'all') {
+    let filtered
+
+    if (viewMode === 'month') {
+      // Filter to specific month/year
+      filtered = data.filter(d =>
+        d.timestamp.getFullYear() === selectedYear &&
+        d.timestamp.getMonth() === selectedMonth
+      )
       filtered = aggregateByDay(filtered)
-    } else if (viewMode === 'week') {
-      filtered = aggregateByHour(filtered)
+    } else if (viewMode === 'year') {
+      // Filter to specific year
+      filtered = data.filter(d => d.timestamp.getFullYear() === selectedYear)
+      filtered = aggregateByDay(filtered)
+    } else {
+      // Original logic for live, week, all
+      const cutoffs = {
+        'live': 24 * 60 * 60 * 1000,
+        'week': 7 * 24 * 60 * 60 * 1000,
+        'all': Infinity
+      }
+      const cutoff = now.getTime() - cutoffs[viewMode]
+      filtered = data.filter(d => d.timestamp.getTime() > cutoff)
+      if (viewMode === 'all') {
+        filtered = aggregateByDay(filtered)
+      } else if (viewMode === 'week') {
+        filtered = aggregateByHour(filtered)
+      }
     }
     return filtered
   }
@@ -416,10 +457,52 @@ export default function RSPopulation() {
 
               {/* Chart */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '28px', marginBottom: isMobile ? '16px' : '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '12px' : '20px' }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
-                    Player Count - {viewModes.find(m => m.id === viewMode)?.label}
-                  </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '12px' : '20px', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
+                      Player Count - {viewModes.find(m => m.id === viewMode)?.label}
+                    </h2>
+                    {/* Year dropdown for month and year views */}
+                    {(viewMode === 'month' || viewMode === 'year') && (
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        style={{
+                          background: '#1a1a1a',
+                          border: '1px solid #333',
+                          color: '#fff',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {getAvailableYears().map(year => (
+                          <option key={year} value={year}>{year}</option>
+                        ))}
+                      </select>
+                    )}
+                    {/* Month dropdown only for month view */}
+                    {viewMode === 'month' && (
+                      <select
+                        value={selectedMonth}
+                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                        style={{
+                          background: '#1a1a1a',
+                          border: '1px solid #333',
+                          color: '#fff',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {getAvailableMonths().map(month => (
+                          <option key={month} value={month}>{monthNames[month]}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', gap: isMobile ? '12px' : '16px', fontSize: isMobile ? '12px' : '14px' }}>
                     <span style={{ color: '#4ade80' }}>OSRS</span>
                     <span style={{ color: '#60a5fa' }}>RS3</span>
