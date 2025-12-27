@@ -6,6 +6,8 @@ export default function RSPopulation() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState('live') // live, day, week, month, year, all
+  const [hoveredPoint, setHoveredPoint] = useState(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     fetchData()
@@ -259,7 +261,7 @@ export default function RSPopulation() {
                               x2="890" y2={320 - pct * 280}
                               stroke="#222" strokeWidth="1"
                             />
-                            <text x="45" y={325 - pct * 280} fill="#555" fontSize="11" textAnchor="end">
+                            <text x="45" y={325 - pct * 280} fill="#999" fontSize="11" textAnchor="end">
                               {Math.round(maxOsrs * pct / 1000)}k
                             </text>
                           </g>
@@ -271,7 +273,7 @@ export default function RSPopulation() {
                             key={i}
                             x={50 + (label.index / (filteredData.length - 1 || 1)) * 840}
                             y={340}
-                            fill="#555"
+                            fill="#999"
                             fontSize="10"
                             textAnchor="middle"
                           >
@@ -306,7 +308,68 @@ export default function RSPopulation() {
                           stroke="#60a5fa"
                           strokeWidth="2"
                         />
+
+                        {/* Hover points - invisible but interactive */}
+                        {filteredData.map((d, i) => {
+                          const x = 50 + (i / (filteredData.length - 1 || 1)) * 840
+                          const yOsrs = 320 - (d.osrs / maxOsrs) * 280
+                          return (
+                            <g key={i}>
+                              <rect
+                                x={x - (840 / filteredData.length / 2)}
+                                y={40}
+                                width={840 / filteredData.length}
+                                height={280}
+                                fill="transparent"
+                                style={{ cursor: 'crosshair' }}
+                                onMouseEnter={(e) => {
+                                  setHoveredPoint(d)
+                                  const rect = e.currentTarget.closest('svg').getBoundingClientRect()
+                                  setTooltipPos({
+                                    x: (x / 900) * rect.width,
+                                    y: (yOsrs / 350) * rect.height
+                                  })
+                                }}
+                                onMouseLeave={() => setHoveredPoint(null)}
+                              />
+                              {hoveredPoint === d && (
+                                <>
+                                  <circle cx={x} cy={yOsrs} r="4" fill="#4ade80" />
+                                  <circle cx={x} cy={320 - (d.rs3 / maxOsrs) * 280} r="4" fill="#60a5fa" />
+                                  <line x1={x} y1={40} x2={x} y2={320} stroke="#444" strokeWidth="1" strokeDasharray="4" />
+                                </>
+                              )}
+                            </g>
+                          )
+                        })}
                       </svg>
+
+                      {/* Tooltip */}
+                      {hoveredPoint && (
+                        <div style={{
+                          ...styles.tooltip,
+                          left: tooltipPos.x + 10,
+                          top: tooltipPos.y - 60
+                        }}>
+                          <div style={styles.tooltipDate}>
+                            {hoveredPoint.timestamp.toLocaleDateString('en-US', {
+                              weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                            })}
+                            {(viewMode === 'live' || viewMode === 'day' || viewMode === 'week') &&
+                              ` ${hoveredPoint.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                            }
+                          </div>
+                          <div style={styles.tooltipRow}>
+                            <span style={styles.tooltipOsrs}>OSRS:</span> {hoveredPoint.osrs.toLocaleString()}
+                          </div>
+                          <div style={styles.tooltipRow}>
+                            <span style={styles.tooltipRs3}>RS3:</span> {hoveredPoint.rs3.toLocaleString()}
+                          </div>
+                          <div style={styles.tooltipTotal}>
+                            Total: {hoveredPoint.total.toLocaleString()}
+                          </div>
+                        </div>
+                      )}
                     ) : (
                       <div style={styles.noData}>No data for selected range</div>
                     )}
@@ -691,5 +754,43 @@ const styles = {
     fontSize: '12px',
     color: '#333',
     borderTop: '1px solid #1a1a1a',
+  },
+  tooltip: {
+    position: 'absolute',
+    background: 'rgba(20, 20, 20, 0.95)',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    padding: '10px 12px',
+    pointerEvents: 'none',
+    zIndex: 10,
+    minWidth: '140px',
+  },
+  tooltipDate: {
+    fontSize: '11px',
+    color: '#aaa',
+    marginBottom: '8px',
+    borderBottom: '1px solid #333',
+    paddingBottom: '6px',
+  },
+  tooltipRow: {
+    fontSize: '12px',
+    color: '#e5e5e5',
+    marginBottom: '4px',
+  },
+  tooltipOsrs: {
+    color: '#4ade80',
+    fontWeight: '500',
+  },
+  tooltipRs3: {
+    color: '#60a5fa',
+    fontWeight: '500',
+  },
+  tooltipTotal: {
+    fontSize: '12px',
+    color: '#fff',
+    fontWeight: '600',
+    marginTop: '6px',
+    paddingTop: '6px',
+    borderTop: '1px solid #333',
   },
 }
