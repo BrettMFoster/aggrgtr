@@ -8,9 +8,15 @@ export async function GET(request) {
 
     // Get service account credentials from environment
     let privateKey = process.env.GOOGLE_PRIVATE_KEY || ''
+
     // Handle various newline formats from Vercel env vars
     if (privateKey.includes('\\n')) {
       privateKey = privateKey.split('\\n').join('\n')
+    }
+
+    // Add PEM headers if missing (user may have pasted just the key body)
+    if (privateKey && !privateKey.includes('-----BEGIN')) {
+      privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`
     }
 
     const credentials = {
@@ -25,7 +31,7 @@ export async function GET(request) {
     }
 
     // Debug: check if key is present
-    if (!privateKey || !privateKey.includes('PRIVATE KEY')) {
+    if (!privateKey || privateKey.length < 100) {
       return Response.json({ error: 'Private key not configured correctly', rows: [] }, { status: 500 })
     }
 
