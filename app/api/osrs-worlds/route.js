@@ -6,6 +6,9 @@ export const revalidate = 900 // Cache for 15 minutes
 
 export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const worldId = searchParams.get('world')
+
     // Get service account credentials from environment
     let credentials
 
@@ -46,16 +49,52 @@ export async function GET(request) {
     }
     const token = tokenResult.token
 
-    // Query BigQuery for latest snapshot
     const projectId = credentials.project_id || 'aggrgtr-482420'
+    const bigqueryUrl = `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`
+
+    // If world ID specified, return history for that world
+    if (worldId) {
+      const historyQuery = `
+        SELECT timestamp, players
+        FROM \`${projectId}.rs_population.world_data\`
+        WHERE world_id = ${parseInt(worldId)}
+        ORDER BY timestamp ASC
+      `
+
+      const historyResponse = await fetch(bigqueryUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: historyQuery,
+          useLegacySql: false,
+          timeoutMs: 30000,
+        })
+      })
+
+      if (!historyResponse.ok) {
+        const error = await historyResponse.text()
+        return Response.json({ error: `BigQuery API: ${error.substring(0, 200)}`, history: [] }, { status: 500 })
+      }
+
+      const historyJson = await historyResponse.json()
+      const history = (historyJson.rows || []).map(row => ({
+        timestamp: row.f[0].v,
+        players: parseInt(row.f[1].v) || 0
+      }))
+
+      return Response.json({ worldId: parseInt(worldId), history })
+    }
+
+    // Query BigQuery for latest snapshot
     const query = `
       SELECT timestamp, world_id, world_name, players, location, world_type, activity, game
       FROM \`${projectId}.rs_population.world_data\`
       WHERE timestamp = (SELECT MAX(timestamp) FROM \`${projectId}.rs_population.world_data\`)
       ORDER BY players DESC
     `
-
-    const bigqueryUrl = `https://bigquery.googleapis.com/bigquery/v2/projects/${projectId}/queries`
 
     const response = await fetch(bigqueryUrl, {
       method: 'POST',

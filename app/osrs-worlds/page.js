@@ -9,10 +9,13 @@ export default function OSRSWorlds() {
   const [sortDir, setSortDir] = useState('desc')
   const [filterRegion, setFilterRegion] = useState('all')
   const [filterType, setFilterType] = useState('all')
+  const [selectedWorld, setSelectedWorld] = useState(null)
+  const [worldHistory, setWorldHistory] = useState(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 60 * 1000) // Refresh every minute
+    const interval = setInterval(fetchData, 60 * 1000)
     return () => clearInterval(interval)
   }, [])
 
@@ -32,6 +35,21 @@ export default function OSRSWorlds() {
     }
   }
 
+  const fetchWorldHistory = async (world) => {
+    setSelectedWorld(world)
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(`/api/osrs-worlds?world=${world.world_id}`)
+      const json = await res.json()
+      if (json.history) {
+        setWorldHistory(json.history)
+      }
+    } catch (err) {
+      console.error('Failed to fetch world history:', err)
+    }
+    setHistoryLoading(false)
+  }
+
   const handleSort = (column) => {
     if (sortBy === column) {
       setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
@@ -45,7 +63,6 @@ export default function OSRSWorlds() {
     if (!data?.worlds) return []
     let worlds = [...data.worlds]
 
-    // Filter
     if (filterRegion !== 'all') {
       worlds = worlds.filter(w => w.location === filterRegion)
     }
@@ -53,7 +70,6 @@ export default function OSRSWorlds() {
       worlds = worlds.filter(w => w.world_type === filterType)
     }
 
-    // Sort
     worlds.sort((a, b) => {
       let aVal = a[sortBy]
       let bVal = b[sortBy]
@@ -73,12 +89,78 @@ export default function OSRSWorlds() {
   const types = data?.summary?.byType ? Object.keys(data.summary.byType).sort() : []
   const sortedWorlds = getSortedWorlds()
 
-  // Top activities by player count
-  const topActivities = data?.summary?.byActivity
+  // All activities sorted by player count (no limit)
+  const allActivities = data?.summary?.byActivity
     ? Object.entries(data.summary.byActivity)
         .sort((a, b) => b[1].players - a[1].players)
-        .slice(0, 10)
     : []
+
+  // Free vs Members totals
+  const freeTotal = data?.summary?.byType?.['Free']?.players || 0
+  const membersTotal = data?.summary?.byType?.['Members']?.players || 0
+
+  // Format timestamp for display
+  const formatTimestamp = (ts) => {
+    if (!ts) return '-'
+    // BigQuery returns timestamp as seconds with decimals
+    const date = new Date(parseFloat(ts) * 1000)
+    if (isNaN(date.getTime())) return '-'
+    return date.toLocaleTimeString()
+  }
+
+  // Render mini chart for world history
+  const renderHistoryChart = () => {
+    if (!worldHistory || worldHistory.length === 0) return null
+
+    const maxPlayers = Math.max(...worldHistory.map(h => h.players))
+    const minPlayers = Math.min(...worldHistory.map(h => h.players))
+    const range = maxPlayers - minPlayers || 1
+
+    const points = worldHistory.map((h, i) => {
+      const x = 50 + (i / (worldHistory.length - 1 || 1)) * 700
+      const y = 180 - ((h.players - minPlayers) / range) * 150
+      return `${x},${y}`
+    }).join(' ')
+
+    return (
+      <svg width="100%" height="200" viewBox="0 0 800 200" preserveAspectRatio="none">
+        {/* Y-axis labels */}
+        <text x="45" y="35" fill="#888" fontSize="11" textAnchor="end">{maxPlayers}</text>
+        <text x="45" y="180" fill="#888" fontSize="11" textAnchor="end">{minPlayers}</text>
+
+        {/* Grid lines */}
+        <line x1="50" y1="30" x2="750" y2="30" stroke="#333" strokeWidth="1" />
+        <line x1="50" y1="105" x2="750" y2="105" stroke="#333" strokeWidth="1" />
+        <line x1="50" y1="180" x2="750" y2="180" stroke="#333" strokeWidth="1" />
+
+        {/* Area fill */}
+        <path
+          d={`M 50,180 L ${points} L 750,180 Z`}
+          fill="rgba(74, 222, 128, 0.2)"
+        />
+
+        {/* Line */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="#4ade80"
+          strokeWidth="2"
+        />
+
+        {/* X-axis labels */}
+        {worldHistory.length > 0 && (
+          <>
+            <text x="50" y="195" fill="#888" fontSize="10" textAnchor="middle">
+              {new Date(parseFloat(worldHistory[0].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </text>
+            <text x="750" y="195" fill="#888" fontSize="10" textAnchor="middle">
+              {new Date(parseFloat(worldHistory[worldHistory.length - 1].timestamp) * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </text>
+          </>
+        )}
+      </svg>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
@@ -93,7 +175,7 @@ export default function OSRSWorlds() {
 
       <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '150px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
+        <aside style={{ width: '180px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
           <div style={{ marginBottom: '24px' }}>
             <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -156,22 +238,61 @@ export default function OSRSWorlds() {
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
                   <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Last Updated</div>
                   <div style={{ fontSize: '18px', fontWeight: '700', color: '#4ade80' }}>
-                    {data?.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '-'}
+                    {formatTimestamp(data?.timestamp)}
                   </div>
                 </div>
               </div>
 
-              {/* Two column layout: Top Activities + Region breakdown */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '32px' }}>
-                {/* Top Activities */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Top Activities</h3>
-                  {topActivities.map(([activity, stats]) => (
-                    <div key={activity} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
-                      <span style={{ color: '#fff', fontSize: '14px' }}>{activity}</span>
-                      <span style={{ color: '#4ade80', fontWeight: '600', fontSize: '14px' }}>{stats.players.toLocaleString()}</span>
+              {/* World History Modal/Panel */}
+              {selectedWorld && (
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', marginBottom: '32px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', margin: 0 }}>
+                      {selectedWorld.world_name} - Population History
+                    </h3>
+                    <button
+                      onClick={() => { setSelectedWorld(null); setWorldHistory(null); }}
+                      style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '14px', color: '#888' }}>
+                    <span>Region: {selectedWorld.location}</span>
+                    <span>Type: {selectedWorld.world_type}</span>
+                    <span>Activity: {selectedWorld.activity}</span>
+                    <span>Current: <span style={{ color: '#4ade80', fontWeight: '600' }}>{selectedWorld.players.toLocaleString()}</span></span>
+                  </div>
+                  {historyLoading ? (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>Loading history...</div>
+                  ) : worldHistory && worldHistory.length > 0 ? (
+                    <div style={{ height: '200px' }}>
+                      {renderHistoryChart()}
                     </div>
-                  ))}
+                  ) : (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>No history available</div>
+                  )}
+                  {worldHistory && worldHistory.length > 0 && (
+                    <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                      {worldHistory.length} data points from past {Math.round((parseFloat(worldHistory[worldHistory.length-1].timestamp) - parseFloat(worldHistory[0].timestamp)) / 3600)} hours
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Three column layout: Activities + Region + Type */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+                {/* All Activities - scrollable */}
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Activities</h3>
+                  <div style={{ maxHeight: '300px', overflow: 'auto' }}>
+                    {allActivities.map(([activity, stats]) => (
+                      <div key={activity} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
+                        <span style={{ color: '#fff', fontSize: '14px' }}>{activity}</span>
+                        <span style={{ color: '#4ade80', fontWeight: '600', fontSize: '14px' }}>{stats.players.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* By Region */}
@@ -186,6 +307,37 @@ export default function OSRSWorlds() {
                       </div>
                     ))}
                 </div>
+
+                {/* Free vs Members */}
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Free vs Members</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ color: '#60a5fa', fontSize: '14px', fontWeight: '600' }}>Free</span>
+                        <span style={{ color: '#60a5fa', fontWeight: '700', fontSize: '18px' }}>{freeTotal.toLocaleString()}</span>
+                      </div>
+                      <div style={{ background: '#222', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                        <div style={{ background: '#60a5fa', height: '100%', width: `${(freeTotal / (freeTotal + membersTotal) * 100) || 0}%` }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ color: '#4ade80', fontSize: '14px', fontWeight: '600' }}>Members</span>
+                        <span style={{ color: '#4ade80', fontWeight: '700', fontSize: '18px' }}>{membersTotal.toLocaleString()}</span>
+                      </div>
+                      <div style={{ background: '#222', borderRadius: '4px', height: '8px', overflow: 'hidden' }}>
+                        <div style={{ background: '#4ade80', height: '100%', width: `${(membersTotal / (freeTotal + membersTotal) * 100) || 0}%` }} />
+                      </div>
+                    </div>
+                    <div style={{ borderTop: '1px solid #333', paddingTop: '16px', marginTop: '8px' }}>
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Members %</div>
+                      <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff' }}>
+                        {((membersTotal / (freeTotal + membersTotal) * 100) || 0).toFixed(1)}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* World Table */}
@@ -193,6 +345,7 @@ export default function OSRSWorlds() {
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #222' }}>
                   <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: 0 }}>
                     All Worlds {filterRegion !== 'all' || filterType !== 'all' ? `(${sortedWorlds.length} shown)` : ''}
+                    <span style={{ fontWeight: '400', color: '#888', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>
                   </h3>
                 </div>
                 <div style={{ maxHeight: '500px', overflow: 'auto' }}>
@@ -218,7 +371,14 @@ export default function OSRSWorlds() {
                     </thead>
                     <tbody>
                       {sortedWorlds.map((world, i) => (
-                        <tr key={world.world_id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                        <tr
+                          key={world.world_id}
+                          onClick={() => fetchWorldHistory(world)}
+                          style={{
+                            background: selectedWorld?.world_id === world.world_id ? 'rgba(74, 222, 128, 0.1)' : (i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'),
+                            cursor: 'pointer'
+                          }}
+                        >
                           <td style={{ padding: '10px 16px', color: '#fff', fontSize: '14px' }}>{world.world_name}</td>
                           <td style={{ padding: '10px 16px', color: '#4ade80', fontSize: '14px', textAlign: 'right', fontWeight: '600' }}>{world.players.toLocaleString()}</td>
                           <td style={{ padding: '10px 16px', color: '#888', fontSize: '14px' }}>{world.location}</td>
