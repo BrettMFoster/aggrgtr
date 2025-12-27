@@ -164,25 +164,17 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      // Select evenly spaced months, skip partial first month only
+      // Select evenly spaced months
       const maxLabels = viewMode === 'all' ? 16 : 12
 
-      // Check if first month is partial (starts late in the data) - skip to avoid collision
-      const skipFirst = allMonths.length > 1 && allMonths[0].index < 10
-
-      // Trim partial first month only - always keep last month to show current data
-      let monthsToUse = allMonths
-      if (skipFirst) monthsToUse = monthsToUse.slice(1)
-
-      if (monthsToUse.length <= maxLabels) {
-        return monthsToUse
+      if (allMonths.length <= maxLabels) {
+        return allMonths
       }
-      // Pick evenly spaced indices from monthsToUse
+      // Pick evenly spaced indices
       const result = []
-      const labelsToShow = Math.min(maxLabels, monthsToUse.length)
-      for (let i = 0; i < labelsToShow; i++) {
-        const idx = Math.floor((i / (labelsToShow - 1)) * (monthsToUse.length - 1))
-        result.push(monthsToUse[idx])
+      for (let i = 0; i < maxLabels; i++) {
+        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
+        result.push(allMonths[idx])
       }
       return result
     }
