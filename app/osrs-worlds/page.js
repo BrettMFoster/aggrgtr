@@ -31,6 +31,14 @@ export default function OSRSWorlds() {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [hoveredWorld, setHoveredWorld] = useState(null)
   const [hoveredPoint, setHoveredPoint] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     fetchData()
@@ -294,55 +302,61 @@ export default function OSRSWorlds() {
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, sans-serif' }}>
       <style>{scrollbarStyles}</style>
       {/* Nav */}
-      <nav style={{ borderBottom: '1px solid #222', padding: '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
-        <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: '18px' }}>aggrgtr</a>
+      <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
+        <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: isMobile ? '16px' : '18px' }}>aggrgtr</a>
         <div style={{ display: 'flex', gap: '24px' }}>
-          <a href="/" style={{ color: '#fff', textDecoration: 'none' }}>Datasets</a>
-          <a href="/rs-population" style={{ color: '#fff', textDecoration: 'none' }}>RS Population</a>
+          <a href="https://github.com" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
         </div>
       </nav>
 
-      <div style={{ display: 'flex', maxWidth: '1400px', margin: '0' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{ width: '220px', padding: '12px 24px 12px 32px', borderRight: '1px solid #222' }}>
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <a href="/rs-population" style={{ background: 'transparent', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
-              <a href="/osrs-worlds" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>OSRS Worlds</a>
+        <aside style={{
+          width: isMobile ? '100%' : '220px',
+          padding: isMobile ? '12px 16px' : '12px 24px 12px 32px',
+          borderRight: isMobile ? 'none' : '1px solid #222',
+          borderBottom: isMobile ? '1px solid #222' : 'none'
+        }}>
+          <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
+            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>}
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px' }}>
+              <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
+              <a href="/osrs-worlds" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>OSRS Worlds</a>
             </div>
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Region</div>
-            <select
-              value={filterRegion}
-              onChange={(e) => setFilterRegion(e.target.value)}
-              style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="all">All Regions</option>
-              {regions.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '0' : '16px' }}>
+            <div style={{ flex: isMobile ? 1 : 'auto' }}>
+              {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Region</div>}
+              <select
+                value={filterRegion}
+                onChange={(e) => setFilterRegion(e.target.value)}
+                style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '14px' }}
+              >
+                <option value="all">All Regions</option>
+                {regions.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Type</div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '14px' }}
-            >
-              <option value="all">All Types</option>
-              {types.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <div style={{ flex: isMobile ? 1 : 'auto' }}>
+              {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Type</div>}
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                style={{ width: '100%', background: '#111', border: '1px solid #333', color: '#fff', padding: '6px', borderRadius: '4px', fontSize: '14px' }}
+              >
+                <option value="all">All Types</option>
+                {types.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
           </div>
-          <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 15 minutes.</div>
+          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
         </aside>
 
         {/* Main */}
-        <main style={{ flex: 1, padding: '24px 20px' }}>
-          <h1 style={{ fontSize: '36px', fontWeight: '700', color: '#fff', margin: '0 0 8px 0' }}>OSRS World Population</h1>
-          <p style={{ fontSize: '16px', color: '#fff', margin: '0 0 32px 0' }}>Live player counts by world for Old School RuneScape</p>
+        <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
+          <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#fff', margin: '0 0 8px 0' }}>OSRS World Population</h1>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>Live player counts by world for Old School RuneScape</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -351,22 +365,22 @@ export default function OSRSWorlds() {
           ) : (
             <>
               {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Total Players</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#4ade80' }}>{filteredTotalPlayers.toLocaleString()}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '16px' : '32px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Total Players</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#4ade80' }}>{filteredTotalPlayers.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Active Worlds</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#60a5fa' }}>{filteredWorldCount}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Active Worlds</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#60a5fa' }}>{filteredWorldCount}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Avg Per World</div>
-                  <div style={{ fontSize: '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Avg Per World</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Last Updated</div>
-                  <div style={{ fontSize: '18px', fontWeight: '700', color: '#4ade80' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Last Updated</div>
+                  <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#4ade80' }}>
                     {formatTimestamp(data?.timestamp)}
                   </div>
                 </div>
@@ -410,10 +424,10 @@ export default function OSRSWorlds() {
               )}
 
               {/* Three column layout: Activities + Region + Type */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '16px' : '32px' }}>
                 {/* All Activities - scrollable */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Activities</h3>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                  <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Activities</h3>
                   <div className="dark-scrollbar" style={{ maxHeight: '300px', overflow: 'auto', paddingRight: '12px' }}>
                     {allActivities.map(([activity, stats]) => (
                       <div key={activity} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
@@ -425,8 +439,8 @@ export default function OSRSWorlds() {
                 </div>
 
                 {/* By Region */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>By Region</h3>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                  <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>By Region</h3>
                   {Object.entries(filteredRegions)
                     .sort((a, b) => b[1].players - a[1].players)
                     .map(([region, stats]) => (
@@ -438,8 +452,8 @@ export default function OSRSWorlds() {
                 </div>
 
                 {/* Free vs Members */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: '0 0 16px 0' }}>Free vs Members</h3>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                  <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Free vs Members</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -471,13 +485,13 @@ export default function OSRSWorlds() {
 
               {/* World Table */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #222' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', margin: 0 }}>
+                <div style={{ padding: isMobile ? '12px 16px' : '16px 20px', borderBottom: '1px solid #222' }}>
+                  <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: 0 }}>
                     All Worlds {filterRegion !== 'all' || filterType !== 'all' ? `(${sortedWorlds.length} shown)` : ''}
-                    <span style={{ fontWeight: '400', color: '#888', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>
+                    {!isMobile && <span style={{ fontWeight: '400', color: '#888', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>}
                   </h3>
                 </div>
-                <div className="dark-scrollbar" style={{ maxHeight: '500px', overflow: 'auto' }}>
+                <div className="dark-scrollbar" style={{ maxHeight: isMobile ? '400px' : '500px', overflow: 'auto', overflowX: isMobile ? 'auto' : 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ position: 'sticky', top: 0, background: '#111' }}>
                       <tr>

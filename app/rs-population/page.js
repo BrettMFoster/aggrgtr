@@ -364,15 +364,13 @@ export default function RSPopulation() {
           borderRight: isMobile ? 'none' : '1px solid #222',
           borderBottom: isMobile ? '1px solid #222' : 'none'
         }}>
-          {!isMobile && (
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <a href="/rs-population" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>Population</a>
-                <a href="/osrs-worlds" style={{ background: 'transparent', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
-              </div>
+          <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
+            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>}
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px' }}>
+              <a href="/rs-population" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Population</a>
+              <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
             </div>
-          )}
+          </div>
           <div style={{ marginBottom: isMobile ? '0' : '16px' }}>
             {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '4px', flexWrap: 'wrap' }}>
@@ -397,7 +395,7 @@ export default function RSPopulation() {
               ))}
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 15 minutes.</div>}
+          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
         </aside>
 
         {/* Main */}

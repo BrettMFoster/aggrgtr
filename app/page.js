@@ -1,14 +1,45 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Waitlist signup:', email)
-    setSubmitted(true)
+    setError('')
+    setLoading(true)
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Failed to subscribe')
+        setLoading(false)
+        return
+      }
+
+      setSubmitted(true)
+    } catch (err) {
+      setError('Network error, please try again')
+    }
+    setLoading(false)
   }
 
   const datasets = [
@@ -17,11 +48,9 @@ export default function Home() {
       title: 'RuneScape Population',
       category: 'gaming',
       status: 'live',
-      desc: 'Live player counts for OSRS and RS3. Updated every 15 minutes from official sources.',
-      stats: ['15-min intervals', 'Historical data'],
-      format: 'API',
-      link: '/rs-population',
-      noDownload: true
+      desc: 'Live player counts for OSRS and RS3. Updated every 3 minutes from official sources.',
+      stats: ['3-min intervals', 'Per-world data'],
+      link: '/rs-population'
     },
     {
       id: 'fbi',
@@ -29,8 +58,7 @@ export default function Home() {
       category: 'government',
       status: 'available',
       desc: 'Violent and property crime rates by county, normalized per 100k population. 2000-2023.',
-      stats: ['3,000+ counties', '23 years'],
-      format: 'CSV'
+      stats: ['3,000+ counties', '23 years']
     },
     {
       id: 'census',
@@ -38,8 +66,7 @@ export default function Home() {
       category: 'government',
       status: 'available',
       desc: 'Population, income, age distribution, housing. County, tract, and ZIP level.',
-      stats: ['All US geographies', '100+ variables'],
-      format: 'CSV'
+      stats: ['All US geographies', '100+ variables']
     },
     {
       id: 'schools',
@@ -47,8 +74,7 @@ export default function Home() {
       category: 'government',
       status: 'coming',
       desc: 'Test scores, graduation rates, student-teacher ratios, per-pupil spending.',
-      stats: ['13,000+ districts', '20+ metrics'],
-      format: 'CSV'
+      stats: ['13,000+ districts', '20+ metrics']
     },
   ]
 
@@ -56,20 +82,16 @@ export default function Home() {
   return (
     <main style={styles.main}>
       {/* Navigation */}
-      <nav style={styles.nav}>
-        <div style={styles.navInner}>
-          <a href="/" style={styles.logo}>aggrgtr</a>
-          <div style={styles.navLinks}>
-            <a href="#datasets" style={styles.navLink}>Datasets</a>
-            <a href="#about" style={styles.navLink}>About</a>
-            <a href="https://github.com/aggrgtr" style={styles.navLink} target="_blank" rel="noopener">GitHub</a>
-          </div>
+      <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
+        <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: isMobile ? '16px' : '18px' }}>aggrgtr</a>
+        <div style={{ display: 'flex', gap: '24px' }}>
+          <a href="https://github.com" style={{ color: '#fff', textDecoration: 'none' }} target="_blank" rel="noopener">GitHub</a>
         </div>
       </nav>
 
       {/* Hero - minimal */}
-      <section style={styles.hero}>
-        <h1 style={styles.h1}>Open datasets, cleaned and documented</h1>
+      <section style={{ ...styles.hero, padding: isMobile ? '40px 16px 20px' : '80px 32px 40px' }}>
+        <h1 style={{ ...styles.h1, fontSize: isMobile ? '24px' : '36px' }}>Open datasets, cleaned and documented</h1>
         <p style={styles.subtitle}>
           Public data from government sources and live APIs.
           Download directly or access via API.
@@ -78,8 +100,8 @@ export default function Home() {
 
 
       {/* Data Catalog */}
-      <section id="datasets" style={styles.section}>
-        <div style={styles.dataGrid}>
+      <section id="datasets" style={{ ...styles.section, padding: isMobile ? '16px 16px 32px' : '32px 32px 64px' }}>
+        <div style={{ ...styles.dataGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))' }}>
           {datasets.map(dataset => (
             <div key={dataset.id} style={styles.dataCard}>
               <div style={styles.cardTop}>
@@ -96,7 +118,6 @@ export default function Home() {
                 </div>
               </div>
               <div style={styles.cardBottom}>
-                <span style={styles.formatTag}>{dataset.format}</span>
                 {dataset.link ? (
                   <a href={dataset.link} style={styles.viewBtn}>View Dashboard</a>
                 ) : dataset.status === 'available' ? (
@@ -111,8 +132,8 @@ export default function Home() {
       </section>
 
       {/* About / Updates */}
-      <section id="about" style={styles.aboutSection}>
-        <div style={styles.aboutGrid}>
+      <section id="about" style={{ ...styles.aboutSection, padding: isMobile ? '32px 16px' : '64px 32px' }}>
+        <div style={{ ...styles.aboutGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))' }}>
           <div style={styles.aboutCard}>
             <h3 style={styles.aboutTitle}>What is this?</h3>
             <p style={styles.aboutText}>
@@ -129,25 +150,32 @@ export default function Home() {
             {submitted ? (
               <p style={styles.successMsg}>Got it, thanks!</p>
             ) : (
-              <form onSubmit={handleSubmit} style={styles.form}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  style={styles.input}
-                />
-                <button type="submit" style={styles.submitBtn}>Subscribe</button>
-              </form>
+              <>
+                <form onSubmit={handleSubmit} style={styles.form}>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    disabled={loading}
+                    style={styles.input}
+                  />
+                  <button type="submit" disabled={loading} style={styles.submitBtn}>
+                    {loading ? '...' : 'Subscribe'}
+                  </button>
+                </form>
+                {error && <p style={styles.errorMsg}>{error}</p>}
+              </>
             )}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={styles.footer}>
-        <p>aggrgtr © 2025</p>
+      <footer style={{ borderTop: '1px solid #222', padding: isMobile ? '16px' : '24px 32px', fontSize: '12px', color: '#999', textAlign: 'right' }}>
+        <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#999', textDecoration: 'none', marginRight: '16px' }}>Donate</a>
+        aggrgtr 2025
       </footer>
     </main>
   )
@@ -210,7 +238,7 @@ const styles = {
   },
   subtitle: {
     fontSize: '16px',
-    color: '#666',
+    color: '#999',
     lineHeight: '1.6',
     margin: 0,
   },
@@ -292,14 +320,14 @@ const styles = {
   badgeComing: {
     fontSize: '10px',
     background: '#1a1a1a',
-    color: '#666',
+    color: '#999',
     padding: '3px 8px',
     borderRadius: '4px',
     fontWeight: '500',
   },
   cardDesc: {
     fontSize: '13px',
-    color: '#666',
+    color: '#999',
     lineHeight: '1.5',
     marginBottom: '12px',
   },
@@ -307,7 +335,7 @@ const styles = {
     display: 'flex',
     gap: '12px',
     fontSize: '12px',
-    color: '#555',
+    color: '#999',
   },
   cardBottom: {
     display: 'flex',
@@ -319,7 +347,7 @@ const styles = {
   },
   formatTag: {
     fontSize: '11px',
-    color: '#555',
+    color: '#999',
     fontFamily: 'monospace',
   },
   downloadBtn: {
@@ -345,7 +373,7 @@ const styles = {
   notifyBtn: {
     background: 'transparent',
     border: '1px solid #2a2a2a',
-    color: '#666',
+    color: '#999',
     padding: '6px 12px',
     borderRadius: '4px',
     fontSize: '12px',
@@ -353,7 +381,7 @@ const styles = {
   },
   apiSoon: {
     fontSize: '12px',
-    color: '#888',
+    color: '#999',
   },
   aboutSection: {
     padding: '64px 32px',
@@ -378,7 +406,7 @@ const styles = {
   },
   aboutText: {
     fontSize: '14px',
-    color: '#666',
+    color: '#999',
     lineHeight: '1.6',
     marginBottom: '16px',
   },
@@ -409,6 +437,11 @@ const styles = {
   successMsg: {
     color: '#4ade80',
     fontSize: '14px',
+  },
+  errorMsg: {
+    color: '#f87171',
+    fontSize: '13px',
+    marginTop: '8px',
   },
   footer: {
     padding: '32px',
