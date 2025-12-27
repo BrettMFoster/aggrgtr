@@ -362,7 +362,7 @@ export default function RSPopulation() {
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#fff', margin: '0 0 8px 0' }}>RuneScape Population Tracker</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>Live player counts for Old School RuneScape and RuneScape 3</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>Live player counts for OSRS and RS3</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
