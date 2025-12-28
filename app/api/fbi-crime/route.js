@@ -89,21 +89,20 @@ export async function GET(request) {
 
     // Parse headers and data - only keep columns we need
     const headers = rows[0]
-    const neededIndexes = NEEDED_COLUMNS.map(col => headers.indexOf(col)).filter(i => i >= 0)
+    // Build column index map once (O(n) instead of O(n²))
+    const colIndexMap = {}
+    const stringCols = new Set(['state_abbr', 'state_name', 'county_name'])
+    for (const col of NEEDED_COLUMNS) {
+      const idx = headers.indexOf(col)
+      if (idx >= 0) colIndexMap[col] = idx
+    }
 
     const data = rows.slice(1).map(row => {
       const obj = {}
-      NEEDED_COLUMNS.forEach(col => {
-        const idx = headers.indexOf(col)
-        if (idx >= 0) {
-          const val = row[idx]
-          if (col === 'state_abbr' || col === 'state_name' || col === 'county_name') {
-            obj[col] = val || ''
-          } else {
-            obj[col] = parseInt(val) || 0
-          }
-        }
-      })
+      for (const col in colIndexMap) {
+        const val = row[colIndexMap[col]]
+        obj[col] = stringCols.has(col) ? (val || '') : (parseInt(val) || 0)
+      }
       return obj
     })
 
@@ -331,11 +330,6 @@ function processData(data, level, state, year) {
     }
 
     return Response.json({ error: `Invalid level: ${level}`, rows: [] }, { status: 400 })
-
-  } catch (error) {
-    console.error('FBI Crime API error:', error)
-    return Response.json({ error: error.message, rows: [] }, { status: 500 })
-  }
 }
 
 async function getAccessToken(credentials) {
