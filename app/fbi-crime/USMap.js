@@ -1,5 +1,8 @@
 'use client'
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps'
+
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json'
 
 const STATE_NAMES = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
@@ -15,64 +18,36 @@ const STATE_NAMES = {
   'WY': 'Wyoming', 'PR': 'Puerto Rico'
 }
 
+// FIPS to abbreviation mapping
+const FIPS_TO_ABBR = {
+  '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA',
+  '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC', '12': 'FL',
+  '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN',
+  '19': 'IA', '20': 'KS', '21': 'KY', '22': 'LA', '23': 'ME',
+  '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS',
+  '29': 'MO', '30': 'MT', '31': 'NE', '32': 'NV', '33': 'NH',
+  '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND',
+  '39': 'OH', '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI',
+  '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX', '49': 'UT',
+  '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI',
+  '56': 'WY', '72': 'PR'
+}
+
 // Map data abbreviations to standard USPS codes
 const ABBR_FIXES = {
-  'NB': 'NE',  // Nebraska sometimes coded as NB
+  'NB': 'NE',
 }
 
 export default function USMap({ data, metric, year, onStateClick, selectedState }) {
   const [hoveredState, setHoveredState] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-  const [statePaths, setStatePaths] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [viewBox, setViewBox] = useState("0 0 1000 600")
 
-  // Fetch SVG map from @svg-maps/usa
-  useEffect(() => {
-    fetch('https://unpkg.com/@svg-maps/usa/usa.svg')
-      .then(res => res.text())
-      .then(svgText => {
-        // Parse SVG to extract paths
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(svgText, 'image/svg+xml')
-        const svg = doc.querySelector('svg')
-        const paths = doc.querySelectorAll('path')
-
-        // Get viewBox
-        if (svg && svg.getAttribute('viewBox')) {
-          setViewBox(svg.getAttribute('viewBox'))
-        }
-
-        const pathData = {}
-        paths.forEach(path => {
-          const id = path.getAttribute('id')
-          const d = path.getAttribute('d')
-          if (id && d) {
-            const abbr = id.toUpperCase()
-            pathData[abbr] = {
-              path: d,
-              name: STATE_NAMES[abbr] || abbr,
-              abbr
-            }
-          }
-        })
-
-        setStatePaths(pathData)
-        setLoading(false)
-      })
-      .catch(err => {
-        console.error('Failed to load US map:', err)
-        setLoading(false)
-      })
-  }, [])
-
-  // Memoize state data lookup - only recalculate when data/year changes
+  // Memoize state data lookup
   const stateDataMap = useMemo(() => {
     const map = {}
     if (data && Array.isArray(data)) {
       for (const row of data) {
         if (row.year === year) {
-          // Fix any abbreviation mismatches
           const abbr = ABBR_FIXES[row.state] || row.state
           map[abbr] = row
         }
@@ -81,7 +56,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
     return map
   }, [data, year])
 
-  // Memoize color scale calculations using percentiles to handle outliers
+  // Memoize color scale using percentiles
   const { minVal, maxVal } = useMemo(() => {
     const values = Object.values(stateDataMap).map(d => {
       if (!d || !d.pop || d.pop === 0) return 0
@@ -90,41 +65,35 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
 
     if (values.length === 0) return { minVal: 0, maxVal: 1 }
 
-    // Use 5th and 95th percentile to avoid outlier skewing
     const p5 = values[Math.floor(values.length * 0.05)] || values[0]
     const p95 = values[Math.floor(values.length * 0.95)] || values[values.length - 1]
 
     return { minVal: p5, maxVal: p95 }
   }, [stateDataMap, metric])
 
-  // Memoize color map for all states
-  const stateColors = useMemo(() => {
-    const colors = {}
-    for (const abbr in statePaths) {
-      const d = stateDataMap[abbr]
-      if (!d || !d.pop || d.pop === 0) {
-        colors[abbr] = '#1a1a1a'
-      } else {
-        const rate = (d[metric] || 0) / d.pop * 100000
-        // Clamp to 0-1 range (outliers beyond percentiles get capped)
-        const pct = Math.max(0, Math.min(1, maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0))
-        if (pct < 0.25) {
-          const t = pct / 0.25
-          colors[abbr] = `rgb(${Math.round(60 + t * 80)}, ${Math.round(20 + t * 10)}, ${Math.round(90 - t * 30)})`
-        } else if (pct < 0.5) {
-          const t = (pct - 0.25) / 0.25
-          colors[abbr] = `rgb(${Math.round(140 + t * 80)}, ${Math.round(30 + t * 30)}, ${Math.round(60 - t * 30)})`
-        } else if (pct < 0.75) {
-          const t = (pct - 0.5) / 0.25
-          colors[abbr] = `rgb(${Math.round(220 + t * 35)}, ${Math.round(60 + t * 80)}, ${Math.round(30 - t * 10)})`
-        } else {
-          const t = (pct - 0.75) / 0.25
-          colors[abbr] = `rgb(255, ${Math.round(140 + t * 80)}, ${Math.round(20 + t * 40)})`
-        }
-      }
+  // Get color for a state
+  const getStateColor = useCallback((abbr) => {
+    const d = stateDataMap[abbr]
+    if (!d || !d.pop || d.pop === 0) {
+      return '#1a1a1a'
     }
-    return colors
-  }, [statePaths, stateDataMap, metric, minVal, maxVal])
+    const rate = (d[metric] || 0) / d.pop * 100000
+    const pct = Math.max(0, Math.min(1, maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0))
+
+    if (pct < 0.25) {
+      const t = pct / 0.25
+      return `rgb(${Math.round(60 + t * 80)}, ${Math.round(20 + t * 10)}, ${Math.round(90 - t * 30)})`
+    } else if (pct < 0.5) {
+      const t = (pct - 0.25) / 0.25
+      return `rgb(${Math.round(140 + t * 80)}, ${Math.round(30 + t * 30)}, ${Math.round(60 - t * 30)})`
+    } else if (pct < 0.75) {
+      const t = (pct - 0.5) / 0.25
+      return `rgb(${Math.round(220 + t * 35)}, ${Math.round(60 + t * 80)}, ${Math.round(30 - t * 10)})`
+    } else {
+      const t = (pct - 0.75) / 0.25
+      return `rgb(255, ${Math.round(140 + t * 80)}, ${Math.round(20 + t * 40)})`
+    }
+  }, [stateDataMap, metric, minVal, maxVal])
 
   const formatRate = useCallback((num) => typeof num === 'number' ? num.toFixed(1) : '0', [])
 
@@ -132,40 +101,41 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
     setMousePos({ x: e.clientX, y: e.clientY })
   }, [])
 
-  if (loading) {
-    return (
-      <div style={{ width: '100%', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-        Loading map...
-      </div>
-    )
-  }
-
   return (
     <div style={{ position: 'relative' }} onMouseMove={handleMouseMove}>
-      <svg
-        viewBox={viewBox}
+      <ComposableMap
+        projection="geoAlbersUsa"
         style={{ width: '100%', height: 'auto', maxHeight: '500px' }}
       >
-        {/* Draw each state */}
-        {Object.entries(statePaths).map(([abbr, state]) => {
-          const isHovered = hoveredState === abbr
-          const isSelected = selectedState === abbr
+        <Geographies geography={GEO_URL}>
+          {({ geographies }) =>
+            geographies.map((geo) => {
+              const fips = String(geo.id).padStart(2, '0')
+              const abbr = FIPS_TO_ABBR[fips]
+              const isHovered = hoveredState === abbr
+              const isSelected = selectedState === abbr
 
-          return (
-            <path
-              key={abbr}
-              d={state.path}
-              fill={stateColors[abbr] || '#1a1a1a'}
-              stroke={isSelected ? '#fff' : isHovered ? '#888' : '#333'}
-              strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
-              style={{ cursor: 'pointer', transition: 'fill 0.2s' }}
-              onMouseEnter={() => setHoveredState(abbr)}
-              onMouseLeave={() => setHoveredState(null)}
-              onClick={() => onStateClick && onStateClick(abbr)}
-            />
-          )
-        })}
-      </svg>
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill={getStateColor(abbr)}
+                  stroke={isSelected ? '#fff' : isHovered ? '#888' : '#333'}
+                  strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
+                  style={{
+                    default: { outline: 'none', cursor: 'pointer', transition: 'fill 0.2s' },
+                    hover: { outline: 'none', cursor: 'pointer' },
+                    pressed: { outline: 'none' }
+                  }}
+                  onMouseEnter={() => setHoveredState(abbr)}
+                  onMouseLeave={() => setHoveredState(null)}
+                  onClick={() => onStateClick && onStateClick(abbr)}
+                />
+              )
+            })
+          }
+        </Geographies>
+      </ComposableMap>
 
       {/* Legend */}
       <div style={{
@@ -203,7 +173,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
           minWidth: '140px'
         }}>
           <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff', marginBottom: '6px' }}>
-            {statePaths[hoveredState]?.name}
+            {STATE_NAMES[hoveredState] || hoveredState}
           </div>
           <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>
             Pop: {(stateDataMap[hoveredState].pop || 0).toLocaleString()}
