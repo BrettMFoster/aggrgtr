@@ -54,7 +54,13 @@ const STATE_PATHS = {
   WA: { path: "M170.9,97.8l-3.5-0.9-2.7-2.3-0.9,0.8-0.7-2.7-2.9,0.6-1.3-1.5-0.9-3-2.1-0.4-0.5-3.3-4.3-0.2-2.1-3.3-1.7-5.9-3.1-1.5-0.5-2.1-3.5-0.9-4.3-3.9-6.1-1.9-1.7-0.9-1.1-2.9-3.8-1.2-0.4-3.5-4.1-3.3 4.9-0.5 0-4.6-3.4-0.1-1.5,1.8-0.5-2.7 3.1-0.4 3.7,1 3.7-2.5-0.5-3.9-1.9-1.6 1.2-4.1-0.9-3.2 0.9-3.6 2.9-0.1 2.1-4 0.5,0.9 0.1,5.2 2.5,2.8 4.5,1.5-2,2.3 2.4,3 2.7,0.3 1.5,2.9 4.4,1.6 0.1-2.2-3.4-5-0.4-4.2 3.9-0.2 4.1-0.4 7.3,2.1 5.5,1.5 6.1,1.1 25.9,6 28.3,5.5-6.5,31.9z", name: "Washington", abbr: "WA" },
   WV: { path: "M768.1,311.2l-2.5,2.7-0.4,4.1-2.9,3.7-1.8-0.6-1.7-2.2-2.6,2.3-0.3,3.9-3.7,3.2-3.2-0.1-4.7-3.9-3.5,1.4-2.9-0.9-2.8,0.6-5.5,3.5-1.9-2.5-1-3.8-4.1-0.3-0.9,4.3-2.1,2.5-0.7,5.2-2.4-0.4-3.5,3.7-1.3,3.9-0.9-2.7-3.6-2.9 4.4-3.9 2.6-5.5 3.5-3.9 3.7-2.1-0.3-2.3-3.8-3.7 0.3-3.5 3.1-4.3 0.5-5.2-2.9-4.6-0.2-3.7-3.8-3.8-0.5-1.9-5.3-6 12.9-3.2 4.7,4.7 3.1,4.3 3.7,2.7 6.4,2.9 4.5,5.6 3.9,2.7-0.5,2.8 5.3-1 3.7-3.5z", name: "West Virginia", abbr: "WV" },
   WI: { path: "M603.1,214.9l-3.5-2.2-2.7-3.5-2.5-8.2-2.3-4-4.3-4.5-1.4-3.9-0.2-5.6 2.3-4.9 1.3-5.9-0.1-3.6-1.3-1.3 0.8-2.5 1.1-4.2-1.1-3.5-0.9-5.8 0.9-3.9 0.9-4.5-0.5-5.9-1.9-2.9 0.2-2.5 2.5-3.2 1.9,0.5 0.5-4.9-2.7-1.5-0.1-2.1 0.9-2.7 2.1-3.7 0.6-3.5 0.3-4.4 3.9-0.2-0.2-3.5 3.9,0.6 4.7,0.7 0.9,3.7 3.7,2.2 1.1,1.2 4.6-0.2 1.7-2.8-1-3.9 0.8-3.2 2.9-1 1.7-1.3 1.9,0.9 5.5-1.2 7.2,3.5 5.9,2.9 3.8,2.9 5.4,3.7 1.1-1.5 3.6,2 3,4.6-0.2,3.9-0.9,0.9 0.2,3.5-1.4,4.9-0.6,4.4-2.4,0.9 0.4,4.6-0.6,6.3 0.6,3.7 3.7,4.2 1.3,3.3-1.3,3.9 1.7,2.8-0.2,4.2-0.7,2.6-7.6,1.7-18,1.5-0.7,3.2 0.5,1.1z", name: "Wisconsin", abbr: "WI" },
-  WY: { path: "M326.6,223.5l-2.5-23.6-5.4-50.3 47.9-5.2 56.9-8.1 4.1,44.1 3.3,41.3-56,3.5z", name: "Wyoming", abbr: "WY" }
+  WY: { path: "M326.6,223.5l-2.5-23.6-5.4-50.3 47.9-5.2 56.9-8.1 4.1,44.1 3.3,41.3-56,3.5z", name: "Wyoming", abbr: "WY" },
+  DC: { path: "M801.8,289.5l2.5-3.8 4.9,3.5-2.2,3.9z", name: "District of Columbia", abbr: "DC" }
+}
+
+// Map data abbreviations to standard USPS codes
+const ABBR_FIXES = {
+  'NB': 'NE',  // Nebraska sometimes coded as NB
 }
 
 export default function USMap({ data, metric, year, onStateClick, selectedState }) {
@@ -67,23 +73,29 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
     if (data && Array.isArray(data)) {
       for (const row of data) {
         if (row.year === year) {
-          map[row.state] = row
+          // Fix any abbreviation mismatches
+          const abbr = ABBR_FIXES[row.state] || row.state
+          map[abbr] = row
         }
       }
     }
     return map
   }, [data, year])
 
-  // Memoize color scale calculations
+  // Memoize color scale calculations using percentiles to handle outliers
   const { minVal, maxVal } = useMemo(() => {
     const values = Object.values(stateDataMap).map(d => {
       if (!d || !d.pop || d.pop === 0) return 0
       return (d[metric] || 0) / d.pop * 100000
-    }).filter(v => v > 0)
-    return {
-      minVal: values.length > 0 ? Math.min(...values) : 0,
-      maxVal: values.length > 0 ? Math.max(...values) : 1
-    }
+    }).filter(v => v > 0).sort((a, b) => a - b)
+
+    if (values.length === 0) return { minVal: 0, maxVal: 1 }
+
+    // Use 5th and 95th percentile to avoid outlier skewing
+    const p5 = values[Math.floor(values.length * 0.05)] || values[0]
+    const p95 = values[Math.floor(values.length * 0.95)] || values[values.length - 1]
+
+    return { minVal: p5, maxVal: p95 }
   }, [stateDataMap, metric])
 
   // Memoize color map for all states
@@ -95,7 +107,8 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
         colors[abbr] = '#1a1a1a'
       } else {
         const rate = (d[metric] || 0) / d.pop * 100000
-        const pct = maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0
+        // Clamp to 0-1 range (outliers beyond percentiles get capped)
+        const pct = Math.max(0, Math.min(1, maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0))
         if (pct < 0.25) {
           const t = pct / 0.25
           colors[abbr] = `rgb(${Math.round(60 + t * 80)}, ${Math.round(20 + t * 10)}, ${Math.round(90 - t * 30)})`
