@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 
 // US State paths for SVG choropleth map
 // Simplified paths for performance
@@ -61,53 +61,64 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
   const [hoveredState, setHoveredState] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
-  // Build lookup for state data
-  const stateDataMap = {}
-  if (data && Array.isArray(data)) {
-    for (const row of data) {
-      if (row.year === year) {
-        stateDataMap[row.state] = row
+  // Memoize state data lookup - only recalculate when data/year changes
+  const stateDataMap = useMemo(() => {
+    const map = {}
+    if (data && Array.isArray(data)) {
+      for (const row of data) {
+        if (row.year === year) {
+          map[row.state] = row
+        }
       }
     }
-  }
+    return map
+  }, [data, year])
 
-  // Calculate color scale
-  const values = Object.values(stateDataMap).map(d => {
-    if (!d || !d.pop || d.pop === 0) return 0
-    return (d[metric] || 0) / d.pop * 100000
-  }).filter(v => v > 0)
-
-  const minVal = values.length > 0 ? Math.min(...values) : 0
-  const maxVal = values.length > 0 ? Math.max(...values) : 1
-
-  const getColor = (stateAbbr) => {
-    const d = stateDataMap[stateAbbr]
-    if (!d || !d.pop || d.pop === 0) return '#1a1a1a'
-
-    const rate = (d[metric] || 0) / d.pop * 100000
-    const pct = maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0
-
-    // Color scale: dark purple -> red -> orange -> yellow
-    if (pct < 0.25) {
-      const t = pct / 0.25
-      return `rgb(${Math.round(60 + t * 80)}, ${Math.round(20 + t * 10)}, ${Math.round(90 - t * 30)})`
-    } else if (pct < 0.5) {
-      const t = (pct - 0.25) / 0.25
-      return `rgb(${Math.round(140 + t * 80)}, ${Math.round(30 + t * 30)}, ${Math.round(60 - t * 30)})`
-    } else if (pct < 0.75) {
-      const t = (pct - 0.5) / 0.25
-      return `rgb(${Math.round(220 + t * 35)}, ${Math.round(60 + t * 80)}, ${Math.round(30 - t * 10)})`
-    } else {
-      const t = (pct - 0.75) / 0.25
-      return `rgb(255, ${Math.round(140 + t * 80)}, ${Math.round(20 + t * 40)})`
+  // Memoize color scale calculations
+  const { minVal, maxVal } = useMemo(() => {
+    const values = Object.values(stateDataMap).map(d => {
+      if (!d || !d.pop || d.pop === 0) return 0
+      return (d[metric] || 0) / d.pop * 100000
+    }).filter(v => v > 0)
+    return {
+      minVal: values.length > 0 ? Math.min(...values) : 0,
+      maxVal: values.length > 0 ? Math.max(...values) : 1
     }
-  }
+  }, [stateDataMap, metric])
 
-  const formatRate = (num) => typeof num === 'number' ? num.toFixed(1) : '0'
+  // Memoize color map for all states
+  const stateColors = useMemo(() => {
+    const colors = {}
+    for (const abbr in STATE_PATHS) {
+      const d = stateDataMap[abbr]
+      if (!d || !d.pop || d.pop === 0) {
+        colors[abbr] = '#1a1a1a'
+      } else {
+        const rate = (d[metric] || 0) / d.pop * 100000
+        const pct = maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0
+        if (pct < 0.25) {
+          const t = pct / 0.25
+          colors[abbr] = `rgb(${Math.round(60 + t * 80)}, ${Math.round(20 + t * 10)}, ${Math.round(90 - t * 30)})`
+        } else if (pct < 0.5) {
+          const t = (pct - 0.25) / 0.25
+          colors[abbr] = `rgb(${Math.round(140 + t * 80)}, ${Math.round(30 + t * 30)}, ${Math.round(60 - t * 30)})`
+        } else if (pct < 0.75) {
+          const t = (pct - 0.5) / 0.25
+          colors[abbr] = `rgb(${Math.round(220 + t * 35)}, ${Math.round(60 + t * 80)}, ${Math.round(30 - t * 10)})`
+        } else {
+          const t = (pct - 0.75) / 0.25
+          colors[abbr] = `rgb(255, ${Math.round(140 + t * 80)}, ${Math.round(20 + t * 40)})`
+        }
+      }
+    }
+    return colors
+  }, [stateDataMap, metric, minVal, maxVal])
 
-  const handleMouseMove = (e) => {
+  const formatRate = useCallback((num) => typeof num === 'number' ? num.toFixed(1) : '0', [])
+
+  const handleMouseMove = useCallback((e) => {
     setMousePos({ x: e.clientX, y: e.clientY })
-  }
+  }, [])
 
   return (
     <div style={{ position: 'relative' }} onMouseMove={handleMouseMove}>
@@ -119,13 +130,12 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
         {Object.entries(STATE_PATHS).map(([abbr, state]) => {
           const isHovered = hoveredState === abbr
           const isSelected = selectedState === abbr
-          const d = stateDataMap[abbr]
 
           return (
             <path
               key={abbr}
               d={state.path}
-              fill={getColor(abbr)}
+              fill={stateColors[abbr]}
               stroke={isSelected ? '#fff' : isHovered ? '#888' : '#333'}
               strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.5}
               style={{ cursor: 'pointer', transition: 'fill 0.2s' }}

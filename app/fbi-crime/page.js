@@ -1,6 +1,17 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import USMap from './USMap'
+
+const METRICS = [
+  { id: 'off_murder', label: 'Murder' },
+  { id: 'off_rape', label: 'Rape' },
+  { id: 'off_robbery', label: 'Robbery' },
+  { id: 'off_agg_assault', label: 'Aggravated Assault' },
+  { id: 'off_burglary', label: 'Burglary' },
+  { id: 'off_motor_vehicle_theft', label: 'Vehicle Theft' },
+  { id: 'off_drug_violations', label: 'Drug Violations' },
+  { id: 'off_weapon_violations', label: 'Weapon Violations' }
+]
 
 export default function FBICrime() {
   const [stateData, setStateData] = useState([])
@@ -44,25 +55,17 @@ export default function FBICrime() {
     }
   }
 
-  const getYears = () => {
-    return metadata?.years?.sort((a, b) => b - a) || []
-  }
+  // Memoize sorted years to avoid re-sorting on every render
+  const years = useMemo(() => {
+    return metadata?.years?.slice().sort((a, b) => b - a) || []
+  }, [metadata?.years])
 
-  const metrics = [
-    { id: 'off_murder', label: 'Murder' },
-    { id: 'off_rape', label: 'Rape' },
-    { id: 'off_robbery', label: 'Robbery' },
-    { id: 'off_agg_assault', label: 'Aggravated Assault' },
-    { id: 'off_burglary', label: 'Burglary' },
-    { id: 'off_motor_vehicle_theft', label: 'Vehicle Theft' },
-    { id: 'off_drug_violations', label: 'Drug Violations' },
-    { id: 'off_weapon_violations', label: 'Weapon Violations' }
-  ]
+  const selectedMetricInfo = useMemo(() => {
+    return METRICS.find(m => m.id === selectedMetric)
+  }, [selectedMetric])
 
-  const selectedMetricInfo = metrics.find(m => m.id === selectedMetric)
-
-  // Get state rankings for selected year
-  const getStateRankings = () => {
+  // Memoize state rankings - only recalculate when data/year/metric changes
+  const stateRankings = useMemo(() => {
     return stateData
       .filter(d => d.year === selectedYear)
       .map(d => ({
@@ -70,7 +73,7 @@ export default function FBICrime() {
         rate: d.pop > 0 ? (d[selectedMetric] / d.pop) * 100000 : 0
       }))
       .sort((a, b) => b.rate - a.rate)
-  }
+  }, [stateData, selectedYear, selectedMetric])
 
   const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
@@ -120,7 +123,7 @@ export default function FBICrime() {
                 width: '100%'
               }}
             >
-              {getYears().map(year => (
+              {years.map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -130,7 +133,7 @@ export default function FBICrime() {
           <div style={{ marginBottom: isMobile ? '12px' : '16px' }}>
             {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Offense Type</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '4px', flexWrap: 'wrap' }}>
-              {metrics.map(metric => (
+              {METRICS.map(metric => (
                 <button
                   key={metric.id}
                   onClick={() => setSelectedMetric(metric.id)}
@@ -193,7 +196,7 @@ export default function FBICrime() {
                     </tr>
                   </thead>
                   <tbody>
-                    {getStateRankings().map((row, i) => (
+                    {stateRankings.map((row, i) => (
                       <tr key={row.state} style={{ borderBottom: '1px solid #222' }}>
                         <td style={{ padding: '8px', color: '#888' }}>{i + 1}</td>
                         <td style={{ padding: '8px', color: '#fff', fontWeight: '500' }}>{row.state}</td>
