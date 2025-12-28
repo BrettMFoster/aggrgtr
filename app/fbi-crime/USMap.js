@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 
 // US State paths for SVG choropleth map
 // Simplified paths for performance
