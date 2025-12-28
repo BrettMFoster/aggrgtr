@@ -1,12 +1,36 @@
 // API route to fetch FBI crime data from Google Sheets
 // Data source: master_county_year table exported to Google Sheets
 
+// In-memory cache for sheet data (5 minute TTL)
+let cachedData = null
+let cacheTime = 0
+const CACHE_TTL = 5 * 60 * 1000  // 5 minutes
+
+// Only fetch the columns we need (much faster than A:GN with 170 columns)
+const NEEDED_COLUMNS = [
+  'state_abbr', 'state_name', 'county_name', 'year', 'population', 'incidents',
+  'off_murder', 'off_rape', 'off_robbery', 'off_agg_assault', 'off_simple_assault',
+  'off_burglary', 'off_larceny_pocket', 'off_larceny_purse', 'off_larceny_shoplifting',
+  'off_larceny_building', 'off_larceny_coin_machine', 'off_larceny_vehicle',
+  'off_larceny_vehicle_parts', 'off_larceny_other', 'off_motor_vehicle_theft',
+  'off_drug_violations', 'off_weapon_violations',
+  // Offender demographics
+  'o_total', 'o_white', 'o_black', 'o_asian', 'o_native', 'o_pacific', 'o_race_other', 'o_race_unknown',
+  'o_hispanic', 'o_not_hispanic', 'o_ethnicity_unknown'
+]
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const level = searchParams.get('level') || 'state'
     const state = searchParams.get('state')
     const year = searchParams.get('year')
+
+    // Check cache first
+    const now = Date.now()
+    if (cachedData && (now - cacheTime) < CACHE_TTL) {
+      return processData(cachedData, level, state, year)
+    }
 
     // Get credentials
     let credentials
@@ -43,7 +67,9 @@ export async function GET(request) {
     }
 
     const SPREADSHEET_ID = '1I8lgh3cxtTq-0aUnRiicvnPZ_yQdJ1Ail_4THL6V5oo'
-    const range = 'master_county_year!A:GN'  // 170 columns
+    // Fetch columns A through CZ (includes offender demographics at columns 90-103)
+    // This cuts down from 170 to ~104 columns
+    const range = 'master_county_year!A:CZ'
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}`
     const response = await fetch(url, {
@@ -61,23 +87,38 @@ export async function GET(request) {
       return Response.json({ error: 'No data found', rows: [] }, { status: 404 })
     }
 
-    // Parse headers and data
+    // Parse headers and data - only keep columns we need
     const headers = rows[0]
+    const neededIndexes = NEEDED_COLUMNS.map(col => headers.indexOf(col)).filter(i => i >= 0)
+
     const data = rows.slice(1).map(row => {
       const obj = {}
-      headers.forEach((h, i) => {
-        const val = row[i]
-        // Convert numeric fields
-        if (i >= 4) {  // After state_abbr, state_name, county_name, year
-          obj[h] = parseInt(val) || 0
-        } else if (h === 'year') {
-          obj[h] = parseInt(val) || 0
-        } else {
-          obj[h] = val || ''
+      NEEDED_COLUMNS.forEach(col => {
+        const idx = headers.indexOf(col)
+        if (idx >= 0) {
+          const val = row[idx]
+          if (col === 'state_abbr' || col === 'state_name' || col === 'county_name') {
+            obj[col] = val || ''
+          } else {
+            obj[col] = parseInt(val) || 0
+          }
         }
       })
       return obj
     })
+
+    // Update cache
+    cachedData = data
+    cacheTime = now
+
+    return processData(data, level, state, year)
+  } catch (error) {
+    console.error('FBI Crime API error:', error)
+    return Response.json({ error: error.message, rows: [] }, { status: 500 })
+  }
+}
+
+function processData(data, level, state, year) {
 
     // Handle different levels
     if (level === 'metadata') {
@@ -141,7 +182,10 @@ export async function GET(request) {
             off_burglary: 0, off_larceny_pocket: 0, off_larceny_purse: 0, off_larceny_shoplifting: 0,
             off_larceny_building: 0, off_larceny_coin_machine: 0, off_larceny_vehicle: 0,
             off_larceny_vehicle_parts: 0, off_larceny_other: 0, off_motor_vehicle_theft: 0,
-            off_drug_violations: 0
+            off_drug_violations: 0, off_weapon_violations: 0,
+            // Offender demographics
+            o_total: 0, o_white: 0, o_black: 0, o_asian: 0, o_native: 0, o_pacific: 0, o_race_other: 0, o_race_unknown: 0,
+            o_hispanic: 0, o_not_hispanic: 0, o_ethnicity_unknown: 0
           }
         }
         const s = stateMap[key]
@@ -164,6 +208,19 @@ export async function GET(request) {
         s.off_larceny_other += d.off_larceny_other || 0
         s.off_motor_vehicle_theft += d.off_motor_vehicle_theft || 0
         s.off_drug_violations += d.off_drug_violations || 0
+        s.off_weapon_violations += d.off_weapon_violations || 0
+        // Offender demographics
+        s.o_total += d.o_total || 0
+        s.o_white += d.o_white || 0
+        s.o_black += d.o_black || 0
+        s.o_asian += d.o_asian || 0
+        s.o_native += d.o_native || 0
+        s.o_pacific += d.o_pacific || 0
+        s.o_race_other += d.o_race_other || 0
+        s.o_race_unknown += d.o_race_unknown || 0
+        s.o_hispanic += d.o_hispanic || 0
+        s.o_not_hispanic += d.o_not_hispanic || 0
+        s.o_ethnicity_unknown += d.o_ethnicity_unknown || 0
       }
 
       let stateData = Object.values(stateMap).map(s => ({
@@ -173,18 +230,32 @@ export async function GET(request) {
         pop: s.pop,
         incidents: s.incidents,
         counties: s.counties,
+        // Offense types
+        off_murder: s.off_murder,
+        off_rape: s.off_rape,
+        off_robbery: s.off_robbery,
+        off_agg_assault: s.off_agg_assault,
+        off_burglary: s.off_burglary,
+        off_motor_vehicle_theft: s.off_motor_vehicle_theft,
+        off_drug_violations: s.off_drug_violations,
+        off_weapon_violations: s.off_weapon_violations,
+        // Aggregates
         violent: s.off_murder + s.off_rape + s.off_robbery + s.off_agg_assault,
         property: s.off_burglary + s.off_larceny_pocket + s.off_larceny_purse + s.off_larceny_shoplifting +
                   s.off_larceny_building + s.off_larceny_coin_machine + s.off_larceny_vehicle +
                   s.off_larceny_vehicle_parts + s.off_larceny_other + s.off_motor_vehicle_theft,
-        homicide: s.off_murder,
-        assault: s.off_agg_assault + s.off_simple_assault,
-        robbery: s.off_robbery,
-        burglary: s.off_burglary,
-        theft: s.off_larceny_pocket + s.off_larceny_purse + s.off_larceny_shoplifting +
-               s.off_larceny_building + s.off_larceny_coin_machine + s.off_larceny_vehicle +
-               s.off_larceny_vehicle_parts + s.off_larceny_other,
-        drug: s.off_drug_violations
+        // Offender demographics
+        o_total: s.o_total,
+        o_white: s.o_white,
+        o_black: s.o_black,
+        o_asian: s.o_asian,
+        o_native: s.o_native,
+        o_pacific: s.o_pacific,
+        o_race_other: s.o_race_other,
+        o_race_unknown: s.o_race_unknown,
+        o_hispanic: s.o_hispanic,
+        o_not_hispanic: s.o_not_hispanic,
+        o_ethnicity_unknown: s.o_ethnicity_unknown
       }))
 
       if (state) stateData = stateData.filter(d => d.state === state.toUpperCase())
