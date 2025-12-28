@@ -1,21 +1,6 @@
 'use client'
 import { useState, useMemo, useCallback, useEffect } from 'react'
 
-// FIPS code to state abbreviation mapping
-const FIPS_TO_ABBR = {
-  '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA',
-  '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC', '12': 'FL',
-  '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN',
-  '19': 'IA', '20': 'KS', '21': 'KY', '22': 'LA', '23': 'ME',
-  '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS',
-  '29': 'MO', '30': 'MT', '31': 'NE', '32': 'NV', '33': 'NH',
-  '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND',
-  '39': 'OH', '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI',
-  '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX', '49': 'UT',
-  '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI',
-  '56': 'WY', '72': 'PR'
-}
-
 const STATE_NAMES = {
   'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
   'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'DC': 'District of Columbia', 'FL': 'Florida',
@@ -35,73 +20,44 @@ const ABBR_FIXES = {
   'NB': 'NE',  // Nebraska sometimes coded as NB
 }
 
-// TopoJSON decoder - converts TopoJSON arcs to SVG path
-function decodeArc(topology, arcIndex) {
-  const arc = topology.arcs[arcIndex < 0 ? ~arcIndex : arcIndex]
-  const transform = topology.transform
-  let x = 0, y = 0
-  const coords = []
-
-  for (let i = 0; i < arc.length; i++) {
-    x += arc[i][0]
-    y += arc[i][1]
-    coords.push([
-      x * transform.scale[0] + transform.translate[0],
-      y * transform.scale[1] + transform.translate[1]
-    ])
-  }
-
-  if (arcIndex < 0) coords.reverse()
-  return coords
-}
-
-function geometryToPath(topology, geometry) {
-  if (!geometry) return ''
-
-  const paths = []
-
-  function processRing(ring) {
-    const coords = []
-    for (const arcRef of ring) {
-      const arcCoords = decodeArc(topology, arcRef)
-      // Skip first point of subsequent arcs (shared with previous)
-      coords.push(...(coords.length ? arcCoords.slice(1) : arcCoords))
-    }
-    return coords
-  }
-
-  function ringToPath(coords) {
-    if (coords.length === 0) return ''
-    return 'M' + coords.map(c => `${c[0].toFixed(1)},${c[1].toFixed(1)}`).join('L') + 'Z'
-  }
-
-  if (geometry.type === 'Polygon') {
-    for (const ring of geometry.arcs) {
-      paths.push(ringToPath(processRing(ring)))
-    }
-  } else if (geometry.type === 'MultiPolygon') {
-    for (const polygon of geometry.arcs) {
-      for (const ring of polygon) {
-        paths.push(ringToPath(processRing(ring)))
-      }
-    }
-  }
-
-  return paths.join(' ')
-}
-
 export default function USMap({ data, metric, year, onStateClick, selectedState }) {
   const [hoveredState, setHoveredState] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
-  const [topology, setTopology] = useState(null)
+  const [statePaths, setStatePaths] = useState({})
   const [loading, setLoading] = useState(true)
+  const [viewBox, setViewBox] = useState("0 0 1000 600")
 
-  // Fetch US Atlas TopoJSON on mount
+  // Fetch SVG map from @svg-maps/usa
   useEffect(() => {
-    fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-albers-10m.json')
-      .then(res => res.json())
-      .then(data => {
-        setTopology(data)
+    fetch('https://unpkg.com/@svg-maps/usa/usa.svg')
+      .then(res => res.text())
+      .then(svgText => {
+        // Parse SVG to extract paths
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(svgText, 'image/svg+xml')
+        const svg = doc.querySelector('svg')
+        const paths = doc.querySelectorAll('path')
+
+        // Get viewBox
+        if (svg && svg.getAttribute('viewBox')) {
+          setViewBox(svg.getAttribute('viewBox'))
+        }
+
+        const pathData = {}
+        paths.forEach(path => {
+          const id = path.getAttribute('id')
+          const d = path.getAttribute('d')
+          if (id && d) {
+            const abbr = id.toUpperCase()
+            pathData[abbr] = {
+              path: d,
+              name: STATE_NAMES[abbr] || abbr,
+              abbr
+            }
+          }
+        })
+
+        setStatePaths(pathData)
         setLoading(false)
       })
       .catch(err => {
@@ -109,30 +65,6 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
         setLoading(false)
       })
   }, [])
-
-  // Convert TopoJSON to state paths
-  const statePaths = useMemo(() => {
-    if (!topology) return {}
-
-    const paths = {}
-    const states = topology.objects.states
-
-    if (states.geometries) {
-      for (const geo of states.geometries) {
-        const fips = String(geo.id).padStart(2, '0')
-        const abbr = FIPS_TO_ABBR[fips]
-        if (abbr) {
-          paths[abbr] = {
-            path: geometryToPath(topology, geo),
-            name: STATE_NAMES[abbr] || abbr,
-            abbr
-          }
-        }
-      }
-    }
-
-    return paths
-  }, [topology])
 
   // Memoize state data lookup - only recalculate when data/year changes
   const stateDataMap = useMemo(() => {
@@ -211,7 +143,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
   return (
     <div style={{ position: 'relative' }} onMouseMove={handleMouseMove}>
       <svg
-        viewBox="0 0 975 610"
+        viewBox={viewBox}
         style={{ width: '100%', height: 'auto', maxHeight: '500px' }}
       >
         {/* Draw each state */}
