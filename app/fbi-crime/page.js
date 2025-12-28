@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import USMap from './USMap'
 
 export default function FBICrime() {
   const [nationalData, setNationalData] = useState([])
@@ -79,11 +78,6 @@ export default function FBICrime() {
       return stateData
         .filter(d => d.state === selectedState)
         .sort((a, b) => a.year - b.year)
-    } else if (viewLevel === 'compare') {
-      // For comparison, show all states for selected year
-      return stateData
-        .filter(d => d.year === selectedYear)
-        .sort((a, b) => getValue(b, selectedMetric) - getValue(a, selectedMetric))
     }
     return []
   }
@@ -98,9 +92,7 @@ export default function FBICrime() {
   }
 
   const chartData = getChartData()
-  const latestYear = viewLevel === 'compare'
-    ? stateData.filter(d => d.year === selectedYear)[0]
-    : chartData.length > 0 ? chartData[chartData.length - 1] : null
+  const latestYear = chartData.length > 0 ? chartData[chartData.length - 1] : null
 
   // For national view, get latest year summary
   const latestNational = nationalData.find(d => d.year === selectedYear) || nationalData[nationalData.length - 1]
@@ -163,17 +155,6 @@ export default function FBICrime() {
     return num.toFixed(1)
   }
 
-  // Get state rankings for selected year
-  const getStateRankings = () => {
-    return stateData
-      .filter(d => d.year === selectedYear)
-      .map(d => ({
-        ...d,
-        rate: d.pop > 0 ? (d[selectedMetric] / d.pop) * 100000 : 0
-      }))
-      .sort((a, b) => b.rate - a.rate)
-  }
-
   // Get counties for selected state and year
   const getCounties = () => {
     if (!selectedState || !selectedYear) return []
@@ -213,7 +194,6 @@ export default function FBICrime() {
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px', flexWrap: 'wrap' }}>
               {[
                 { id: 'national', label: 'National Trend' },
-                { id: 'compare', label: 'Compare States' },
                 { id: 'state', label: 'Single State' }
               ].map(v => (
                 <button
@@ -234,8 +214,8 @@ export default function FBICrime() {
             </div>
           </div>
 
-          {/* Year selector for compare view */}
-          {(viewLevel === 'compare' || viewLevel === 'state') && (
+          {/* Year selector for state view */}
+          {viewLevel === 'state' && (
             <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
               {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Year</div>}
               <select
@@ -339,7 +319,6 @@ export default function FBICrime() {
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 8px 0' }}>FBI Crime Statistics</h1>
           <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#666', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>
             {viewLevel === 'national' && 'National crime trends over time'}
-            {viewLevel === 'compare' && `State comparison for ${selectedYear}`}
             {viewLevel === 'state' && (selectedState ? `${selectedState} crime data` : 'Select a state to view data')}
           </p>
 
@@ -498,59 +477,6 @@ export default function FBICrime() {
                       )
                     })()}
                   </div>
-                </div>
-              )}
-
-              {/* US Map - for compare view */}
-              {viewLevel === 'compare' && !isMobile && (
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: '0 0 16px 0' }}>
-                    {selectedMetricInfo?.label} by State ({selectedYear})
-                  </h3>
-                  <USMap
-                    data={stateData}
-                    metric={selectedMetric}
-                    year={selectedYear}
-                    selectedState={selectedState}
-                    onStateClick={(abbr) => { setViewLevel('state'); setSelectedState(abbr); }}
-                  />
-                </div>
-              )}
-
-              {/* State Rankings Table - for compare view */}
-              {viewLevel === 'compare' && (
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', marginBottom: '24px', overflowX: 'auto' }}>
-                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: '0 0 16px 0' }}>
-                    State Rankings - {selectedMetricInfo?.label} ({selectedYear})
-                  </h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #333' }}>
-                        <th style={{ padding: '8px', textAlign: 'left', color: '#888' }}>Rank</th>
-                        <th style={{ padding: '8px', textAlign: 'left', color: '#888' }}>State</th>
-                        <th style={{ padding: '8px', textAlign: 'right', color: '#888' }}>Population</th>
-                        <th style={{ padding: '8px', textAlign: 'right', color: selectedMetricInfo?.color }}>{selectedMetricInfo?.label}</th>
-                        <th style={{ padding: '8px', textAlign: 'right', color: '#888' }}>Per 100K</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getStateRankings().map((row, i) => (
-                        <tr
-                          key={row.state}
-                          style={{ borderBottom: '1px solid #222', cursor: 'pointer' }}
-                          onClick={() => { setViewLevel('state'); setSelectedState(row.state); }}
-                        >
-                          <td style={{ padding: '8px', color: '#888' }}>{i + 1}</td>
-                          <td style={{ padding: '8px', color: '#fff', fontWeight: '500' }}>{row.state}</td>
-                          <td style={{ padding: '8px', textAlign: 'right', color: '#888' }}>{formatNumber(row.pop)}</td>
-                          <td style={{ padding: '8px', textAlign: 'right', color: selectedMetricInfo?.color, fontWeight: '600' }}>
-                            {row[selectedMetric]?.toLocaleString()}
-                          </td>
-                          <td style={{ padding: '8px', textAlign: 'right', color: '#888' }}>{formatRate(row.rate)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
                 </div>
               )}
 
