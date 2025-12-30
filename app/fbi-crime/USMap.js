@@ -38,29 +38,38 @@ const ABBR_FIXES = {
   'NB': 'NE',
 }
 
-export default function USMap({ data, metric, year, onStateClick, selectedState }) {
+export default function USMap({ data, selectedOffenses = [], year, onStateClick, selectedState }) {
   const [hoveredState, setHoveredState] = useState(null)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
-  // Memoize state data lookup
+  // Helper to sum selected offenses for a data row
+  const sumOffenses = useCallback((row) => {
+    if (!row || !selectedOffenses || selectedOffenses.length === 0) return 0
+    return selectedOffenses.reduce((sum, id) => sum + (row[id] || 0), 0)
+  }, [selectedOffenses])
+
+  // Memoize state data lookup with computed totals
   const stateDataMap = useMemo(() => {
     const map = {}
     if (data && Array.isArray(data)) {
       for (const row of data) {
         if (row.year === year) {
           const abbr = ABBR_FIXES[row.state] || row.state
-          map[abbr] = row
+          map[abbr] = {
+            ...row,
+            offenseTotal: sumOffenses(row)
+          }
         }
       }
     }
     return map
-  }, [data, year])
+  }, [data, year, sumOffenses])
 
   // Memoize color scale using percentiles
   const { minVal, maxVal } = useMemo(() => {
     const values = Object.values(stateDataMap).map(d => {
       if (!d || !d.pop || d.pop === 0) return 0
-      return (d[metric] || 0) / d.pop * 100000
+      return (d.offenseTotal || 0) / d.pop * 100000
     }).filter(v => v > 0).sort((a, b) => a - b)
 
     if (values.length === 0) return { minVal: 0, maxVal: 1 }
@@ -69,7 +78,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
     const p95 = values[Math.floor(values.length * 0.95)] || values[values.length - 1]
 
     return { minVal: p5, maxVal: p95 }
-  }, [stateDataMap, metric])
+  }, [stateDataMap])
 
   // Get color for a state
   const getStateColor = useCallback((abbr) => {
@@ -77,7 +86,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
     if (!d || !d.pop || d.pop === 0) {
       return '#1a1a1a'
     }
-    const rate = (d[metric] || 0) / d.pop * 100000
+    const rate = (d.offenseTotal || 0) / d.pop * 100000
     const pct = Math.max(0, Math.min(1, maxVal > minVal ? (rate - minVal) / (maxVal - minVal) : 0))
 
     if (pct < 0.25) {
@@ -93,7 +102,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
       const t = (pct - 0.75) / 0.25
       return `rgb(255, ${Math.round(140 + t * 80)}, ${Math.round(20 + t * 40)})`
     }
-  }, [stateDataMap, metric, minVal, maxVal])
+  }, [stateDataMap, minVal, maxVal])
 
   const formatRate = useCallback((num) => typeof num === 'number' ? num.toFixed(1) : '0', [])
 
@@ -137,7 +146,7 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
         </Geographies>
       </ComposableMap>
 
-      {/* Legend */}
+      {/* Legend with DC inset */}
       <div style={{
         position: 'absolute',
         bottom: '10px',
@@ -148,6 +157,43 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
         padding: '8px 12px',
         fontSize: '11px'
       }}>
+        {/* DC Box at top of legend */}
+        {stateDataMap['DC'] && (
+          <div
+            onMouseEnter={() => setHoveredState('DC')}
+            onMouseLeave={() => setHoveredState(null)}
+            onClick={() => onStateClick && onStateClick('DC')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '8px',
+              paddingBottom: '8px',
+              borderBottom: '1px solid #333',
+              cursor: 'pointer',
+              background: selectedState === 'DC' ? '#1a1a2e' : 'transparent',
+              margin: '-8px -12px 8px -12px',
+              padding: '8px 12px',
+              borderRadius: '4px 4px 0 0'
+            }}
+          >
+            <div
+              style={{
+                width: '20px',
+                height: '20px',
+                borderRadius: '3px',
+                background: getStateColor('DC'),
+                border: hoveredState === 'DC' ? '1px solid #888' : selectedState === 'DC' ? '2px solid #fff' : '1px solid #444'
+              }}
+            />
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: '600', color: '#fff' }}>DC</div>
+              <div style={{ fontSize: '10px', color: '#888' }}>
+                {formatRate((stateDataMap['DC'].offenseTotal || 0) / (stateDataMap['DC'].pop || 1) * 100000)}/100K
+              </div>
+            </div>
+          </div>
+        )}
         <div style={{ color: '#888', marginBottom: '4px' }}>Per 100K Pop</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <div style={{ width: '60px', height: '8px', background: 'linear-gradient(to right, rgb(60,20,90), rgb(140,30,60), rgb(220,60,30), rgb(255,220,60))', borderRadius: '2px' }}></div>
@@ -179,10 +225,10 @@ export default function USMap({ data, metric, year, onStateClick, selectedState 
             Pop: {(stateDataMap[hoveredState].pop || 0).toLocaleString()}
           </div>
           <div style={{ fontSize: '13px', color: '#ef4444' }}>
-            {metric}: {(stateDataMap[hoveredState][metric] || 0).toLocaleString()}
+            Offenses: {(stateDataMap[hoveredState].offenseTotal || 0).toLocaleString()}
           </div>
           <div style={{ fontSize: '12px', color: '#888' }}>
-            Rate: {formatRate((stateDataMap[hoveredState][metric] || 0) / (stateDataMap[hoveredState].pop || 1) * 100000)}/100K
+            Rate: {formatRate((stateDataMap[hoveredState].offenseTotal || 0) / (stateDataMap[hoveredState].pop || 1) * 100000)}/100K
           </div>
         </div>
       )}
