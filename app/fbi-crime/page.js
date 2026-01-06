@@ -90,7 +90,7 @@ const getSubdivisionTerm = (stateAbbr, plural = true) => {
 
 export default function FBICrime() {
   const [countyData, setCountyData] = useState([])           // County data for selected state
-  const [selectedYear, setSelectedYear] = useState(null)
+  const [selectedYear, setSelectedYear] = useState(2024)     // Default to 2024 for faster initial load
   const [selectedState, setSelectedState] = useState(null)
   const [countyLoading, setCountyLoading] = useState(false)
   // Multi-select: set of selected offense IDs
@@ -135,16 +135,20 @@ export default function FBICrime() {
   const raceParam = getRaceParam(selectedRaces)
   const hasRaceFilter = isRaceFilterActive(selectedRaces)
 
-  // SWR hooks for main data fetching with caching
-  const { data: metaJson } = useSWR('/api/fbi-crime?level=metadata')
-  const { data: stateJson, error: stateError } = useSWR(`/api/fbi-crime?level=state${raceParam}`)
-  const { data: countyJson } = useSWR(`/api/fbi-crime?level=county${raceParam}`)
-  const { data: cityJson } = useSWR(`/api/fbi-crime?level=city${raceParam}`)
+  // Build year param - only fetch selected year's data for faster loading
+  const yearParam = selectedYear ? `&year=${selectedYear}` : ''
 
-  // Fetch totals (unfiltered) when race filter is active
-  const { data: totalStateJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=state' : null)
-  const { data: totalCountyJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=county' : null)
-  const { data: totalCityJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=city' : null)
+  // SWR hooks for main data fetching with caching
+  // Fetches only selected year's data to reduce payload size
+  const { data: metaJson } = useSWR('/api/fbi-crime?level=metadata')
+  const { data: stateJson, error: stateError } = useSWR(`/api/fbi-crime?level=state${yearParam}${raceParam}`)
+  const { data: countyJson } = useSWR(`/api/fbi-crime?level=county${yearParam}${raceParam}`)
+  const { data: cityJson } = useSWR(`/api/fbi-crime?level=city${yearParam}${raceParam}`)
+
+  // Fetch totals (unfiltered by race) when race filter is active - still filter by year
+  const { data: totalStateJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=state${yearParam}` : null)
+  const { data: totalCountyJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=county${yearParam}` : null)
+  const { data: totalCityJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=city${yearParam}` : null)
 
   // Derive data from SWR responses
   const metadata = metaJson || null
@@ -159,15 +163,19 @@ export default function FBICrime() {
   const loading = !stateJson || !countyJson || !cityJson
   const error = stateError?.message || null
 
-  // Set initial year when metadata loads
+  // Update year to latest available if metadata shows 2024 isn't available
+  // (fallback in case data doesn't have 2024 yet)
   useEffect(() => {
-    if (metadata?.years && metadata.years.length > 0 && !selectedYear) {
-      setSelectedYear(Math.max(...metadata.years))
+    if (metadata?.years && metadata.years.length > 0) {
+      const maxYear = Math.max(...metadata.years)
+      if (!metadata.years.includes(selectedYear)) {
+        setSelectedYear(maxYear)
+      }
     }
-  }, [metadata, selectedYear])
+  }, [metadata])
 
   // Fetch county data when state is selected
-  const fetchCountyData = async (stateAbbr, races) => {
+  const fetchCountyData = async (stateAbbr, races, year) => {
     if (!stateAbbr) {
       setCountyData([])
       return
@@ -175,7 +183,8 @@ export default function FBICrime() {
     setCountyLoading(true)
     try {
       const raceParam = getRaceParam(races)
-      const res = await fetch(`/api/fbi-crime?level=county&state=${stateAbbr}${raceParam}`)
+      const yearParam = year ? `&year=${year}` : ''
+      const res = await fetch(`/api/fbi-crime?level=county&state=${stateAbbr}${yearParam}${raceParam}`)
       const json = await res.json()
       setCountyData(json.rows || [])
     } catch (err) {
@@ -185,12 +194,12 @@ export default function FBICrime() {
     setCountyLoading(false)
   }
 
-  // Re-fetch county data when race changes and a state is selected
+  // Re-fetch county data when race or year changes and a state is selected
   useEffect(() => {
     if (selectedState) {
-      fetchCountyData(selectedState, selectedRaces)
+      fetchCountyData(selectedState, selectedRaces, selectedYear)
     }
-  }, [selectedRaces])
+  }, [selectedRaces, selectedYear])
 
   // Handle state click
   const handleStateClick = (stateAbbr) => {
@@ -200,7 +209,7 @@ export default function FBICrime() {
       setCountyData([])
     } else {
       setSelectedState(stateAbbr)
-      fetchCountyData(stateAbbr, selectedRaces)
+      fetchCountyData(stateAbbr, selectedRaces, selectedYear)
     }
   }
 
