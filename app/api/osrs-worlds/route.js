@@ -63,14 +63,15 @@ export async function GET(request) {
       }
       const hours = rangeHours[range] || 24
 
-      // Calculate cutoff as Unix timestamp (seconds)
-      const cutoffSeconds = Math.floor(Date.now() / 1000) - (hours * 3600)
+      // Calculate cutoff as ISO timestamp string for BigQuery TIMESTAMP comparison
+      const cutoffDate = new Date(Date.now() - (hours * 3600 * 1000))
+      const cutoffISO = cutoffDate.toISOString()
 
       const historyQuery = `
-        SELECT timestamp, players
+        SELECT UNIX_SECONDS(timestamp) as timestamp, players
         FROM \`${projectId}.rs_population.world_data\`
         WHERE world_id = ${parseInt(worldId)}
-          AND timestamp >= ${cutoffSeconds}
+          AND timestamp >= TIMESTAMP('${cutoffISO}')
         ORDER BY timestamp ASC
       `
 
