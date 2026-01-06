@@ -135,40 +135,77 @@ export default function FBICrime() {
   const raceParam = getRaceParam(selectedRaces)
   const hasRaceFilter = isRaceFilterActive(selectedRaces)
 
-  // Build year param - only fetch selected year's data for faster loading
-  const yearParam = selectedYear ? `&year=${selectedYear}` : ''
-
-  // SWR hooks for main data fetching with caching
-  // Fetches only selected year's data to reduce payload size
+  // SWR hooks - always fetch 2024 data only (fast initial load)
+  // Other years are fetched on-demand when user selects them
   const { data: metaJson } = useSWR('/api/fbi-crime?level=metadata')
-  const { data: stateJson, error: stateError } = useSWR(`/api/fbi-crime?level=state${yearParam}${raceParam}`)
-  const { data: countyJson } = useSWR(`/api/fbi-crime?level=county${yearParam}${raceParam}`)
-  const { data: cityJson } = useSWR(`/api/fbi-crime?level=city${yearParam}${raceParam}`)
+  const { data: stateJson2024, error: stateError } = useSWR(`/api/fbi-crime?level=state&year=2024${raceParam}`)
+  const { data: countyJson2024 } = useSWR(`/api/fbi-crime?level=county&year=2024${raceParam}`)
+  const { data: cityJson2024 } = useSWR(`/api/fbi-crime?level=city&year=2024${raceParam}`)
 
-  // Fetch totals (unfiltered by race) when race filter is active - still filter by year
-  const { data: totalStateJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=state${yearParam}` : null)
-  const { data: totalCountyJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=county${yearParam}` : null)
-  const { data: totalCityJson } = useSWR(hasRaceFilter ? `/api/fbi-crime?level=city${yearParam}` : null)
+  // Fetch totals (unfiltered by race) when race filter is active - 2024 only
+  const { data: totalStateJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=state&year=2024' : null)
+  const { data: totalCountyJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=county&year=2024' : null)
+  const { data: totalCityJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=city&year=2024' : null)
 
-  // Derive data from SWR responses
-  const metadata = metaJson || null
-  const stateData = stateJson?.rows || []
-  const allCountyData = countyJson?.rows || []
-  const allCityData = cityJson?.rows || []
+  // State for on-demand year data (when user selects a year other than 2024)
+  const [otherYearData, setOtherYearData] = useState({ state: null, county: null, city: null, year: null })
+  const [otherYearLoading, setOtherYearLoading] = useState(false)
+
+  // Fetch other year data on-demand
+  const fetchYearData = async (year) => {
+    if (year === 2024) return // Already have 2024
+    setOtherYearLoading(true)
+    try {
+      const raceParam = getRaceParam(selectedRaces)
+      const [stateRes, countyRes, cityRes] = await Promise.all([
+        fetch(`/api/fbi-crime?level=state&year=${year}${raceParam}`),
+        fetch(`/api/fbi-crime?level=county&year=${year}${raceParam}`),
+        fetch(`/api/fbi-crime?level=city&year=${year}${raceParam}`)
+      ])
+      const [stateData, countyData, cityData] = await Promise.all([
+        stateRes.json(),
+        countyRes.json(),
+        cityRes.json()
+      ])
+      setOtherYearData({
+        state: stateData.rows || [],
+        county: countyData.rows || [],
+        city: cityData.rows || [],
+        year
+      })
+    } catch (err) {
+      console.error('Error fetching year data:', err)
+    }
+    setOtherYearLoading(false)
+  }
+
+  // Fetch data when year changes (if not 2024)
+  useEffect(() => {
+    if (selectedYear && selectedYear !== 2024 && otherYearData.year !== selectedYear) {
+      fetchYearData(selectedYear)
+    }
+  }, [selectedYear])
+
+  // Use correct data based on selected year
+  const stateData = selectedYear === 2024 ? (stateJson2024?.rows || []) : (otherYearData.state || [])
+  const allCountyData = selectedYear === 2024 ? (countyJson2024?.rows || []) : (otherYearData.county || [])
+  const allCityData = selectedYear === 2024 ? (cityJson2024?.rows || []) : (otherYearData.city || [])
   const totalStateData = hasRaceFilter ? (totalStateJson?.rows || []) : stateData
   const totalCountyData = hasRaceFilter ? (totalCountyJson?.rows || []) : allCountyData
   const totalCityData = hasRaceFilter ? (totalCityJson?.rows || []) : allCityData
 
-  // Show loading until all main data is ready (state, county, city)
-  const loading = !stateJson || !countyJson || !cityJson
+  // Derive metadata
+  const metadata = metaJson || null
+
+  // Show loading until 2024 data ready (map shows immediately, tables show loading)
+  const loading = !stateJson2024 || !countyJson2024 || !cityJson2024 || (selectedYear !== 2024 && otherYearLoading)
   const error = stateError?.message || null
 
   // Update year to latest available if metadata shows 2024 isn't available
-  // (fallback in case data doesn't have 2024 yet)
   useEffect(() => {
     if (metadata?.years && metadata.years.length > 0) {
       const maxYear = Math.max(...metadata.years)
-      if (!metadata.years.includes(selectedYear)) {
+      if (!metadata.years.includes(2024)) {
         setSelectedYear(maxYear)
       }
     }
