@@ -255,12 +255,13 @@ export async function GET(request) {
   }
 }
 
-// Helper to create cached JSON response
+// Helper to create cached JSON response with proper Vercel edge caching
 function cachedJson(data, cacheSeconds = 300) {
-  return new Response(JSON.stringify(data), {
+  return Response.json(data, {
     headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': `public, s-maxage=${cacheSeconds}, stale-while-revalidate=60`
+      'Cache-Control': `public, max-age=0, s-maxage=${cacheSeconds}, stale-while-revalidate=60`,
+      'CDN-Cache-Control': `public, s-maxage=${cacheSeconds}`,
+      'Vercel-CDN-Cache-Control': `public, s-maxage=${cacheSeconds}`
     }
   })
 }

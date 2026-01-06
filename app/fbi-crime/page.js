@@ -135,61 +135,36 @@ export default function FBICrime() {
   const raceParam = getRaceParam(selectedRaces)
   const hasRaceFilter = isRaceFilterActive(selectedRaces)
 
-  // SWR hooks - always fetch 2024 data only (fast initial load)
-  // Other years are fetched on-demand when user selects them
+  // SWR hooks - 2024 always loads on init, other years load on-demand via conditional keys
+  // When key is null, SWR skips the fetch. When user selects a year, key becomes the URL.
   const { data: metaJson } = useSWR('/api/fbi-crime?level=metadata')
-  const { data: stateJson2024, error: stateError } = useSWR(`/api/fbi-crime?level=state&year=2024${raceParam}`)
-  const { data: countyJson2024 } = useSWR(`/api/fbi-crime?level=county&year=2024${raceParam}`)
-  const { data: cityJson2024 } = useSWR(`/api/fbi-crime?level=city&year=2024${raceParam}`)
 
-  // Fetch totals (unfiltered by race) when race filter is active - 2024 only
-  const { data: totalStateJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=state&year=2024' : null)
-  const { data: totalCountyJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=county&year=2024' : null)
-  const { data: totalCityJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=city&year=2024' : null)
+  // Main data - 2024 loads immediately, other years only when selected
+  const { data: stateJson, error: stateError, isLoading: stateLoading } = useSWR(
+    selectedYear ? `/api/fbi-crime?level=state&year=${selectedYear}${raceParam}` : null
+  )
+  const { data: countyJson, isLoading: countyLoading2 } = useSWR(
+    selectedYear ? `/api/fbi-crime?level=county&year=${selectedYear}${raceParam}` : null
+  )
+  const { data: cityJson, isLoading: cityLoading } = useSWR(
+    selectedYear ? `/api/fbi-crime?level=city&year=${selectedYear}${raceParam}` : null
+  )
 
-  // State for on-demand year data (when user selects a year other than 2024)
-  const [otherYearData, setOtherYearData] = useState({ state: null, county: null, city: null, year: null })
-  const [otherYearLoading, setOtherYearLoading] = useState(false)
+  // Fetch totals (unfiltered by race) when race filter is active
+  const { data: totalStateJson } = useSWR(
+    hasRaceFilter && selectedYear ? `/api/fbi-crime?level=state&year=${selectedYear}` : null
+  )
+  const { data: totalCountyJson } = useSWR(
+    hasRaceFilter && selectedYear ? `/api/fbi-crime?level=county&year=${selectedYear}` : null
+  )
+  const { data: totalCityJson } = useSWR(
+    hasRaceFilter && selectedYear ? `/api/fbi-crime?level=city&year=${selectedYear}` : null
+  )
 
-  // Fetch other year data on-demand
-  const fetchYearData = async (year) => {
-    if (year === 2024) return // Already have 2024
-    setOtherYearLoading(true)
-    try {
-      const raceParam = getRaceParam(selectedRaces)
-      const [stateRes, countyRes, cityRes] = await Promise.all([
-        fetch(`/api/fbi-crime?level=state&year=${year}${raceParam}`),
-        fetch(`/api/fbi-crime?level=county&year=${year}${raceParam}`),
-        fetch(`/api/fbi-crime?level=city&year=${year}${raceParam}`)
-      ])
-      const [stateData, countyData, cityData] = await Promise.all([
-        stateRes.json(),
-        countyRes.json(),
-        cityRes.json()
-      ])
-      setOtherYearData({
-        state: stateData.rows || [],
-        county: countyData.rows || [],
-        city: cityData.rows || [],
-        year
-      })
-    } catch (err) {
-      console.error('Error fetching year data:', err)
-    }
-    setOtherYearLoading(false)
-  }
-
-  // Fetch data when year changes (if not 2024)
-  useEffect(() => {
-    if (selectedYear && selectedYear !== 2024 && otherYearData.year !== selectedYear) {
-      fetchYearData(selectedYear)
-    }
-  }, [selectedYear])
-
-  // Use correct data based on selected year
-  const stateData = selectedYear === 2024 ? (stateJson2024?.rows || []) : (otherYearData.state || [])
-  const allCountyData = selectedYear === 2024 ? (countyJson2024?.rows || []) : (otherYearData.county || [])
-  const allCityData = selectedYear === 2024 ? (cityJson2024?.rows || []) : (otherYearData.city || [])
+  // Extract data from SWR responses
+  const stateData = stateJson?.rows || []
+  const allCountyData = countyJson?.rows || []
+  const allCityData = cityJson?.rows || []
   const totalStateData = hasRaceFilter ? (totalStateJson?.rows || []) : stateData
   const totalCountyData = hasRaceFilter ? (totalCountyJson?.rows || []) : allCountyData
   const totalCityData = hasRaceFilter ? (totalCityJson?.rows || []) : allCityData
@@ -197,8 +172,8 @@ export default function FBICrime() {
   // Derive metadata
   const metadata = metaJson || null
 
-  // Show loading until 2024 data ready (map shows immediately, tables show loading)
-  const loading = !stateJson2024 || !countyJson2024 || !cityJson2024 || (selectedYear !== 2024 && otherYearLoading)
+  // Show loading while data for selected year is being fetched
+  const loading = stateLoading || countyLoading2 || cityLoading
   const error = stateError?.message || null
 
   // Update year to latest available if metadata shows 2024 isn't available
