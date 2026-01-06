@@ -155,7 +155,8 @@ export default function FBICrime() {
   const totalCountyData = hasRaceFilter ? (totalCountyJson?.rows || []) : allCountyData
   const totalCityData = hasRaceFilter ? (totalCityJson?.rows || []) : allCityData
 
-  const loading = !stateJson && !stateError
+  // Show loading until all main data is ready (state, county, city)
+  const loading = !stateJson || !countyJson || !cityJson
   const error = stateError?.message || null
 
   // Set initial year when metadata loads
