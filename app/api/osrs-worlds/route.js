@@ -52,10 +52,22 @@ export async function GET(request) {
 
     // If world ID specified, return history for that world
     if (worldId) {
+      // Time range filter: day, week, month, quarter, year (default: day)
+      const range = searchParams.get('range') || 'day'
+      const rangeHours = {
+        'day': 24,
+        'week': 24 * 7,
+        'month': 24 * 30,
+        'quarter': 24 * 90,
+        'year': 24 * 365
+      }
+      const hours = rangeHours[range] || 24
+
       const historyQuery = `
         SELECT timestamp, players
         FROM \`${projectId}.rs_population.world_data\`
         WHERE world_id = ${parseInt(worldId)}
+          AND timestamp >= UNIX_SECONDS(TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL ${hours} HOUR))
         ORDER BY timestamp ASC
       `
 

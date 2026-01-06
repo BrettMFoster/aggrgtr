@@ -1,10 +1,8 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import useSWR from 'swr'
 
 export default function RSPopulation() {
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [viewMode, setViewMode] = useState('live')
   const [hoveredPoint, setHoveredPoint] = useState(null)
   const [hoveredIndex, setHoveredIndex] = useState(-1)
@@ -14,54 +12,52 @@ export default function RSPopulation() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const chartRef = useRef(null)
 
+  // SWR for data fetching with caching
+  const { data: historicalJson, error: historicalError } = useSWR(
+    '/api/rs-data?sheet=Historical',
+    { refreshInterval: 5 * 60 * 1000 }  // Auto-refresh every 5 minutes
+  )
+  const { data: liveJson, error: liveError } = useSWR(
+    '/api/rs-data?sheet=Data',
+    { refreshInterval: 5 * 60 * 1000 }  // Auto-refresh every 5 minutes
+  )
+
+  const loading = !historicalJson || !liveJson
+  const error = historicalError || liveError
+
+  // Process and combine data when it arrives
+  const data = useMemo(() => {
+    if (!historicalJson || !liveJson) return []
+
+    const historicalData = (historicalJson.rows || []).map(r => ({
+      ...r,
+      timestamp: new Date(r.timestamp)
+    }))
+    const liveData = (liveJson.rows || []).map(r => ({
+      ...r,
+      timestamp: new Date(r.timestamp)
+    }))
+
+    const combined = [...historicalData]
+    const latestHistorical = historicalData.length > 0
+      ? Math.max(...historicalData.map(d => d.timestamp.getTime()))
+      : 0
+
+    for (const point of liveData) {
+      if (point.timestamp.getTime() > latestHistorical) {
+        combined.push(point)
+      }
+    }
+    combined.sort((a, b) => a.timestamp - b.timestamp)
+    return combined
+  }, [historicalJson, liveJson])
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
-
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 5 * 60 * 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchData = async () => {
-    try {
-      const [historicalRes, liveRes] = await Promise.all([
-        fetch('/api/rs-data?sheet=Historical'),
-        fetch('/api/rs-data?sheet=Data')
-      ])
-      const [historicalJson, liveJson] = await Promise.all([
-        historicalRes.json(),
-        liveRes.json()
-      ])
-      const historicalData = (historicalJson.rows || []).map(r => ({
-        ...r,
-        timestamp: new Date(r.timestamp)
-      }))
-      const liveData = (liveJson.rows || []).map(r => ({
-        ...r,
-        timestamp: new Date(r.timestamp)
-      }))
-      const combined = [...historicalData]
-      const latestHistorical = historicalData.length > 0
-        ? Math.max(...historicalData.map(d => d.timestamp.getTime()))
-        : 0
-      for (const point of liveData) {
-        if (point.timestamp.getTime() > latestHistorical) {
-          combined.push(point)
-        }
-      }
-      combined.sort((a, b) => a.timestamp - b.timestamp)
-      setData(combined)
-      setLoading(false)
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
 
   // Get available years from data
   const getAvailableYears = () => {
@@ -408,7 +404,7 @@ export default function RSPopulation() {
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
           ) : error ? (
-            <div style={{ color: '#ff4444', padding: '40px', textAlign: 'center' }}>Error: {error}</div>
+            <div style={{ color: '#ff4444', padding: '40px', textAlign: 'center' }}>Error: {error?.message || 'Failed to load data'}</div>
           ) : (
             <>
               {/* KPI Cards - BIGGER */}

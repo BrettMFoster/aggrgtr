@@ -1,10 +1,36 @@
 // API route to fetch RS population data from Google Sheets
 // Uses service account credentials stored in environment variables
 
+// In-memory cache for RS data
+let cachedHistorical = null
+let cachedLive = null
+let historicalCacheTime = 0
+let liveCacheTime = 0
+const HISTORICAL_CACHE_TTL = 60 * 60 * 1000  // 1 hour (daily data, rarely changes)
+const LIVE_CACHE_TTL = 3 * 60 * 1000         // 3 minutes (matches scrape interval)
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const sheet = searchParams.get('sheet') || 'Data'
+    const now = Date.now()
+
+    // Check cache first
+    if (sheet === 'Historical' && cachedHistorical && (now - historicalCacheTime) < HISTORICAL_CACHE_TTL) {
+      return Response.json(cachedHistorical, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=600'
+        }
+      })
+    }
+
+    if (sheet === 'Data' && cachedLive && (now - liveCacheTime) < LIVE_CACHE_TTL) {
+      return Response.json(cachedLive, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=60'
+        }
+      })
+    }
 
     // Get service account credentials from environment
     // Option 1: Full JSON as single env var (preferred)
@@ -119,10 +145,27 @@ export async function GET(request) {
       }).filter(d => d && d.timestamp)
     }
 
-    return Response.json({
+    const result = {
       rows: data,
       count: data.length,
       sheet
+    }
+
+    // Update cache
+    if (sheet === 'Historical') {
+      cachedHistorical = result
+      historicalCacheTime = now
+    } else {
+      cachedLive = result
+      liveCacheTime = now
+    }
+
+    return Response.json(result, {
+      headers: {
+        'Cache-Control': sheet === 'Historical'
+          ? 'public, s-maxage=3600, stale-while-revalidate=600'
+          : 'public, s-maxage=180, stale-while-revalidate=60'
+      }
     })
 
   } catch (error) {

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 
 const scrollbarStyles = `
   .dark-scrollbar::-webkit-scrollbar {
@@ -19,9 +20,6 @@ const scrollbarStyles = `
 `
 
 export default function OSRSWorlds() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [sortBy, setSortBy] = useState('players')
   const [sortDir, setSortDir] = useState('desc')
   const [filterRegion, setFilterRegion] = useState('all')
@@ -29,10 +27,18 @@ export default function OSRSWorlds() {
   const [selectedWorld, setSelectedWorld] = useState(null)
   const [worldHistory, setWorldHistory] = useState(null)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyRange, setHistoryRange] = useState('day')  // day, week, month, quarter, year
   const [hoveredWorld, setHoveredWorld] = useState(null)
   const [hoveredPoint, setHoveredPoint] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [, setTick] = useState(0) // Force re-render for cache age display
+
+  // SWR for main data fetching with caching
+  const { data, error: swrError } = useSWR('/api/osrs-worlds', {
+    refreshInterval: 15 * 60 * 1000  // Auto-refresh every 15 minutes
+  })
+  const loading = !data && !swrError
+  const error = swrError?.message || data?.error
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -47,33 +53,11 @@ export default function OSRSWorlds() {
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 15 * 60 * 1000) // Poll every 15 minutes to protect BigQuery
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch('/api/osrs-worlds')
-      const json = await res.json()
-      if (json.error) {
-        setError(json.error)
-      } else {
-        setData(json)
-      }
-      setLoading(false)
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
-
-  const fetchWorldHistory = async (world) => {
+  const fetchWorldHistory = async (world, range = 'day') => {
     setSelectedWorld(world)
     setHistoryLoading(true)
     try {
-      const res = await fetch(`/api/osrs-worlds?world=${world.world_id}`)
+      const res = await fetch(`/api/osrs-worlds?world=${world.world_id}&range=${range}`)
       const json = await res.json()
       if (json.history) {
         setWorldHistory(json.history)
@@ -82,6 +66,14 @@ export default function OSRSWorlds() {
       console.error('Failed to fetch world history:', err)
     }
     setHistoryLoading(false)
+  }
+
+  // Refetch history when range changes
+  const handleRangeChange = (newRange) => {
+    setHistoryRange(newRange)
+    if (selectedWorld) {
+      fetchWorldHistory(selectedWorld, newRange)
+    }
   }
 
   const handleSort = (column) => {
@@ -296,16 +288,21 @@ export default function OSRSWorlds() {
           </>
         )}
 
-        {/* X-axis labels - show 6 evenly spaced timestamps */}
+        {/* X-axis labels - show 6 evenly spaced timestamps with date for longer ranges */}
         {worldHistory.length > 0 && (
           <>
             {[0, 0.2, 0.4, 0.6, 0.8, 1].map((pct, i) => {
               const idx = Math.floor(pct * (worldHistory.length - 1))
               const x = 50 + pct * 700
               const date = new Date(parseFloat(worldHistory[idx].timestamp) * 1000)
+              // Show date for ranges longer than a day
+              const showDate = historyRange !== 'day'
+              const label = showDate
+                ? `${date.getMonth()+1}/${date.getDate()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
+                : date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
               return (
                 <text key={i} x={x} y="200" fill="#888" fontSize="10" textAnchor="middle">
-                  {date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  {label}
                 </text>
               )
             })}
@@ -413,14 +410,27 @@ export default function OSRSWorlds() {
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', margin: 0 }}>
                       {selectedWorld.world_name} - Population History
                     </h3>
-                    <button
-                      onClick={() => { setSelectedWorld(null); setWorldHistory(null); }}
-                      style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      Close
-                    </button>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <select
+                        value={historyRange}
+                        onChange={(e) => handleRangeChange(e.target.value)}
+                        style={{ background: '#222', border: '1px solid #333', color: '#fff', padding: '6px 10px', borderRadius: '4px', fontSize: '13px', cursor: 'pointer' }}
+                      >
+                        <option value="day">Last 24 Hours</option>
+                        <option value="week">Last Week</option>
+                        <option value="month">Last Month</option>
+                        <option value="quarter">Last Quarter</option>
+                        <option value="year">Last Year</option>
+                      </select>
+                      <button
+                        onClick={() => { setSelectedWorld(null); setWorldHistory(null); setHistoryRange('day'); }}
+                        style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '14px', color: '#888' }}>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '14px', color: '#888', flexWrap: 'wrap' }}>
                     <span>Region: {selectedWorld.location}</span>
                     <span>Type: {selectedWorld.world_type}</span>
                     <span>Activity: {selectedWorld.activity}</span>
@@ -437,7 +447,13 @@ export default function OSRSWorlds() {
                   )}
                   {worldHistory && worldHistory.length > 0 && (
                     <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-                      {worldHistory.length} data points from past {Math.round((parseFloat(worldHistory[worldHistory.length-1].timestamp) - parseFloat(worldHistory[0].timestamp)) / 3600)} hours
+                      {worldHistory.length} data points from past {
+                        historyRange === 'day' ? '24 hours' :
+                        historyRange === 'week' ? 'week' :
+                        historyRange === 'month' ? 'month' :
+                        historyRange === 'quarter' ? 'quarter' :
+                        'year'
+                      }
                     </div>
                   )}
                 </div>

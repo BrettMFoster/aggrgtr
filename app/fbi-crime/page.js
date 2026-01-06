@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
+import useSWR from 'swr'
 import USMap from './USMap'
 import CountyMap from './CountyMap'
 
@@ -88,13 +89,7 @@ const getSubdivisionTerm = (stateAbbr, plural = true) => {
 }
 
 export default function FBICrime() {
-  const [stateData, setStateData] = useState([])
   const [countyData, setCountyData] = useState([])           // County data for selected state
-  const [allCountyData, setAllCountyData] = useState([])     // All county data nationwide
-  const [allCityData, setAllCityData] = useState([])         // All city data nationwide
-  const [metadata, setMetadata] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedState, setSelectedState] = useState(null)
   const [countyLoading, setCountyLoading] = useState(false)
@@ -111,10 +106,6 @@ export default function FBICrime() {
   const [selectedRaces, setSelectedRaces] = useState(new Set())
   // Track if race section is expanded
   const [raceExpanded, setRaceExpanded] = useState(false)
-  // Total data (unfiltered by race) - used to show "X/Total" when race filter active
-  const [totalStateData, setTotalStateData] = useState([])
-  const [totalCountyData, setTotalCountyData] = useState([])
-  const [totalCityData, setTotalCityData] = useState([])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -140,63 +131,39 @@ export default function FBICrime() {
     return races.size > 0 && races.size < OFFENDER_RACES.length
   }
 
-  const fetchData = async (races) => {
-    try {
-      const raceParam = getRaceParam(races)
-      const hasRaceFilter = isRaceFilterActive(races)
+  // Build race param string for SWR keys
+  const raceParam = getRaceParam(selectedRaces)
+  const hasRaceFilter = isRaceFilterActive(selectedRaces)
 
-      // Build fetch promises - always get race-filtered (or total if no filter)
-      const fetches = [
-        fetch('/api/fbi-crime?level=metadata'),
-        fetch(`/api/fbi-crime?level=state${raceParam}`),
-        fetch(`/api/fbi-crime?level=county${raceParam}`),
-        fetch(`/api/fbi-crime?level=city${raceParam}`)
-      ]
+  // SWR hooks for main data fetching with caching
+  const { data: metaJson } = useSWR('/api/fbi-crime?level=metadata')
+  const { data: stateJson, error: stateError } = useSWR(`/api/fbi-crime?level=state${raceParam}`)
+  const { data: countyJson } = useSWR(`/api/fbi-crime?level=county${raceParam}`)
+  const { data: cityJson } = useSWR(`/api/fbi-crime?level=city${raceParam}`)
 
-      // If race filter is active, also fetch totals for comparison
-      if (hasRaceFilter) {
-        fetches.push(
-          fetch('/api/fbi-crime?level=state'),
-          fetch('/api/fbi-crime?level=county'),
-          fetch('/api/fbi-crime?level=city')
-        )
-      }
+  // Fetch totals (unfiltered) when race filter is active
+  const { data: totalStateJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=state' : null)
+  const { data: totalCountyJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=county' : null)
+  const { data: totalCityJson } = useSWR(hasRaceFilter ? '/api/fbi-crime?level=city' : null)
 
-      const responses = await Promise.all(fetches)
-      const jsons = await Promise.all(responses.map(r => r.json()))
+  // Derive data from SWR responses
+  const metadata = metaJson || null
+  const stateData = stateJson?.rows || []
+  const allCountyData = countyJson?.rows || []
+  const allCityData = cityJson?.rows || []
+  const totalStateData = hasRaceFilter ? (totalStateJson?.rows || []) : stateData
+  const totalCountyData = hasRaceFilter ? (totalCountyJson?.rows || []) : allCountyData
+  const totalCityData = hasRaceFilter ? (totalCityJson?.rows || []) : allCityData
 
-      const [metaJson, stateJson, countyJson, cityJson] = jsons
-      setMetadata(metaJson)
-      setStateData(stateJson.rows || [])
-      setAllCountyData(countyJson.rows || [])
-      setAllCityData(cityJson.rows || [])
+  const loading = !stateJson && !stateError
+  const error = stateError?.message || null
 
-      // Set totals if race filter active
-      if (hasRaceFilter) {
-        setTotalStateData(jsons[4].rows || [])
-        setTotalCountyData(jsons[5].rows || [])
-        setTotalCityData(jsons[6].rows || [])
-      } else {
-        // No race filter - totals are same as main data
-        setTotalStateData(stateJson.rows || [])
-        setTotalCountyData(countyJson.rows || [])
-        setTotalCityData(cityJson.rows || [])
-      }
-
-      if (metaJson.years && metaJson.years.length > 0) {
-        setSelectedYear(Math.max(...metaJson.years))
-      }
-      setLoading(false)
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
-
-  // Fetch data on initial load and when race filter changes
+  // Set initial year when metadata loads
   useEffect(() => {
-    fetchData(selectedRaces)
-  }, [selectedRaces])
+    if (metadata?.years && metadata.years.length > 0 && !selectedYear) {
+      setSelectedYear(Math.max(...metadata.years))
+    }
+  }, [metadata, selectedYear])
 
   // Fetch county data when state is selected
   const fetchCountyData = async (stateAbbr, races) => {
