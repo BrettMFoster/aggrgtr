@@ -90,11 +90,9 @@ export default function RSPopulation() {
     let filtered
 
     if (viewMode === 'month') {
-      // Filter to specific month/year
-      filtered = data.filter(d =>
-        d.timestamp.getFullYear() === selectedYear &&
-        d.timestamp.getMonth() === selectedMonth
-      )
+      // Rolling 30-day window
+      const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000
+      filtered = data.filter(d => d.timestamp.getTime() > cutoff)
       filtered = aggregateByHour(filtered)
     } else if (viewMode === 'year') {
       // Filter to specific year
@@ -435,8 +433,8 @@ export default function RSPopulation() {
                     <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
                       Player Count - {viewModes.find(m => m.id === viewMode)?.label}
                     </h2>
-                    {/* Year dropdown for month and year views */}
-                    {(viewMode === 'month' || viewMode === 'year') && (
+                    {/* Year dropdown for year view */}
+                    {viewMode === 'year' && (
                       <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -452,26 +450,6 @@ export default function RSPopulation() {
                       >
                         {getAvailableYears().map(year => (
                           <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-                    )}
-                    {/* Month dropdown only for month view */}
-                    {viewMode === 'month' && (
-                      <select
-                        value={selectedMonth}
-                        onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                        style={{
-                          background: '#1a1a1a',
-                          border: '1px solid #333',
-                          color: '#fff',
-                          padding: '6px 10px',
-                          borderRadius: '6px',
-                          fontSize: '14px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {getAvailableMonths().map(month => (
-                          <option key={month} value={month}>{monthNames[month]}</option>
                         ))}
                       </select>
                     )}
