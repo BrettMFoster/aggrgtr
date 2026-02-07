@@ -11,6 +11,7 @@ export default function RSPopulation() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [monthFilterOn, setMonthFilterOn] = useState(false)
+  const [yearFilterOn, setYearFilterOn] = useState(false)
   const chartRef = useRef(null)
 
   // SWR for data fetching with caching
@@ -104,9 +105,15 @@ export default function RSPopulation() {
       }
       filtered = aggregateByHour(filtered)
     } else if (viewMode === 'year') {
-      // Filter to specific year
-      filtered = data.filter(d => d.timestamp.getFullYear() === selectedYear)
-      filtered = aggregateByDay(filtered)
+      if (yearFilterOn) {
+        // Filter to specific calendar year
+        filtered = data.filter(d => d.timestamp.getFullYear() === selectedYear)
+      } else {
+        // Rolling 365-day window
+        const cutoff = now.getTime() - 365 * 24 * 60 * 60 * 1000
+        filtered = data.filter(d => d.timestamp.getTime() > cutoff)
+      }
+      filtered = aggregateByHour(filtered)
     } else {
       // Original logic for live, week, all
       const cutoffs = {
@@ -459,8 +466,25 @@ export default function RSPopulation() {
                         Filter
                       </button>
                     )}
-                    {/* Year dropdown for month (when filter on) and year views */}
-                    {((viewMode === 'month' && monthFilterOn) || viewMode === 'year') && (
+                    {/* Year filter toggle */}
+                    {viewMode === 'year' && (
+                      <button
+                        onClick={() => setYearFilterOn(!yearFilterOn)}
+                        style={{
+                          background: yearFilterOn ? '#1a1a1a' : 'transparent',
+                          border: yearFilterOn ? '1px solid #4ade80' : '1px solid #333',
+                          color: yearFilterOn ? '#4ade80' : '#666',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Filter
+                      </button>
+                    )}
+                    {/* Year dropdown for month (when filter on) and year (when filter on) */}
+                    {((viewMode === 'month' && monthFilterOn) || (viewMode === 'year' && yearFilterOn)) && (
                       <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
