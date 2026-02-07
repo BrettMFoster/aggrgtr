@@ -10,6 +10,7 @@ export default function RSPopulation() {
   const [isMobile, setIsMobile] = useState(false)
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+  const [monthFilterOn, setMonthFilterOn] = useState(false)
   const chartRef = useRef(null)
 
   // SWR for data fetching with caching
@@ -90,11 +91,17 @@ export default function RSPopulation() {
     let filtered
 
     if (viewMode === 'month') {
-      // Filter to specific month/year with hourly granularity
-      filtered = data.filter(d =>
-        d.timestamp.getFullYear() === selectedYear &&
-        d.timestamp.getMonth() === selectedMonth
-      )
+      if (monthFilterOn) {
+        // Filter to specific month/year
+        filtered = data.filter(d =>
+          d.timestamp.getFullYear() === selectedYear &&
+          d.timestamp.getMonth() === selectedMonth
+        )
+      } else {
+        // Rolling 30-day window
+        const cutoff = now.getTime() - 30 * 24 * 60 * 60 * 1000
+        filtered = data.filter(d => d.timestamp.getTime() > cutoff)
+      }
       filtered = aggregateByHour(filtered)
     } else if (viewMode === 'year') {
       // Filter to specific year
@@ -435,8 +442,25 @@ export default function RSPopulation() {
                     <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
                       Player Count - {viewModes.find(m => m.id === viewMode)?.label}
                     </h2>
-                    {/* Year dropdown for month and year views */}
-                    {(viewMode === 'month' || viewMode === 'year') && (
+                    {/* Month filter toggle */}
+                    {viewMode === 'month' && (
+                      <button
+                        onClick={() => setMonthFilterOn(!monthFilterOn)}
+                        style={{
+                          background: monthFilterOn ? '#1a1a1a' : 'transparent',
+                          border: monthFilterOn ? '1px solid #4ade80' : '1px solid #333',
+                          color: monthFilterOn ? '#4ade80' : '#666',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Filter
+                      </button>
+                    )}
+                    {/* Year dropdown for month (when filter on) and year views */}
+                    {((viewMode === 'month' && monthFilterOn) || viewMode === 'year') && (
                       <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
@@ -455,8 +479,8 @@ export default function RSPopulation() {
                         ))}
                       </select>
                     )}
-                    {/* Month dropdown for month view */}
-                    {viewMode === 'month' && (
+                    {/* Month dropdown when filter is on */}
+                    {viewMode === 'month' && monthFilterOn && (
                       <select
                         value={selectedMonth}
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
