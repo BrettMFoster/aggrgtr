@@ -274,7 +274,7 @@ export default function RSPopulation() {
     }
 
     if (viewMode === 'year') {
-      // Year view: show months, skip first partial month to avoid collision
+      // Year view: show months, evenly spaced with no overlap
       const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < filteredData.length; i++) {
@@ -286,11 +286,15 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      // Skip first month if it's partial (less than 10 data points before next month)
+      // Skip first month if partial (less than 5% of data before next month boundary)
       let monthsToUse = allMonths
-      if (allMonths.length > 1 && allMonths[0].index < 10) {
-        monthsToUse = allMonths.slice(1)
+      if (allMonths.length > 1 && allMonths[1].index > 0) {
+        const firstMonthPct = allMonths[1].index / filteredData.length
+        if (firstMonthPct < 0.03) {
+          monthsToUse = allMonths.slice(1)
+        }
       }
+      // Generate candidate labels (collision detection at render handles overlap)
       const maxLabels = 12
       if (monthsToUse.length <= maxLabels) {
         return monthsToUse
@@ -565,11 +569,24 @@ export default function RSPopulation() {
                         </g>
                       ))}
 
-                      {/* X-axis labels - WHITE */}
-                      {getXAxisLabels().map((label, i) => (
+                      {/* X-axis labels - skip any that would overlap */}
+                      {(() => {
+                        const allLabels = getXAxisLabels()
+                        const minGap = 70 // minimum px between label centers in viewBox coords
+                        const visible = []
+                        let lastX = -Infinity
+                        for (const label of allLabels) {
+                          const x = 60 + (label.index / (filteredData.length - 1 || 1)) * 820
+                          if (x - lastX >= minGap) {
+                            visible.push({ ...label, x })
+                            lastX = x
+                          }
+                        }
+                        return visible
+                      })().map((label, i) => (
                         <text
                           key={i}
-                          x={60 + (label.index / (filteredData.length - 1 || 1)) * 820}
+                          x={label.x}
                           y={335}
                           fill="#ffffff"
                           fontSize="12"
