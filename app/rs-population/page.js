@@ -95,7 +95,7 @@ export default function RSPopulation() {
         d.timestamp.getFullYear() === selectedYear &&
         d.timestamp.getMonth() === selectedMonth
       )
-      filtered = aggregateByDay(filtered)
+      filtered = aggregateByHour(filtered)
     } else if (viewMode === 'year') {
       // Filter to specific year
       filtered = data.filter(d => d.timestamp.getFullYear() === selectedYear)
