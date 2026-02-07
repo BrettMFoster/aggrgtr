@@ -113,7 +113,7 @@ export default function RSPopulation() {
         const cutoff = now.getTime() - 365 * 24 * 60 * 60 * 1000
         filtered = data.filter(d => d.timestamp.getTime() > cutoff)
       }
-      filtered = aggregateByHour(filtered)
+      filtered = aggregateByWeek(filtered)
     } else {
       // Original logic for live, week, all
       const cutoffs = {
@@ -145,6 +145,30 @@ export default function RSPopulation() {
     }
     return Object.entries(byDay).map(([day, values]) => ({
       timestamp: new Date(day),
+      osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
+      rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
+      total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
+    })).sort((a, b) => a.timestamp - b.timestamp)
+  }
+
+  const aggregateByWeek = (data) => {
+    const byWeek = {}
+    for (const point of data) {
+      // ISO week key: get the Monday of the week
+      const d = new Date(point.timestamp)
+      const day = d.getDay()
+      const monday = new Date(d)
+      monday.setDate(d.getDate() - ((day + 6) % 7))
+      const weekKey = monday.toISOString().split('T')[0]
+      if (!byWeek[weekKey]) {
+        byWeek[weekKey] = { osrs: [], rs3: [], total: [] }
+      }
+      byWeek[weekKey].osrs.push(point.osrs)
+      byWeek[weekKey].rs3.push(point.rs3)
+      byWeek[weekKey].total.push(point.total)
+    }
+    return Object.entries(byWeek).map(([week, values]) => ({
+      timestamp: new Date(week),
       osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
       rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
       total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
