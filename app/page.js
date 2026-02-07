@@ -21,31 +21,32 @@ export default function Home() {
       stats: ['3-min intervals', 'Per-world data'],
       link: '/rs-population'
     },
-    {
-      id: 'fbi',
-      title: 'FBI Crime Statistics',
-      category: 'government',
-      status: 'live',
-      desc: 'Violent and property crime from FBI NIBRS. Agency, county, and state level data.',
-      stats: ['13,000+ agencies', '2020-2024'],
-      link: '/fbi-crime'
-    },
-    {
-      id: 'census',
-      title: 'Census Demographics',
-      category: 'government',
-      status: 'available',
-      desc: 'Population, income, age distribution, housing. County, tract, and ZIP level.',
-      stats: ['All US geographies', '100+ variables']
-    },
-    {
-      id: 'schools',
-      title: 'School District Data',
-      category: 'government',
-      status: 'coming',
-      desc: 'Test scores, graduation rates, student-teacher ratios, per-pupil spending.',
-      stats: ['13,000+ districts', '20+ metrics']
-    },
+    // Hidden from public view for now
+    // {
+    //   id: 'fbi',
+    //   title: 'FBI Crime Statistics',
+    //   category: 'government',
+    //   status: 'live',
+    //   desc: 'Violent and property crime from FBI NIBRS. Agency, county, and state level data.',
+    //   stats: ['13,000+ agencies', '2020-2024'],
+    //   link: '/fbi-crime'
+    // },
+    // {
+    //   id: 'census',
+    //   title: 'Census Demographics',
+    //   category: 'government',
+    //   status: 'available',
+    //   desc: 'Population, income, age distribution, housing. County, tract, and ZIP level.',
+    //   stats: ['All US geographies', '100+ variables']
+    // },
+    // {
+    //   id: 'schools',
+    //   title: 'School District Data',
+    //   category: 'government',
+    //   status: 'coming',
+    //   desc: 'Test scores, graduation rates, student-teacher ratios, per-pupil spending.',
+    //   stats: ['13,000+ districts', '20+ metrics']
+    // },
   ]
 
 
