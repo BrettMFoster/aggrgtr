@@ -596,7 +596,7 @@ export default function RSPopulation() {
                       {/* X-axis labels - skip any that would overlap */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const minGap = 70 // minimum px between label centers in viewBox coords
+                        const minGap = 55 // minimum px between label centers in viewBox coords
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
