@@ -195,6 +195,20 @@ export default function RSPopulation() {
   }
 
   const filteredData = getFilteredData()
+
+  // Compute x positions - time-proportional for year/all, index-based for others
+  const xPositions = (() => {
+    if (filteredData.length === 0) return []
+    if (viewMode === 'year' || viewMode === 'all') {
+      const minTime = filteredData[0].timestamp.getTime()
+      const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
+      const range = maxTime - minTime || 1
+      return filteredData.map(d => 60 + ((d.timestamp.getTime() - minTime) / range) * 820)
+    }
+    const len = filteredData.length - 1 || 1
+    return filteredData.map((_, i) => 60 + (i / len) * 820)
+  })()
+
   const latest = data[data.length - 1]
   const maxOsrs = Math.max(...filteredData.map(d => d.osrs), 1)
   const avgTotal = filteredData.length > 0
@@ -239,21 +253,22 @@ export default function RSPopulation() {
   ]
 
   const handleInteraction = (clientX, clientY) => {
-    if (!chartRef.current || filteredData.length === 0) return
+    if (!chartRef.current || filteredData.length === 0 || xPositions.length === 0) return
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    // Chart area starts at ~7% from left (60/900) and ends at ~98% (880/900)
-    const chartStartPct = 60 / 900
-    const chartEndPct = 880 / 900
-    const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
-    const chartAreaStart = chartWidth * chartStartPct
-    const relativeX = x - chartAreaStart
-    const pct = Math.max(0, Math.min(1, relativeX / chartAreaWidth))
-    const dataIndex = Math.round(pct * (filteredData.length - 1))
-    const clampedIndex = Math.max(0, Math.min(filteredData.length - 1, dataIndex))
-    setHoveredPoint(filteredData[clampedIndex])
-    setHoveredIndex(clampedIndex)
+    const viewBoxX = (x / chartWidth) * 900
+    let closestIndex = 0
+    let closestDist = Infinity
+    for (let i = 0; i < xPositions.length; i++) {
+      const dist = Math.abs(xPositions[i] - viewBoxX)
+      if (dist < closestDist) {
+        closestDist = dist
+        closestIndex = i
+      }
+    }
+    setHoveredPoint(filteredData[closestIndex])
+    setHoveredIndex(closestIndex)
     setMousePos({ x: clientX, y: clientY })
   }
 
@@ -571,8 +586,8 @@ export default function RSPopulation() {
                     <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
-                        const x1 = 60 + (band.start / (filteredData.length - 1 || 1)) * 820
-                        const x2 = 60 + (band.end / (filteredData.length - 1 || 1)) * 820
+                        const x1 = xPositions[band.start] || 60
+                        const x2 = xPositions[band.end] || 880
                         return (
                           <rect
                             key={i}
@@ -596,11 +611,11 @@ export default function RSPopulation() {
                       {/* X-axis labels - skip any that would overlap */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const minGap = 55 // minimum px between label centers in viewBox coords
+                        const minGap = 55
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
-                          const x = 60 + (label.index / (filteredData.length - 1 || 1)) * 820
+                          const x = xPositions[label.index] || 60
                           if (x - lastX >= minGap) {
                             visible.push({ ...label, x })
                             lastX = x
@@ -622,12 +637,12 @@ export default function RSPopulation() {
 
                       {/* OSRS area */}
                       <path
-                        d={`M 60,310 ${filteredData.map((d, i) => `L ${60 + (i / (filteredData.length - 1 || 1)) * 820},${310 - (d.osrs / maxOsrs) * 270}`).join(' ')} L ${60 + 820},310 Z`}
+                        d={`M ${xPositions[0]},310 ${filteredData.map((d, i) => `L ${xPositions[i]},${310 - (d.osrs / maxOsrs) * 270}`).join(' ')} L ${xPositions[filteredData.length - 1]},310 Z`}
                         fill="rgba(74, 222, 128, 0.2)"
                       />
                       {/* OSRS line */}
                       <path
-                        d={`M ${filteredData.map((d, i) => `${60 + (i / (filteredData.length - 1 || 1)) * 820},${310 - (d.osrs / maxOsrs) * 270}`).join(' L ')}`}
+                        d={`M ${filteredData.map((d, i) => `${xPositions[i]},${310 - (d.osrs / maxOsrs) * 270}`).join(' L ')}`}
                         fill="none"
                         stroke="#4ade80"
                         strokeWidth="2"
@@ -635,12 +650,12 @@ export default function RSPopulation() {
 
                       {/* RS3 area */}
                       <path
-                        d={`M 60,310 ${filteredData.map((d, i) => `L ${60 + (i / (filteredData.length - 1 || 1)) * 820},${310 - (d.rs3 / maxOsrs) * 270}`).join(' ')} L ${60 + 820},310 Z`}
+                        d={`M ${xPositions[0]},310 ${filteredData.map((d, i) => `L ${xPositions[i]},${310 - (d.rs3 / maxOsrs) * 270}`).join(' ')} L ${xPositions[filteredData.length - 1]},310 Z`}
                         fill="rgba(96, 165, 250, 0.2)"
                       />
                       {/* RS3 line */}
                       <path
-                        d={`M ${filteredData.map((d, i) => `${60 + (i / (filteredData.length - 1 || 1)) * 820},${310 - (d.rs3 / maxOsrs) * 270}`).join(' L ')}`}
+                        d={`M ${filteredData.map((d, i) => `${xPositions[i]},${310 - (d.rs3 / maxOsrs) * 270}`).join(' L ')}`}
                         fill="none"
                         stroke="#60a5fa"
                         strokeWidth="2"
@@ -648,7 +663,7 @@ export default function RSPopulation() {
 
                       {/* Hover indicator */}
                       {hoveredPoint && hoveredIndex >= 0 && (() => {
-                        const x = 60 + (hoveredIndex / (filteredData.length - 1 || 1)) * 820
+                        const x = xPositions[hoveredIndex] || 60
                         return (
                           <>
                             <line x1={x} y1={40} x2={x} y2={310} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
