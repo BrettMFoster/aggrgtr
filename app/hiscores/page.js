@@ -88,46 +88,20 @@ export default function Hiscores() {
     const utcOpts = { timeZone: 'UTC' }
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-    if (viewMode === 'all_monthly') {
-      const allMonths = []
-      const seenMonths = new Set()
+    if (viewMode === 'all_monthly' || viewMode === 'all_weekly') {
+      // Use consistent quarterly labels (Jan, Apr, Jul, Oct)
+      const quarterMonths = [0, 3, 6, 9] // JS month indices
+      const result = []
+      const seen = new Set()
       for (let i = 0; i < chartData.length; i++) {
         const d = chartData[i]
-        const monthKey = `${d.timestamp.getUTCFullYear()}-${d.timestamp.getUTCMonth()}`
-        if (!seenMonths.has(monthKey)) {
-          seenMonths.add(monthKey)
-          const text = monthNames[d.timestamp.getUTCMonth()] + " '" + d.timestamp.getUTCFullYear().toString().slice(-2)
-          allMonths.push({ index: i, text })
+        const m = d.timestamp.getUTCMonth()
+        const y = d.timestamp.getUTCFullYear()
+        const key = `${y}-${m}`
+        if (quarterMonths.includes(m) && !seen.has(key)) {
+          seen.add(key)
+          result.push({ index: i, text: monthNames[m] + " '" + y.toString().slice(-2) })
         }
-      }
-      const maxLabels = 16
-      if (allMonths.length <= maxLabels) return allMonths
-      const result = []
-      for (let i = 0; i < maxLabels; i++) {
-        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
-        result.push(allMonths[idx])
-      }
-      return result
-    }
-
-    if (viewMode === 'all_weekly') {
-      const allMonths = []
-      const seenMonths = new Set()
-      for (let i = 0; i < chartData.length; i++) {
-        const d = chartData[i]
-        const monthKey = `${d.timestamp.getUTCFullYear()}-${d.timestamp.getUTCMonth()}`
-        if (!seenMonths.has(monthKey)) {
-          seenMonths.add(monthKey)
-          const text = monthNames[d.timestamp.getUTCMonth()] + " '" + d.timestamp.getUTCFullYear().toString().slice(-2)
-          allMonths.push({ index: i, text })
-        }
-      }
-      const maxLabels = 16
-      if (allMonths.length <= maxLabels) return allMonths
-      const result = []
-      for (let i = 0; i < maxLabels; i++) {
-        const idx = Math.floor((i / (maxLabels - 1)) * (allMonths.length - 1))
-        result.push(allMonths[idx])
       }
       return result
     }
