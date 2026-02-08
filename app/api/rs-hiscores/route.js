@@ -138,6 +138,10 @@ export async function GET(request) {
         (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
          WHERE total_accounts = (SELECT MAX(total_accounts) FROM \`${projectId}.rs_hiscores.monthly\`)
          LIMIT 1) as peak_monthly_label,
+        (SELECT total_accounts FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1) as current_month_total,
+        (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1) as current_month_label,
         (SELECT CAST(ROUND(AVG(total_accounts)) AS INT64) FROM \`${projectId}.rs_hiscores.weekly\`
          WHERE period_start >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 WEEK)) as avg_4week,
         (SELECT CAST(ROUND(AVG(total_accounts)) AS INT64) FROM \`${projectId}.rs_hiscores.monthly\`
@@ -185,8 +189,10 @@ export async function GET(request) {
           peak_weekly_label: r[5].v || '',
           peak_monthly: parseInt(r[6].v) || 0,
           peak_monthly_label: r[7].v || '',
-          avg_4week: parseInt(r[8].v) || 0,
-          avg_12month: parseInt(r[9].v) || 0,
+          current_month_total: parseInt(r[8].v) || 0,
+          current_month_label: r[9].v || '',
+          avg_4week: parseInt(r[10].v) || 0,
+          avg_12month: parseInt(r[11].v) || 0,
         }
       }
     }
