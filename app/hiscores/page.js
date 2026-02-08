@@ -263,13 +263,8 @@ export default function Hiscores() {
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '16px' : '40px' }}>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Week</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#4ade80' }}>{summary.current_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#4ade80' }}>{summary.current_week_total?.toLocaleString() || '-'}</div>
                   <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>Accounts with XP gain</div>
-                </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Month</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#c084fc' }}>{summary.current_month_total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.current_month_label || ''}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Last Week</div>
@@ -277,9 +272,14 @@ export default function Hiscores() {
                   <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.last_week_label || ''}</div>
                 </div>
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Week High</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#60a5fa' }}>{summary.week_high?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>Peak this week</div>
+                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Month</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#c084fc' }}>{summary.current_month_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.current_month_label || ''}</div>
+                </div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Last Month</div>
+                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#60a5fa' }}>{summary.last_month_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.last_month_label || ''}</div>
                 </div>
               </div>
 

@@ -123,13 +123,19 @@ export async function GET(request) {
     const summaryQuery = `
       SELECT
         (SELECT total_accounts FROM \`${projectId}.rs_hiscores.snapshots\`
-         ORDER BY scraped_at DESC LIMIT 1) as current_total,
-        (SELECT MAX(total_accounts) FROM \`${projectId}.rs_hiscores.snapshots\`
-         WHERE scraped_at >= TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), WEEK)) as week_high,
+         ORDER BY scraped_at DESC LIMIT 1) as current_week_total,
         (SELECT total_accounts FROM \`${projectId}.rs_hiscores.weekly\`
          ORDER BY period_start DESC LIMIT 1) as last_week_total,
         (SELECT period_label FROM \`${projectId}.rs_hiscores.weekly\`
          ORDER BY period_start DESC LIMIT 1) as last_week_label,
+        (SELECT total_accounts FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1) as current_month_total,
+        (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1) as current_month_label,
+        (SELECT total_accounts FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1 OFFSET 1) as last_month_total,
+        (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
+         ORDER BY period_start DESC LIMIT 1 OFFSET 1) as last_month_label,
         (SELECT MAX(total_accounts) FROM \`${projectId}.rs_hiscores.weekly\`) as peak_weekly,
         (SELECT period_label FROM \`${projectId}.rs_hiscores.weekly\`
          WHERE total_accounts = (SELECT MAX(total_accounts) FROM \`${projectId}.rs_hiscores.weekly\`)
@@ -138,10 +144,6 @@ export async function GET(request) {
         (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
          WHERE total_accounts = (SELECT MAX(total_accounts) FROM \`${projectId}.rs_hiscores.monthly\`)
          LIMIT 1) as peak_monthly_label,
-        (SELECT total_accounts FROM \`${projectId}.rs_hiscores.monthly\`
-         ORDER BY period_start DESC LIMIT 1) as current_month_total,
-        (SELECT period_label FROM \`${projectId}.rs_hiscores.monthly\`
-         ORDER BY period_start DESC LIMIT 1) as current_month_label,
         (SELECT CAST(ROUND(AVG(total_accounts)) AS INT64) FROM \`${projectId}.rs_hiscores.weekly\`
          WHERE period_start >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 WEEK)) as avg_4week,
         (SELECT CAST(ROUND(AVG(total_accounts)) AS INT64) FROM \`${projectId}.rs_hiscores.monthly\`
@@ -181,18 +183,19 @@ export async function GET(request) {
       if (summaryJson.rows && summaryJson.rows[0]) {
         const r = summaryJson.rows[0].f
         summary = {
-          current_total: parseInt(r[0].v) || 0,
-          week_high: parseInt(r[1].v) || 0,
-          last_week_total: parseInt(r[2].v) || 0,
-          last_week_label: r[3].v || '',
-          peak_weekly: parseInt(r[4].v) || 0,
-          peak_weekly_label: r[5].v || '',
-          peak_monthly: parseInt(r[6].v) || 0,
-          peak_monthly_label: r[7].v || '',
-          current_month_total: parseInt(r[8].v) || 0,
-          current_month_label: r[9].v || '',
-          avg_4week: parseInt(r[10].v) || 0,
-          avg_12month: parseInt(r[11].v) || 0,
+          current_week_total: parseInt(r[0].v) || 0,
+          last_week_total: parseInt(r[1].v) || 0,
+          last_week_label: r[2].v || '',
+          current_month_total: parseInt(r[3].v) || 0,
+          current_month_label: r[4].v || '',
+          last_month_total: parseInt(r[5].v) || 0,
+          last_month_label: r[6].v || '',
+          peak_weekly: parseInt(r[7].v) || 0,
+          peak_weekly_label: r[8].v || '',
+          peak_monthly: parseInt(r[9].v) || 0,
+          peak_monthly_label: r[10].v || '',
+          avg_4week: parseInt(r[11].v) || 0,
+          avg_12month: parseInt(r[12].v) || 0,
         }
       }
     }
