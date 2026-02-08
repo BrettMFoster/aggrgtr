@@ -451,7 +451,7 @@ export default function Hiscores() {
           <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
           <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
         </div>
-        <span>aggrgtr 2025 — Not affiliated with Jagex Ltd.</span>
+        <span>aggrgtr 2026 — Not affiliated with Jagex Ltd.</span>
       </footer>
     </div>
   )

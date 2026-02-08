@@ -1130,7 +1130,7 @@ export default function FBICrime() {
           <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
           <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
         </div>
-        <span>aggrgtr 2025 | Data: FBI NIBRS {metadata?.min_year}-{metadata?.max_year}</span>
+        <span>aggrgtr 2026 | Data: FBI NIBRS {metadata?.min_year}-{metadata?.max_year}</span>
       </footer>
     </div>
   )
