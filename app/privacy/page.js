@@ -78,18 +78,6 @@ export default function Privacy() {
         </section>
 
         <section style={sectionStyle}>
-          <h2 style={h2Style}>Third-party services</h2>
-          <p style={pStyle}>
-            aggrgtr uses the following third-party services:
-          </p>
-          <ul style={{ ...pStyle, paddingLeft: '20px' }}>
-            <li style={{ marginBottom: '8px' }}>Vercel — hosting and deployment</li>
-            <li style={{ marginBottom: '8px' }}>Google BigQuery — data storage and querying</li>
-            <li style={{ marginBottom: '8px' }}>Namecheap — domain registration</li>
-          </ul>
-        </section>
-
-        <section style={sectionStyle}>
           <h2 style={h2Style}>Disclaimer</h2>
           <p style={pStyle}>
             aggrgtr is an independent project and is not affiliated with, endorsed by, or sponsored by
