@@ -446,8 +446,12 @@ export default function Hiscores() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', textAlign: 'right' }}>
-        aggrgtr 2025
+      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
+          <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
+        </div>
+        <span>aggrgtr 2025 — Not affiliated with Jagex Ltd.</span>
       </footer>
     </div>
   )
