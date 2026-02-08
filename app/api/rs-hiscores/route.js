@@ -62,11 +62,11 @@ export async function GET(request) {
       cacheTTL = 180 // 3 minutes
 
     } else if (view === 'week') {
-      // Last 7 days, aggregated by hour
+      // Last 7 days, daily max snapshot value
       query = `
         SELECT
-          UNIX_SECONDS(TIMESTAMP_TRUNC(scraped_at, HOUR)) as timestamp,
-          CAST(ROUND(AVG(total_accounts)) AS INT64) as total_accounts,
+          UNIX_SECONDS(TIMESTAMP_TRUNC(scraped_at, DAY)) as timestamp,
+          MAX(total_accounts) as total_accounts,
           MAX(last_page) as last_page
         FROM \`${projectId}.rs_hiscores.snapshots\`
         WHERE scraped_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)
@@ -76,11 +76,11 @@ export async function GET(request) {
       cacheTTL = 900 // 15 minutes
 
     } else if (view === 'month') {
-      // Last 30 days, aggregated by hour
+      // Last 30 days, daily max snapshot value
       query = `
         SELECT
-          UNIX_SECONDS(TIMESTAMP_TRUNC(scraped_at, HOUR)) as timestamp,
-          CAST(ROUND(AVG(total_accounts)) AS INT64) as total_accounts,
+          UNIX_SECONDS(TIMESTAMP_TRUNC(scraped_at, DAY)) as timestamp,
+          MAX(total_accounts) as total_accounts,
           MAX(last_page) as last_page
         FROM \`${projectId}.rs_hiscores.snapshots\`
         WHERE scraped_at >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)
@@ -89,8 +89,8 @@ export async function GET(request) {
       `
       cacheTTL = 900
 
-    } else if (view === 'year') {
-      // Weekly table data for the past year
+    } else if (view === 'all_weekly') {
+      // All weekly data (all time)
       query = `
         SELECT
           UNIX_SECONDS(TIMESTAMP(period_start)) as timestamp,
@@ -98,13 +98,12 @@ export async function GET(request) {
           last_page,
           period_label
         FROM \`${projectId}.rs_hiscores.weekly\`
-        WHERE period_start >= DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR)
         ORDER BY period_start ASC
       `
       cacheTTL = 3600 // 1 hour
 
-    } else if (view === 'all') {
-      // Monthly data (all time)
+    } else if (view === 'all_monthly') {
+      // All monthly data (all time)
       query = `
         SELECT
           UNIX_SECONDS(TIMESTAMP(period_start)) as timestamp,

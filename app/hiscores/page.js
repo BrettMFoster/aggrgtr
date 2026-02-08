@@ -6,8 +6,8 @@ const viewModes = [
   { id: 'live', label: 'Live (24h)' },
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
-  { id: 'year', label: 'Year' },
-  { id: 'all', label: 'All Time' },
+  { id: 'all_weekly', label: 'All Time (Weekly)' },
+  { id: 'all_monthly', label: 'All Time (Monthly)' },
 ]
 
 export default function Hiscores() {
@@ -18,7 +18,7 @@ export default function Hiscores() {
   const [isMobile, setIsMobile] = useState(false)
   const chartRef = useRef(null)
 
-  const refreshInterval = viewMode === 'live' ? 3 * 60 * 1000 : viewMode === 'week' || viewMode === 'month' ? 15 * 60 * 1000 : 60 * 60 * 1000
+  const refreshInterval = viewMode === 'live' ? 3 * 60 * 1000 : (viewMode === 'week' || viewMode === 'month') ? 15 * 60 * 1000 : 60 * 60 * 1000
 
   const { data: apiData, error } = useSWR(
     `/api/rs-hiscores?view=${viewMode}`,
@@ -88,7 +88,7 @@ export default function Hiscores() {
     const utcOpts = { timeZone: 'UTC' }
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-    if (viewMode === 'all') {
+    if (viewMode === 'all_monthly') {
       const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < chartData.length; i++) {
@@ -110,7 +110,7 @@ export default function Hiscores() {
       return result
     }
 
-    if (viewMode === 'year') {
+    if (viewMode === 'all_weekly') {
       const allMonths = []
       const seenMonths = new Set()
       for (let i = 0; i < chartData.length; i++) {
@@ -122,7 +122,7 @@ export default function Hiscores() {
           allMonths.push({ index: i, text })
         }
       }
-      const maxLabels = 12
+      const maxLabels = 16
       if (allMonths.length <= maxLabels) return allMonths
       const result = []
       for (let i = 0; i < maxLabels; i++) {
@@ -132,7 +132,7 @@ export default function Hiscores() {
       return result
     }
 
-    const count = 6
+    const count = viewMode === 'month' ? 8 : 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (chartData.length - 1))
       const d = chartData[idx]
@@ -158,11 +158,15 @@ export default function Hiscores() {
     for (let i = 0; i < chartData.length; i++) {
       const d = chartData[i]
       let key
-      if (viewMode === 'all') {
+      if (viewMode === 'all_monthly') {
         key = d.timestamp.getUTCFullYear()
-      } else if (viewMode === 'year') {
+      } else if (viewMode === 'all_weekly') {
         key = `${d.timestamp.getUTCFullYear()}-${d.timestamp.getUTCMonth()}`
-      } else if (viewMode === 'week' || viewMode === 'month') {
+      } else if (viewMode === 'month') {
+        // Band by week number
+        const dayOfYear = Math.floor((d.timestamp - new Date(d.timestamp.getFullYear(), 0, 0)) / 86400000)
+        key = `${d.timestamp.getFullYear()}-W${Math.floor(dayOfYear / 7)}`
+      } else if (viewMode === 'week') {
         key = d.timestamp.toISOString().split('T')[0]
       } else if (viewMode === 'live') {
         key = d.timestamp.getHours()
@@ -241,13 +245,13 @@ export default function Hiscores() {
               ))}
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Accounts that gained XP this week. Scraped from RS3 hiscores every 3 minutes.</div>}
+          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Unique accounts that gained XP. Scraped from RS3 hiscores every 3 minutes.</div>}
         </aside>
 
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 8px 0' }}>RS3 Hiscores Tracker</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#666', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>RS3 accounts that gained XP — {viewMode === 'all' ? 'monthly totals' : viewMode === 'year' ? 'weekly totals' : 'current week running count'}</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#666', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>RS3 accounts that gained XP — {viewMode === 'all_monthly' ? 'monthly totals' : viewMode === 'all_weekly' ? 'weekly totals' : viewMode === 'month' ? 'daily peak (30 days)' : viewMode === 'week' ? 'daily peak' : 'current week running count'}</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -403,10 +407,10 @@ export default function Hiscores() {
                         minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', marginBottom: '8px', fontWeight: '600', borderBottom: '1px solid #333', paddingBottom: '8px' }}>
-                          {(viewMode === 'all' || viewMode === 'year')
+                          {(viewMode === 'all_monthly' || viewMode === 'all_weekly')
                             ? hoveredPoint.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
                             : hoveredPoint.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {(viewMode === 'live' || viewMode === 'week') && ` ${hoveredPoint.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
+                          {viewMode === 'live' && ` ${hoveredPoint.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
                         </div>
                         <div style={{ fontSize: '14px', color: '#fff' }}>
                           <span style={{ color: '#4ade80', fontWeight: '700' }}>Accounts:</span> {hoveredPoint.total.toLocaleString()}
