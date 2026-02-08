@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/rs-hiscores-snapshot",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}
