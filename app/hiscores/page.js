@@ -59,8 +59,8 @@ export default function Hiscores() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    const chartStartPct = 60 / 900
-    const chartEndPct = 880 / 900
+    const chartStartPct = 65 / 900
+    const chartEndPct = 875 / 900
     const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
     const chartAreaStart = chartWidth * chartStartPct
     const relativeX = x - chartAreaStart
@@ -158,12 +158,14 @@ export default function Hiscores() {
     return bands
   }
 
+  const chartLeft = 65
+  const chartRight = 875
+  const chartWidth = chartRight - chartLeft
+
   const getY = (val) => 310 - ((val - minVal) / (maxVal - minVal)) * 270
 
   const formatYLabel = (val) => {
-    if (val >= 1000000) return `${(val / 1000000).toFixed(1)}M`
-    if (val >= 1000) return `${Math.round(val / 1000)}k`
-    return val.toString()
+    return Math.round(val).toLocaleString()
   }
 
   return (
@@ -193,30 +195,6 @@ export default function Hiscores() {
               <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
               <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
               <a href="/hiscores" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Hiscores</a>
-            </div>
-          </div>
-          <div style={{ marginBottom: isMobile ? '0' : '16px' }}>
-            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Time Range</div>}
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: '4px', flexWrap: 'wrap' }}>
-              {viewModes.map(mode => (
-                <button
-                  key={mode.id}
-                  onClick={() => setViewMode(mode.id)}
-                  style={{
-                    background: viewMode === mode.id ? '#1a1a1a' : 'transparent',
-                    border: viewMode === mode.id ? '1px solid #333' : '1px solid transparent',
-                    color: viewMode === mode.id ? '#e5e5e5' : '#888',
-                    padding: isMobile ? '8px 12px' : '8px 10px',
-                    borderRadius: '6px',
-                    fontSize: isMobile ? '13px' : '14px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    fontWeight: viewMode === mode.id ? '500' : '400'
-                  }}
-                >
-                  {mode.label}
-                </button>
-              ))}
             </div>
           </div>
           {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Unique accounts that gained XP. Scraped from RS3 hiscores every 3 minutes.</div>}
@@ -259,10 +237,30 @@ export default function Hiscores() {
 
               {/* Chart */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '28px', marginBottom: isMobile ? '16px' : '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '12px' : '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '12px' : '20px', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '0' }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
-                    Active Accounts - {viewModes.find(m => m.id === viewMode)?.label}
+                    Active Accounts
                   </h2>
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                    {viewModes.map(mode => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setViewMode(mode.id)}
+                        style={{
+                          background: viewMode === mode.id ? '#333' : 'transparent',
+                          border: viewMode === mode.id ? '1px solid #555' : '1px solid #333',
+                          color: viewMode === mode.id ? '#fff' : '#888',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          fontWeight: viewMode === mode.id ? '600' : '400'
+                        }}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div
@@ -278,8 +276,8 @@ export default function Hiscores() {
                     <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
-                        const x1 = 60 + (band.start / (chartData.length - 1 || 1)) * 820
-                        const x2 = 60 + (band.end / (chartData.length - 1 || 1)) * 820
+                        const x1 = chartLeft + (band.start / (chartData.length - 1 || 1)) * chartWidth
+                        const x2 = chartLeft + (band.end / (chartData.length - 1 || 1)) * chartWidth
                         return (
                           <rect
                             key={i}
@@ -297,8 +295,8 @@ export default function Hiscores() {
                         const val = minVal + pct * (maxVal - minVal)
                         return (
                           <g key={pct}>
-                            <line x1="60" y1={310 - pct * 270} x2="880" y2={310 - pct * 270} stroke="#333" strokeWidth="1" />
-                            <text x="55" y={315 - pct * 270} fill="#ffffff" fontSize="12" textAnchor="end">{formatYLabel(Math.round(val))}</text>
+                            <line x1={chartLeft} y1={310 - pct * 270} x2={chartRight} y2={310 - pct * 270} stroke="#333" strokeWidth="1" />
+                            <text x={chartLeft - 5} y={315 - pct * 270} fill="#ffffff" fontSize="11" textAnchor="end">{formatYLabel(Math.round(val))}</text>
                           </g>
                         )
                       })}
@@ -310,21 +308,21 @@ export default function Hiscores() {
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
-                          const x = 60 + (label.index / (chartData.length - 1 || 1)) * 820
+                          const x = chartLeft + (label.index / (chartData.length - 1 || 1)) * chartWidth
                           if (x - lastX >= minGap) {
                             visible.push({ ...label, x })
                             lastX = x
                           }
                         }
                         return visible
-                      })().map((label, i) => (
+                      })().map((label, i, arr) => (
                         <text
                           key={i}
                           x={label.x}
                           y={335}
                           fill="#ffffff"
                           fontSize="12"
-                          textAnchor="middle"
+                          textAnchor={i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
                         >
                           {label.text}
                         </text>
@@ -332,12 +330,12 @@ export default function Hiscores() {
 
                       {/* Area fill */}
                       <path
-                        d={`M 60,310 ${chartData.map((d, i) => `L ${60 + (i / (chartData.length - 1 || 1)) * 820},${getY(d.total)}`).join(' ')} L ${60 + 820},310 Z`}
+                        d={`M ${chartLeft},310 ${chartData.map((d, i) => `L ${chartLeft + (i / (chartData.length - 1 || 1)) * chartWidth},${getY(d.total)}`).join(' ')} L ${chartRight},310 Z`}
                         fill="rgba(74, 222, 128, 0.15)"
                       />
                       {/* Line */}
                       <path
-                        d={`M ${chartData.map((d, i) => `${60 + (i / (chartData.length - 1 || 1)) * 820},${getY(d.total)}`).join(' L ')}`}
+                        d={`M ${chartData.map((d, i) => `${chartLeft + (i / (chartData.length - 1 || 1)) * chartWidth},${getY(d.total)}`).join(' L ')}`}
                         fill="none"
                         stroke="#4ade80"
                         strokeWidth="2"
@@ -345,7 +343,7 @@ export default function Hiscores() {
 
                       {/* Hover indicator */}
                       {hoveredPoint && hoveredIndex >= 0 && (() => {
-                        const x = 60 + (hoveredIndex / (chartData.length - 1 || 1)) * 820
+                        const x = chartLeft + (hoveredIndex / (chartData.length - 1 || 1)) * chartWidth
                         return (
                           <>
                             <line x1={x} y1={40} x2={x} y2={310} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
