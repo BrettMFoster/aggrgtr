@@ -4,12 +4,12 @@ import useSWR from 'swr'
 
 // Chart layout constants
 const CL = 95    // chart left edge
-const CR = 880   // chart right edge
+const CR = 830   // chart right edge (narrowed for right axis)
 const CW = CR - CL // chart width
 const CT = 40    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
-const VW = 900   // viewBox width
+const VW = 940   // viewBox width (wider for right axis labels)
 const VH = 590   // viewBox height (extra room for legend)
 
 export default function RSPopulation() {
@@ -82,16 +82,23 @@ export default function RSPopulation() {
     }))
   }, [steamHistorical])
 
-  const getNearestSteamPoint = (timestamp) => {
-    if (!steamChartData.length) return null
+  const getNearestSteamValues = (timestamp) => {
+    if (!steamChartData.length) return { osrs: 0, rs3: 0, dragonwilds: 0 }
     const t = timestamp.getTime()
-    let nearest = steamChartData[0]
-    let minDiff = Math.abs(t - nearest.timestamp.getTime())
-    for (const d of steamChartData) {
-      const diff = Math.abs(t - d.timestamp.getTime())
-      if (diff < minDiff) { minDiff = diff; nearest = d }
+    const result = { osrs: 0, rs3: 0, dragonwilds: 0 }
+    for (const key of ['osrs', 'rs3', 'dragonwilds']) {
+      let minDiff = Infinity
+      for (const d of steamChartData) {
+        if (d[key] > 0) {
+          const diff = Math.abs(t - d.timestamp.getTime())
+          if (diff < minDiff) {
+            minDiff = diff
+            result[key] = d[key]
+          }
+        }
+      }
     }
-    return nearest
+    return result
   }
 
   useEffect(() => {
@@ -254,23 +261,28 @@ export default function RSPopulation() {
   const filteredData = getFilteredData()
   const latest = data[data.length - 1]
 
-  // Y-axis scaled to max value across all lines
-  const rawMax = (() => {
-    let max = filteredData.length > 0 ? Math.max(...filteredData.map(d => d.osrs), 1) : 1
-    if (steamChartData.length > 0 && filteredData.length > 0) {
-      const minTime = filteredData[0].timestamp.getTime()
-      const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
-      for (const d of steamChartData) {
-        const t = d.timestamp.getTime()
-        if (t >= minTime && t <= maxTime) {
-          max = Math.max(max, d.osrs || 0, d.rs3 || 0, d.dragonwilds || 0)
-        }
-      }
-    }
-    return max
-  })()
+  // Left Y-axis: RS population data only
+  const rawMax = filteredData.length > 0 ? Math.max(...filteredData.map(d => d.osrs), 1) : 1
   const yTicks = computeYTicks(rawMax)
   const maxVal = yTicks[yTicks.length - 1] || 1
+
+  // Right Y-axis: Steam data (30K floor, scales up only if exceeded)
+  const steamVisibleMax = (() => {
+    if (!steamChartData.length || !filteredData.length) return 30000
+    const minTime = filteredData[0].timestamp.getTime()
+    const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
+    const visible = steamChartData.filter(d => {
+      const t = d.timestamp.getTime()
+      return t >= minTime && t <= maxTime
+    })
+    if (!visible.length) return 30000
+    const dataMax = Math.max(...visible.map(d => Math.max(d.osrs, d.rs3, d.dragonwilds)))
+    return Math.max(dataMax, 30000)
+  })()
+  const steamYTicks = steamVisibleMax <= 30000
+    ? [0, 5000, 10000, 15000, 20000, 25000, 30000]
+    : computeYTicks(steamVisibleMax)
+  const steamMaxVal = steamYTicks[steamYTicks.length - 1] || 30000
 
   const avgTotal = filteredData.length > 0
     ? Math.round(filteredData.reduce((sum, d) => sum + d.total, 0) / filteredData.length)
@@ -312,8 +324,8 @@ export default function RSPopulation() {
   ]
 
   // Whether to show dots (too many = clutter)
-  const showDots = filteredData.length > 0 && filteredData.length <= 200
-  const dotInterval = filteredData.length > 100 ? Math.ceil(filteredData.length / 80) : 1
+  const showDots = filteredData.length > 0
+  const dotInterval = filteredData.length > 200 ? Math.ceil(filteredData.length / 80) : filteredData.length > 100 ? Math.ceil(filteredData.length / 80) : 1
 
   const handleInteraction = (clientX, clientY) => {
     if (!chartRef.current || filteredData.length === 0) return
@@ -405,7 +417,13 @@ export default function RSPopulation() {
       const d = filteredData[idx]
       let text
       if (viewMode === 'live') {
-        text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        const time = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        // Add date to first and last labels to distinguish across midnight
+        if (i === 0 || i === count - 1) {
+          text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + time
+        } else {
+          text = time
+        }
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
       } else {
@@ -449,8 +467,10 @@ export default function RSPopulation() {
 
   // Helper: compute x position for data index
   const xPos = (i) => CL + (i / (filteredData.length - 1 || 1)) * CW
-  // Helper: compute y position for value
+  // Helper: compute y position for value (left axis)
   const yPos = (val) => CB - (val / maxVal) * CH
+  // Helper: compute y position for Steam value (right axis)
+  const steamYPos = (val) => CB - (val / steamMaxVal) * CH
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -662,6 +682,18 @@ export default function RSPopulation() {
                         )
                       })}
 
+                      {/* Right Y-axis labels (Steam) */}
+                      {steamChartData.length > 0 && steamYTicks.map((val, i) => {
+                        const y = steamYPos(val)
+                        return (
+                          <g key={`sy${i}`}>
+                            <text x={CR + 8} y={y + 4} fill="#a855f7" fontSize="12" fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
+                              {val.toLocaleString()}
+                            </text>
+                          </g>
+                        )
+                      })}
+
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
@@ -732,9 +764,24 @@ export default function RSPopulation() {
                       {steamChartData.length > 1 && filteredData.length > 1 && (() => {
                         const minTime = filteredData[0].timestamp.getTime()
                         const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
-                        const timeRange = maxTime - minTime || 1
-                        const sxPos = (t) => CL + ((t.getTime() - minTime) / timeRange) * CW
-                        const visible = steamChartData.filter(d => d.timestamp.getTime() >= minTime && d.timestamp.getTime() <= maxTime)
+                        // Map steam timestamp to RS data index for aligned X positioning
+                        const steamToX = (t) => {
+                          const ts = t.getTime()
+                          if (ts <= minTime) return xPos(0)
+                          if (ts >= maxTime) return xPos(filteredData.length - 1)
+                          // Binary search for nearest RS data point
+                          let lo = 0, hi = filteredData.length - 1
+                          while (lo < hi - 1) {
+                            const mid = (lo + hi) >> 1
+                            if (filteredData[mid].timestamp.getTime() <= ts) lo = mid
+                            else hi = mid
+                          }
+                          const t0 = filteredData[lo].timestamp.getTime()
+                          const t1 = filteredData[hi].timestamp.getTime()
+                          const frac = (ts - t0) / (t1 - t0 || 1)
+                          return xPos(lo + frac)
+                        }
+                        const visible = steamChartData
                         if (visible.length < 2) return null
 
                         const osrsPoints = visible.filter(d => d.osrs > 0)
@@ -745,20 +792,20 @@ export default function RSPopulation() {
                           <>
                             {osrsPoints.length > 1 && (
                               <path
-                                d={`M ${osrsPoints.map((d, i) => `${i > 0 ? 'L ' : ''}${sxPos(d.timestamp)},${yPos(d.osrs)}`).join(' ')}`}
-                                fill="none" stroke="#4ade80" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.5"
+                                d={`M ${osrsPoints.map((d, i) => `${i > 0 ? 'L ' : ''}${steamToX(d.timestamp)},${steamYPos(d.osrs)}`).join(' ')}`}
+                                fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6,3"
                               />
                             )}
                             {rs3Points.length > 1 && (
                               <path
-                                d={`M ${rs3Points.map((d, i) => `${i > 0 ? 'L ' : ''}${sxPos(d.timestamp)},${yPos(d.rs3)}`).join(' ')}`}
-                                fill="none" stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.5"
+                                d={`M ${rs3Points.map((d, i) => `${i > 0 ? 'L ' : ''}${steamToX(d.timestamp)},${steamYPos(d.rs3)}`).join(' ')}`}
+                                fill="none" stroke="#22d3ee" strokeWidth="2.5" strokeDasharray="6,3"
                               />
                             )}
                             {dwPoints.length > 1 && (
                               <path
-                                d={`M ${dwPoints.map((d, i) => `${i > 0 ? 'L ' : ''}${sxPos(d.timestamp)},${yPos(d.dragonwilds)}`).join(' ')}`}
-                                fill="none" stroke="#a855f7" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.5"
+                                d={`M ${dwPoints.map((d, i) => `${i > 0 ? 'L ' : ''}${steamToX(d.timestamp)},${steamYPos(d.dragonwilds)}`).join(' ')}`}
+                                fill="none" stroke="#a855f7" strokeWidth="2.5" strokeDasharray="6,3"
                               />
                             )}
                           </>
@@ -768,15 +815,15 @@ export default function RSPopulation() {
                       {/* Hover indicator */}
                       {hoveredPoint && hoveredIndex >= 0 && (() => {
                         const x = xPos(hoveredIndex)
-                        const sp = getNearestSteamPoint(hoveredPoint.timestamp)
+                        const sp = getNearestSteamValues(hoveredPoint.timestamp)
                         return (
                           <>
                             <line x1={x} y1={CT} x2={x} y2={CB} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
                             <circle cx={x} cy={yPos(hoveredPoint.osrs)} r="5" fill="#4ade80" stroke="#111" strokeWidth="1.5" />
                             <circle cx={x} cy={yPos(hoveredPoint.rs3)} r="5" fill="#60a5fa" stroke="#111" strokeWidth="1.5" />
-                            {sp?.osrs > 0 && <circle cx={x} cy={yPos(sp.osrs)} r="4" fill="#4ade80" stroke="#111" strokeWidth="1" opacity="0.6" strokeDasharray="2,2" />}
-                            {sp?.rs3 > 0 && <circle cx={x} cy={yPos(sp.rs3)} r="4" fill="#60a5fa" stroke="#111" strokeWidth="1" opacity="0.6" strokeDasharray="2,2" />}
-                            {sp?.dragonwilds > 0 && <circle cx={x} cy={yPos(sp.dragonwilds)} r="4" fill="#a855f7" stroke="#111" strokeWidth="1" opacity="0.6" />}
+                            {sp?.osrs > 0 && <circle cx={x} cy={steamYPos(sp.osrs)} r="5" fill="#f59e0b" stroke="#111" strokeWidth="1.5" />}
+                            {sp?.rs3 > 0 && <circle cx={x} cy={steamYPos(sp.rs3)} r="5" fill="#22d3ee" stroke="#111" strokeWidth="1.5" />}
+                            {sp?.dragonwilds > 0 && <circle cx={x} cy={steamYPos(sp.dragonwilds)} r="5" fill="#a855f7" stroke="#111" strokeWidth="1.5" />}
                           </>
                         )
                       })()}
@@ -787,11 +834,11 @@ export default function RSPopulation() {
                         <text x={-232} y={5} fill="#ccc" fontSize="11">OSRS</text>
                         <rect x={-178} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
                         <text x={-162} y={5} fill="#ccc" fontSize="11">RS3</text>
-                        <line x1={-108} y1={0} x2={-78} y2={0} stroke="#4ade80" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.6" />
+                        <line x1={-108} y1={0} x2={-78} y2={0} stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6,3" />
                         <text x={-72} y={5} fill="#ccc" fontSize="11">OSRS Steam</text>
-                        <line x1={12} y1={0} x2={42} y2={0} stroke="#60a5fa" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.6" />
+                        <line x1={12} y1={0} x2={42} y2={0} stroke="#22d3ee" strokeWidth="2.5" strokeDasharray="6,3" />
                         <text x={48} y={5} fill="#ccc" fontSize="11">RS3 Steam</text>
-                        <line x1={132} y1={0} x2={162} y2={0} stroke="#a855f7" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.6" />
+                        <line x1={132} y1={0} x2={162} y2={0} stroke="#a855f7" strokeWidth="2.5" strokeDasharray="6,3" />
                         <text x={168} y={5} fill="#ccc" fontSize="11">Dragonwilds</text>
                       </g>
                     </svg>
@@ -831,14 +878,14 @@ export default function RSPopulation() {
                         <span style={{ color: '#60a5fa', fontWeight: '700' }}>RS3:</span> {hoveredPoint.rs3.toLocaleString()}
                       </div>
                       {(() => {
-                        const sp = getNearestSteamPoint(hoveredPoint.timestamp)
+                        const sp = getNearestSteamValues(hoveredPoint.timestamp)
                         if (!sp) return null
                         return (
                           <div style={{ marginTop: '8px', borderTop: '1px solid #333', paddingTop: '6px', fontSize: '12px' }}>
                             <div style={{ color: '#888', marginBottom: '4px', fontWeight: '600' }}>Steam</div>
-                            {sp.osrs > 0 && <div style={{ color: '#4ade80', opacity: 0.8 }}>OSRS: {sp.osrs.toLocaleString()}</div>}
-                            {sp.rs3 > 0 && <div style={{ color: '#60a5fa', opacity: 0.8 }}>RS3: {sp.rs3.toLocaleString()}</div>}
-                            {sp.dragonwilds > 0 && <div style={{ color: '#a855f7', opacity: 0.8 }}>DW: {sp.dragonwilds.toLocaleString()}</div>}
+                            {sp.osrs > 0 && <div style={{ color: '#f59e0b' }}>OSRS: {sp.osrs.toLocaleString()}</div>}
+                            {sp.rs3 > 0 && <div style={{ color: '#22d3ee' }}>RS3: {sp.rs3.toLocaleString()}</div>}
+                            {sp.dragonwilds > 0 && <div style={{ color: '#a855f7' }}>DW: {sp.dragonwilds.toLocaleString()}</div>}
                           </div>
                         )
                       })()}
