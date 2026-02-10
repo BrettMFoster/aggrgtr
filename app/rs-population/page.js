@@ -39,8 +39,15 @@ export default function RSPopulation() {
   )
   const { data: steamHistorical } = useSWR(
     `/api/steam-data?view=${viewMode}`,
-    { refreshInterval: viewMode === 'live' ? 3 * 60 * 1000 : 15 * 60 * 1000 }
+    { refreshInterval: viewMode === 'live' ? 3 * 60 * 1000 : 15 * 60 * 1000, keepPreviousData: true }
   )
+
+  // Prefetch all steam views so tab switching is instant
+  useSWR(viewMode !== 'live' ? '/api/steam-data?view=live' : null, { refreshInterval: 15 * 60 * 1000 })
+  useSWR(viewMode !== 'week' ? '/api/steam-data?view=week' : null, { refreshInterval: 15 * 60 * 1000 })
+  useSWR(viewMode !== 'month' ? '/api/steam-data?view=month' : null, { refreshInterval: 15 * 60 * 1000 })
+  useSWR(viewMode !== 'year' ? '/api/steam-data?view=year' : null, { refreshInterval: 15 * 60 * 1000 })
+  useSWR(viewMode !== 'all' ? '/api/steam-data?view=all' : null, { refreshInterval: 15 * 60 * 1000 })
 
   const loading = !historicalJson || !liveJson
   const error = historicalError || liveError
