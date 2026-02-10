@@ -547,15 +547,15 @@ export default function RSPopulation() {
               {steamData && (
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '16px' : '40px' }}>
                   <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#888', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>OSRS (Steam)</div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>OSRS (Steam)</div>
                     <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{steamData.osrs?.toLocaleString() || '-'}</div>
                   </div>
                   <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#888', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 (Steam)</div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 (Steam)</div>
                     <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{steamData.rs3?.toLocaleString() || '-'}</div>
                   </div>
                   <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '11px', fontWeight: '700', color: '#888', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>Dragonwilds</div>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>Dragonwilds</div>
                     <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#a855f7' }}>{steamData.dragonwilds?.toLocaleString() || '-'}</div>
                   </div>
                 </div>
