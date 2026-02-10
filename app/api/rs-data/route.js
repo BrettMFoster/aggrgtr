@@ -136,7 +136,9 @@ export async function GET(request) {
 
         let isoTimestamp
         try {
-          isoTimestamp = new Date(timestamp).toISOString()
+          // Scraper stores UTC timestamps without Z suffix - ensure parsed as UTC
+          const utcTs = timestamp.includes('Z') ? timestamp : timestamp.replace(' ', 'T') + 'Z'
+          isoTimestamp = new Date(utcTs).toISOString()
         } catch {
           return null
         }
