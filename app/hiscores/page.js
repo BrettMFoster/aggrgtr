@@ -177,7 +177,7 @@ export default function Hiscores() {
           <a href="https://paypal.me/aggrgtr" target="_blank" rel="noopener" style={{ color: '#4ade80', textDecoration: 'none', fontWeight: '500' }}>Donate</a>
           <a href="/subscribe" style={{ color: '#fff', textDecoration: 'none' }}>Subscribe</a>
           <a href="/" style={{ color: '#fff', textDecoration: 'none' }}>Datasets</a>
-          <a href="#" style={{ color: '#fff', textDecoration: 'none' }}>GitHub</a>
+          <a href="https://discord.gg/E6z2CEUknK" target="_blank" rel="noopener" style={{ color: '#5865F2', textDecoration: 'none', fontWeight: '500' }}>Discord</a>
         </div>
       </nav>
 
