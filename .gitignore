@@ -22,11 +22,12 @@ credentials.json
 *.key
 
 # Data files (too large for git)
-data/
+/data/
 drivers/
 scripts/
 *.zip
 *.csv
+!public/csv/*.csv
 page_source.html
 
 # IDE
