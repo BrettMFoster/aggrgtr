@@ -59,8 +59,8 @@ export default function Hiscores() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    const chartStartPct = 65 / 900
-    const chartEndPct = 875 / 900
+    const chartStartPct = 50 / 900
+    const chartEndPct = 888 / 900
     const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
     const chartAreaStart = chartWidth * chartStartPct
     const relativeX = x - chartAreaStart
@@ -158,11 +158,11 @@ export default function Hiscores() {
     return bands
   }
 
-  const chartLeft = 65
-  const chartRight = 875
+  const chartLeft = 50
+  const chartRight = 888
   const chartWidth = chartRight - chartLeft
 
-  const getY = (val) => 310 - ((val - minVal) / (maxVal - minVal)) * 270
+  const getY = (val) => 310 - ((val - minVal) / (maxVal - minVal)) * 295
 
   const formatYLabel = (val) => {
     return Math.round(val).toLocaleString()
@@ -190,7 +190,7 @@ export default function Hiscores() {
           borderBottom: isMobile ? '1px solid #222' : 'none'
         }}>
           <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>}
+            {!isMobile && <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px' }}>
               <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
               <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
@@ -198,13 +198,13 @@ export default function Hiscores() {
               <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Data</a>
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Unique accounts that gained XP. Scraped from RS3 hiscores every 3 minutes.</div>}
+          {!isMobile && <div style={{ fontSize: '12px', color: '#fff', marginTop: '24px' }}>Unique accounts that gained XP. Scraped from RS3 hiscores every 3 minutes.</div>}
         </aside>
 
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 8px 0' }}>RS3 Hiscores Tracker</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#666', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>RS3 accounts that gained XP — {viewMode === 'all_monthly' ? 'monthly totals' : viewMode === 'all_weekly' ? 'weekly totals' : viewMode === 'month' ? 'daily peak (30 days)' : viewMode === 'week' ? 'daily peak' : 'current week running count'}</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: '0 0 6px 0' }}>RS3 accounts that gained XP — {viewMode === 'all_monthly' ? 'monthly totals' : viewMode === 'all_weekly' ? 'weekly totals' : viewMode === 'month' ? 'daily peak (30 days)' : viewMode === 'week' ? 'daily peak' : 'current week running count'}</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -213,36 +213,36 @@ export default function Hiscores() {
           ) : (
             <>
               {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '16px' : '40px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Week</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#4ade80' }}>{summary.current_week_total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>Accounts with XP gain</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Current Week</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#4ade80' }}>{summary.current_week_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#fff', marginTop: '6px' }}>Accounts with XP gain</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Last Week</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#fff' }}>{summary.last_week_total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.last_week_label || ''}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Last Week</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#fff' }}>{summary.last_week_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#fff', marginTop: '6px' }}>{summary.last_week_label || ''}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Month</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#c084fc' }}>{summary.current_month_total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.current_month_label || ''}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Current Month</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#c084fc' }}>{summary.current_month_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#fff', marginTop: '6px' }}>{summary.current_month_label || ''}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '6px' : '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Last Month</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#60a5fa' }}>{summary.last_month_total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#888', marginTop: '6px' }}>{summary.last_month_label || ''}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Last Month</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#60a5fa' }}>{summary.last_month_total?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: isMobile ? '11px' : '13px', color: '#fff', marginTop: '6px' }}>{summary.last_month_label || ''}</div>
                 </div>
               </div>
 
               {/* Chart */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '28px', marginBottom: isMobile ? '16px' : '40px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '12px' : '20px', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '0' }}>
+              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: isMobile ? '8px' : '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '8px' : '12px', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '12px' : '0' }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
                     Active Accounts
                   </h2>
-                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '4px', background: '#1a1a1a', borderRadius: '8px', padding: '3px', flexWrap: 'wrap' }}>
                     {viewModes.map(mode => (
                       <button
                         key={mode.id}
@@ -250,10 +250,10 @@ export default function Hiscores() {
                         style={{
                           background: viewMode === mode.id ? '#333' : 'transparent',
                           border: viewMode === mode.id ? '1px solid #555' : '1px solid #333',
-                          color: viewMode === mode.id ? '#fff' : '#888',
-                          padding: '6px 12px',
+                          color: viewMode === mode.id ? '#fff' : '#ddd',
+                          padding: isMobile ? '8px 14px' : '8px 18px',
                           borderRadius: '6px',
-                          fontSize: '13px',
+                          fontSize: isMobile ? '13px' : '15px',
                           cursor: 'pointer',
                           fontWeight: viewMode === mode.id ? '600' : '400'
                         }}
@@ -283,9 +283,9 @@ export default function Hiscores() {
                           <rect
                             key={i}
                             x={x1}
-                            y={40}
+                            y={15}
                             width={x2 - x1}
-                            height={270}
+                            height={295}
                             fill={i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'}
                           />
                         )
@@ -296,8 +296,8 @@ export default function Hiscores() {
                         const val = minVal + pct * (maxVal - minVal)
                         return (
                           <g key={pct}>
-                            <line x1={chartLeft} y1={310 - pct * 270} x2={chartRight} y2={310 - pct * 270} stroke="#333" strokeWidth="1" />
-                            <text x={chartLeft - 5} y={315 - pct * 270} fill="#ffffff" fontSize="11" textAnchor="end">{formatYLabel(Math.round(val))}</text>
+                            <line x1={chartLeft} y1={310 - pct * 295} x2={chartRight} y2={310 - pct * 295} stroke="#333" strokeWidth="1" />
+                            <text x={chartLeft - 5} y={315 - pct * 295} fill="#ffffff" fontSize="11" textAnchor="end">{formatYLabel(Math.round(val))}</text>
                           </g>
                         )
                       })}
@@ -347,7 +347,7 @@ export default function Hiscores() {
                         const x = chartLeft + (hoveredIndex / (chartData.length - 1 || 1)) * chartWidth
                         return (
                           <>
-                            <line x1={x} y1={40} x2={x} y2={310} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
+                            <line x1={x} y1={15} x2={x} y2={310} stroke="#fff" strokeWidth="1" strokeDasharray="4" />
                             <circle cx={x} cy={getY(hoveredPoint.total)} r="6" fill="#4ade80" />
                           </>
                         )
@@ -356,7 +356,7 @@ export default function Hiscores() {
                   )}
 
                   {chartData.length === 0 && !loading && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#fff' }}>
                       No data available for this time range
                     </div>
                   )}
@@ -400,27 +400,24 @@ export default function Hiscores() {
               </div>
 
               {/* Summary stats */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '24px', marginBottom: isMobile ? '8px' : '20px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak Weekly</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{summary.peak_weekly?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '10px' : '12px', color: '#888', marginTop: '4px' }}>{summary.peak_weekly_label || '-'}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '10px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Peak Weekly</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#4ade80' }}>{summary.peak_weekly?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2' }}>{summary.peak_weekly_label || '-'}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak Monthly</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{summary.peak_monthly?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '10px' : '12px', color: '#888', marginTop: '4px' }}>{summary.peak_monthly_label || '-'}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Peak Monthly</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#60a5fa' }}>{summary.peak_monthly?.toLocaleString() || '-'}</div>
+                  <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2' }}>{summary.peak_monthly_label || '-'}</div>
                 </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '24px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>4-Week Avg</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{summary.avg_4week?.toLocaleString() || '-'}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>4-Week Avg</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#4ade80' }}>{summary.avg_4week?.toLocaleString() || '-'}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>12-Month Avg</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{summary.avg_12month?.toLocaleString() || '-'}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>12-Month Avg</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#60a5fa' }}>{summary.avg_12month?.toLocaleString() || '-'}</div>
                 </div>
               </div>
             </>
@@ -428,10 +425,10 @@ export default function Hiscores() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+      <footer style={{ borderTop: '1px solid #222', padding: '16px 32px', fontSize: '13px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
-          <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="/about" style={{ color: '#fff', textDecoration: 'none' }}>About</a>
+          <a href="/privacy" style={{ color: '#fff', textDecoration: 'none' }}>Privacy Policy</a>
         </div>
         <span>aggrgtr 2026 — Not affiliated with Jagex Ltd.</span>
       </footer>

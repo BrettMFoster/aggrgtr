@@ -207,8 +207,8 @@ export default function OSRSWorlds() {
     const range = maxPlayers - minPlayers || 1
 
     const pointsData = worldHistory.map((h, i) => {
-      const x = 50 + (i / (worldHistory.length - 1 || 1)) * 700
-      const y = 180 - ((h.players - minPlayers) / range) * 150
+      const x = 38 + (i / (worldHistory.length - 1 || 1)) * 737
+      const y = 185 - ((h.players - minPlayers) / range) * 170
       return { x, y, players: h.players, timestamp: h.timestamp, index: i }
     })
 
@@ -217,17 +217,17 @@ export default function OSRSWorlds() {
     return (
       <svg width="100%" height="220" viewBox="0 0 800 220" preserveAspectRatio="none" onMouseLeave={() => setHoveredPoint(null)}>
         {/* Y-axis labels */}
-        <text x="45" y="35" fill="#888" fontSize="11" textAnchor="end">{maxPlayers.toLocaleString()}</text>
-        <text x="45" y="180" fill="#888" fontSize="11" textAnchor="end">{minPlayers.toLocaleString()}</text>
+        <text x="33" y="20" fill="#fff" fontSize="11" textAnchor="end">{maxPlayers.toLocaleString()}</text>
+        <text x="33" y="185" fill="#fff" fontSize="11" textAnchor="end">{minPlayers.toLocaleString()}</text>
 
         {/* Grid lines */}
-        <line x1="50" y1="30" x2="750" y2="30" stroke="#333" strokeWidth="1" />
-        <line x1="50" y1="105" x2="750" y2="105" stroke="#333" strokeWidth="1" />
-        <line x1="50" y1="180" x2="750" y2="180" stroke="#333" strokeWidth="1" />
+        <line x1="38" y1="15" x2="775" y2="15" stroke="#333" strokeWidth="1" />
+        <line x1="38" y1="100" x2="775" y2="100" stroke="#333" strokeWidth="1" />
+        <line x1="38" y1="185" x2="775" y2="185" stroke="#333" strokeWidth="1" />
 
         {/* Area fill */}
         <path
-          d={`M 50,180 L ${pointsStr} L 750,180 Z`}
+          d={`M 38,185 L ${pointsStr} L 775,185 Z`}
           fill="rgba(74, 222, 128, 0.2)"
         />
 
@@ -279,7 +279,7 @@ export default function OSRSWorlds() {
             <text
               x={Math.min(Math.max(pointsData[hoveredPoint].x, 65), 740)}
               y={Math.max(pointsData[hoveredPoint].y - 16, 39)}
-              fill="#888"
+              fill="#fff"
               fontSize="11"
               textAnchor="middle"
             >
@@ -293,7 +293,7 @@ export default function OSRSWorlds() {
           <>
             {[0, 0.2, 0.4, 0.6, 0.8, 1].map((pct, i) => {
               const idx = Math.floor(pct * (worldHistory.length - 1))
-              const x = 50 + pct * 700
+              const x = 38 + pct * 737
               const date = new Date(parseFloat(worldHistory[idx].timestamp) * 1000)
               // Show date for ranges longer than a day
               const showDate = historyRange !== 'day'
@@ -301,7 +301,7 @@ export default function OSRSWorlds() {
                 ? `${date.getMonth()+1}/${date.getDate()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`
                 : date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
               return (
-                <text key={i} x={x} y="200" fill="#888" fontSize="10" textAnchor="middle">
+                <text key={i} x={x} y="200" fill="#fff" fontSize="10" textAnchor="middle">
                   {label}
                 </text>
               )
@@ -335,7 +335,7 @@ export default function OSRSWorlds() {
           borderBottom: isMobile ? '1px solid #222' : 'none'
         }}>
           <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>}
+            {!isMobile && <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px' }}>
               <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
               <a href="/osrs-worlds" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>OSRS Worlds</a>
@@ -346,7 +346,7 @@ export default function OSRSWorlds() {
 
           <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '12px' : '16px', marginBottom: isMobile ? '0' : '16px' }}>
             <div style={{ flex: isMobile ? 1 : 'auto' }}>
-              {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Region</div>}
+              {!isMobile && <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Region</div>}
               <select
                 value={filterRegion}
                 onChange={(e) => setFilterRegion(e.target.value)}
@@ -358,7 +358,7 @@ export default function OSRSWorlds() {
             </div>
 
             <div style={{ flex: isMobile ? 1 : 'auto' }}>
-              {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Type</div>}
+              {!isMobile && <div style={{ fontSize: '14px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Type</div>}
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
@@ -369,13 +369,13 @@ export default function OSRSWorlds() {
               </select>
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
+          {!isMobile && <div style={{ fontSize: '12px', color: '#fff', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
         </aside>
 
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '700', color: '#fff', margin: '0 0 8px 0' }}>OSRS World Population</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>Live player counts by world for Old School RuneScape</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: '0 0 6px 0' }}>Live player counts by world for Old School RuneScape <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>Data: {getDataAge()}</span></p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -384,30 +384,24 @@ export default function OSRSWorlds() {
           ) : (
             <>
               {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '16px' : '32px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Total Players</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#4ade80' }}>{filteredTotalPlayers.toLocaleString()}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Total Players</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#4ade80' }}>{filteredTotalPlayers.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Active Worlds</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#60a5fa' }}>{filteredWorldCount}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Active Worlds</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#60a5fa' }}>{filteredWorldCount}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Avg Per World</div>
-                  <div style={{ fontSize: isMobile ? '24px' : '40px', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
-                </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '4px' : '8px', textTransform: 'uppercase' }}>Data Age</div>
-                  <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#4ade80' }}>
-                    {getDataAge()}
-                  </div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Avg Per World</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums', fontWeight: '700', color: '#fff' }}>{filteredAvgPerWorld.toLocaleString()}</div>
                 </div>
               </div>
 
               {/* World History Modal/Panel */}
               {selectedWorld && (
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '20px', marginBottom: '32px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: '12px 16px', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#fff', margin: 0 }}>
                       {selectedWorld.world_name} - Population History
@@ -432,23 +426,23 @@ export default function OSRSWorlds() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '14px', color: '#888', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', fontSize: '14px', color: '#fff', flexWrap: 'wrap' }}>
                     <span>Region: {selectedWorld.location}</span>
                     <span>Type: {selectedWorld.world_type}</span>
                     <span>Activity: {selectedWorld.activity}</span>
                     <span>Current: <span style={{ color: '#4ade80', fontWeight: '600' }}>{selectedWorld.players.toLocaleString()}</span></span>
                   </div>
                   {historyLoading ? (
-                    <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>Loading history...</div>
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>Loading history...</div>
                   ) : worldHistory && worldHistory.length > 0 ? (
                     <div style={{ height: '220px' }}>
                       {renderHistoryChart()}
                     </div>
                   ) : (
-                    <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>No history available</div>
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#fff' }}>No history available</div>
                   )}
                   {worldHistory && worldHistory.length > 0 && (
-                    <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+                    <div style={{ fontSize: '12px', color: '#fff', marginTop: '8px' }}>
                       {worldHistory.length} data points from past {
                         historyRange === 'day' ? '24 hours' :
                         historyRange === 'week' ? 'week' :
@@ -462,9 +456,9 @@ export default function OSRSWorlds() {
               )}
 
               {/* Three column layout: Activities + Region + Type */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: isMobile ? '12px' : '20px', marginBottom: isMobile ? '16px' : '32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 {/* All Activities - scrollable */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px' }}>
                   <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Activities</h3>
                   <div className="dark-scrollbar" style={{ maxHeight: '300px', overflow: 'auto', paddingRight: '12px' }}>
                     {allActivities.map(([activity, stats]) => (
@@ -477,7 +471,7 @@ export default function OSRSWorlds() {
                 </div>
 
                 {/* By Region */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px' }}>
                   <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>By Region</h3>
                   {Object.entries(filteredRegions)
                     .sort((a, b) => b[1].players - a[1].players)
@@ -490,7 +484,7 @@ export default function OSRSWorlds() {
                 </div>
 
                 {/* Free vs Members */}
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '20px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px' }}>
                   <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Free vs Members</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
@@ -512,7 +506,7 @@ export default function OSRSWorlds() {
                       </div>
                     </div>
                     <div style={{ borderTop: '1px solid #333', paddingTop: '16px', marginTop: '8px' }}>
-                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '4px' }}>Members %</div>
+                      <div style={{ fontSize: '12px', color: '#fff', marginBottom: '4px' }}>Members %</div>
                       <div style={{ fontSize: '32px', fontWeight: '700', color: '#fff' }}>
                         {((membersTotal / (freeTotal + membersTotal) * 100) || 0).toFixed(1)}%
                       </div>
@@ -522,30 +516,30 @@ export default function OSRSWorlds() {
               </div>
 
               {/* World Table */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', overflow: 'hidden' }}>
                 <div style={{ padding: isMobile ? '12px 16px' : '16px 20px', borderBottom: '1px solid #222' }}>
                   <h3 style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '700', color: '#fff', margin: 0 }}>
                     All Worlds {filterRegion !== 'all' || filterType !== 'all' ? `(${sortedWorlds.length} shown)` : ''}
-                    {!isMobile && <span style={{ fontWeight: '400', color: '#888', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>}
+                    {!isMobile && <span style={{ fontWeight: '400', color: '#fff', fontSize: '14px', marginLeft: '12px' }}>Click a world to see history</span>}
                   </h3>
                 </div>
                 <div className="dark-scrollbar" style={{ maxHeight: isMobile ? '400px' : '500px', overflow: 'auto', overflowX: isMobile ? 'auto' : 'hidden' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead style={{ position: 'sticky', top: 0, background: '#111' }}>
                       <tr>
-                        <th onClick={() => handleSort('world_id')} style={{ padding: '12px 16px', textAlign: 'left', color: '#888', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
+                        <th onClick={() => handleSort('world_id')} style={{ padding: '12px 16px', textAlign: 'left', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
                           WORLD {sortBy === 'world_id' && (sortDir === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('players')} style={{ padding: '12px 16px', textAlign: 'right', color: '#888', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
+                        <th onClick={() => handleSort('players')} style={{ padding: '12px 16px', textAlign: 'right', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
                           PLAYERS {sortBy === 'players' && (sortDir === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('location')} style={{ padding: '12px 16px', textAlign: 'left', color: '#888', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
+                        <th onClick={() => handleSort('location')} style={{ padding: '12px 16px', textAlign: 'left', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
                           REGION {sortBy === 'location' && (sortDir === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('world_type')} style={{ padding: '12px 16px', textAlign: 'left', color: '#888', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
+                        <th onClick={() => handleSort('world_type')} style={{ padding: '12px 16px', textAlign: 'left', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
                           TYPE {sortBy === 'world_type' && (sortDir === 'asc' ? '↑' : '↓')}
                         </th>
-                        <th onClick={() => handleSort('activity')} style={{ padding: '12px 16px', textAlign: 'left', color: '#888', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
+                        <th onClick={() => handleSort('activity')} style={{ padding: '12px 16px', textAlign: 'left', color: '#fff', fontSize: '12px', fontWeight: '600', cursor: 'pointer', borderBottom: '1px solid #222' }}>
                           ACTIVITY {sortBy === 'activity' && (sortDir === 'asc' ? '↑' : '↓')}
                         </th>
                       </tr>
@@ -569,7 +563,7 @@ export default function OSRSWorlds() {
                         >
                           <td style={{ padding: '10px 16px', color: '#fff', fontSize: '14px' }}>{world.world_name}</td>
                           <td style={{ padding: '10px 16px', color: '#4ade80', fontSize: '14px', textAlign: 'right', fontWeight: '600' }}>{world.players.toLocaleString()}</td>
-                          <td style={{ padding: '10px 16px', color: '#888', fontSize: '14px' }}>{world.location}</td>
+                          <td style={{ padding: '10px 16px', color: '#fff', fontSize: '14px' }}>{world.location}</td>
                           <td style={{ padding: '10px 16px', fontSize: '14px' }}>
                             <span style={{
                               padding: '2px 8px',
@@ -581,7 +575,7 @@ export default function OSRSWorlds() {
                               {world.world_type}
                             </span>
                           </td>
-                          <td style={{ padding: '10px 16px', color: '#888', fontSize: '14px' }}>{world.activity}</td>
+                          <td style={{ padding: '10px 16px', color: '#fff', fontSize: '14px' }}>{world.activity}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -593,10 +587,10 @@ export default function OSRSWorlds() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+      <footer style={{ borderTop: '1px solid #222', padding: '16px 32px', fontSize: '13px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
-          <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="/about" style={{ color: '#fff', textDecoration: 'none' }}>About</a>
+          <a href="/privacy" style={{ color: '#fff', textDecoration: 'none' }}>Privacy Policy</a>
         </div>
         <span>aggrgtr 2026 — Not affiliated with Jagex Ltd.</span>
       </footer>

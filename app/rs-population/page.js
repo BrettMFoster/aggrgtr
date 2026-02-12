@@ -3,14 +3,14 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import useSWR from 'swr'
 
 // Chart layout constants
-const CL = 95    // chart left edge
-const CR = 830   // chart right edge (narrowed for right axis)
+const CL = 55    // chart left edge
+const CR = 870   // chart right edge
 const CW = CR - CL // chart width
-const CT = 40    // chart top
+const CT = 15    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
-const VW = 940   // viewBox width (wider for right axis labels)
-const VH = 590   // viewBox height (extra room for legend)
+const VW = 920   // viewBox width
+const VH = 585   // viewBox height
 
 export default function RSPopulation() {
   const [viewMode, setViewMode] = useState('live')
@@ -501,7 +501,7 @@ export default function RSPopulation() {
           borderBottom: isMobile ? '1px solid #222' : 'none'
         }}>
           <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-            {!isMobile && <div style={{ fontSize: '11px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase' }}>Dashboards</div>}
+            {!isMobile && <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '8px' : '6px' }}>
               <a href="/rs-population" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Population</a>
               <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
@@ -509,13 +509,13 @@ export default function RSPopulation() {
               <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Data</a>
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '11px', color: '#666', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
+          {!isMobile && <div style={{ fontSize: '12px', color: '#fff', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
         </aside>
 
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 8px 0' }}>RuneScape Population Tracker</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#666', margin: isMobile ? '0 0 16px 0' : '0 0 32px 0' }}>Live player counts for OSRS and RS3</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#fff', margin: '0 0 6px 0' }}>Live player counts for OSRS and RS3</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -524,52 +524,52 @@ export default function RSPopulation() {
           ) : (
             <>
               {/* KPI Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '24px', marginBottom: isMobile ? '16px' : '40px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '8px' : '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>OSRS Players</div>
-                  <div style={{ fontSize: isMobile ? '32px' : '48px', fontWeight: '700', color: '#4ade80' }}>{latest?.osrs?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#fff', marginTop: '8px' }}>Old School RuneScape</div>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>OSRS Players</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '700', color: '#4ade80', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{latest?.osrs?.toLocaleString() || '-'}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '8px' : '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 Players</div>
-                  <div style={{ fontSize: isMobile ? '32px' : '48px', fontWeight: '700', color: '#60a5fa' }}>{latest?.rs3?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#fff', marginTop: '8px' }}>RuneScape&nbsp;3</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>RS3 Players</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{latest?.rs3?.toLocaleString() || '-'}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '28px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: '700', color: '#fff', marginBottom: isMobile ? '8px' : '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Online</div>
-                  <div style={{ fontSize: isMobile ? '36px' : '56px', fontWeight: '700', color: '#fff' }}>{latest?.total?.toLocaleString() || '-'}</div>
-                  <div style={{ fontSize: isMobile ? '12px' : '14px', color: '#4ade80', marginTop: '8px' }}>
-                    {latest?.timestamp ? `Updated ${Math.floor((Date.now() - latest.timestamp.getTime()) / 60000)}m ago` : ''}
-                  </div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px 12px' : '12px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '500', color: '#fff', marginBottom: '2px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Total Online</div>
+                  <div style={{ fontSize: isMobile ? '22px' : '28px', fontWeight: '700', color: '#fff', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{latest?.total?.toLocaleString() || '-'}</div>
                 </div>
               </div>
 
               {/* Steam Player Counts */}
               {steamData && (
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? '8px' : '16px', marginBottom: isMobile ? '16px' : '40px' }}>
-                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>OSRS (Steam)</div>
-                    <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{steamData.osrs?.toLocaleString() || '-'}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>OSRS (Steam)</div>
+                    <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#4ade80', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{steamData.osrs?.toLocaleString() || '-'}</div>
                   </div>
-                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>RS3 (Steam)</div>
-                    <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{steamData.rs3?.toLocaleString() || '-'}</div>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>RS3 (Steam)</div>
+                    <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{steamData.rs3?.toLocaleString() || '-'}</div>
                   </div>
-                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>Dragonwilds</div>
-                    <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#a855f7' }}>{steamData.dragonwilds?.toLocaleString() || '-'}</div>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Dragonwilds</div>
+                    <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#a855f7', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{steamData.dragonwilds?.toLocaleString() || '-'}</div>
                   </div>
                 </div>
               )}
 
               {/* Chart */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '28px', marginBottom: isMobile ? '16px' : '40px' }}>
+              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: isMobile ? '8px' : '12px' }}>
                 {/* Chart header with title + time range pills */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '12px' : '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '8px' : '12px', flexWrap: 'wrap', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
                       Player Count
                     </h2>
+                    {latest?.timestamp && (
+                      <span style={{ fontSize: '13px', color: '#4ade80', fontWeight: '500' }}>
+                        Updated {Math.floor((Date.now() - latest.timestamp.getTime()) / 60000)}m ago
+                      </span>
+                    )}
                     {/* Month/year filter controls */}
                     {viewMode === 'month' && (
                       <button
@@ -630,10 +630,10 @@ export default function RSPopulation() {
                         style={{
                           background: viewMode === mode.id ? '#333' : 'transparent',
                           border: 'none',
-                          color: viewMode === mode.id ? '#fff' : '#888',
-                          padding: isMobile ? '6px 10px' : '6px 14px',
+                          color: viewMode === mode.id ? '#fff' : '#ddd',
+                          padding: isMobile ? '8px 14px' : '8px 18px',
                           borderRadius: '6px',
-                          fontSize: isMobile ? '11px' : '13px',
+                          fontSize: isMobile ? '13px' : '15px',
                           cursor: 'pointer',
                           fontWeight: viewMode === mode.id ? '600' : '400',
                           transition: 'all 0.15s ease'
@@ -645,10 +645,6 @@ export default function RSPopulation() {
                   </div>
                 </div>
 
-                {/* Data point count */}
-                <div style={{ fontSize: '11px', color: '#666', marginBottom: '12px' }}>
-                  Showing {filteredData.length} points
-                </div>
 
                 <div
                   ref={chartRef}
@@ -837,7 +833,7 @@ export default function RSPopulation() {
                       })()}
 
                       {/* Legend at bottom of chart */}
-                      <g transform={`translate(${VW / 2}, ${CB + 42})`}>
+                      <g transform={`translate(${VW / 2}, ${CB + 50})`}>
                         <rect x={-248} y={-6} width={12} height={12} rx={2} fill="#4ade80" />
                         <text x={-232} y={5} fill="#ccc" fontSize="11">OSRS</text>
                         <rect x={-178} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
@@ -890,7 +886,7 @@ export default function RSPopulation() {
                         if (!sp) return null
                         return (
                           <div style={{ marginTop: '8px', borderTop: '1px solid #333', paddingTop: '6px', fontSize: '12px' }}>
-                            <div style={{ color: '#888', marginBottom: '4px', fontWeight: '600' }}>Steam</div>
+                            <div style={{ color: '#fff', marginBottom: '4px', fontWeight: '600' }}>Steam</div>
                             {sp.osrs > 0 && <div style={{ color: '#f59e0b' }}>OSRS: {sp.osrs.toLocaleString()}</div>}
                             {sp.rs3 > 0 && <div style={{ color: '#22d3ee' }}>RS3: {sp.rs3.toLocaleString()}</div>}
                             {sp.dragonwilds > 0 && <div style={{ color: '#a855f7' }}>DW: {sp.dragonwilds.toLocaleString()}</div>}
@@ -903,45 +899,37 @@ export default function RSPopulation() {
                 </div>
               </div>
 
-              {/* Summary stats - Peaks row */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '24px', marginBottom: isMobile ? '8px' : '20px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak OSRS</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{peakOsrs.toLocaleString()}</div>
-                  <div style={{ fontSize: isMobile ? '10px' : '12px', color: '#888', marginTop: '4px' }}>
+              {/* Summary Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: '10px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Peak OSRS</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#4ade80', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{peakOsrs.toLocaleString()}</div>
+                  <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2' }}>
                     {peakOsrsDate ? peakOsrsDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                   </div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>Peak RS3</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{peakRs3.toLocaleString()}</div>
-                  <div style={{ fontSize: isMobile ? '10px' : '12px', color: '#888', marginTop: '4px' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Peak RS3</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{peakRs3.toLocaleString()}</div>
+                  <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2' }}>
                     {peakRs3Date ? peakRs3Date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                   </div>
                 </div>
-              </div>
-
-              {/* Rolling 30-Day Averages */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '24px', marginBottom: isMobile ? '8px' : '20px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>30-Day Avg OSRS</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{avg30DayOsrs.toLocaleString()}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>30-Day Avg OSRS</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#4ade80', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{avg30DayOsrs.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>30-Day Avg RS3</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{avg30DayRs3.toLocaleString()}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>30-Day Avg RS3</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{avg30DayRs3.toLocaleString()}</div>
                 </div>
-              </div>
-
-              {/* Rolling 1-Year Averages */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)', gap: isMobile ? '8px' : '24px' }}>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>1-Year Avg OSRS</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#4ade80' }}>{avgYearOsrs.toLocaleString()}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>1-Year Avg OSRS</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#4ade80', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{avgYearOsrs.toLocaleString()}</div>
                 </div>
-                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '12px' : '20px', textAlign: 'center' }}>
-                  <div style={{ fontSize: isMobile ? '11px' : '14px', color: '#fff', marginBottom: isMobile ? '4px' : '8px', fontWeight: '600' }}>1-Year Avg RS3</div>
-                  <div style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '700', color: '#60a5fa' }}>{avgYearRs3.toLocaleString()}</div>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>1-Year Avg RS3</div>
+                  <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{avgYearRs3.toLocaleString()}</div>
                 </div>
               </div>
             </>
@@ -949,10 +937,10 @@ export default function RSPopulation() {
         </main>
       </div>
 
-      <footer style={{ borderTop: '1px solid #222', padding: '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+      <footer style={{ borderTop: '1px solid #222', padding: '16px 32px', fontSize: '13px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
-          <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
+          <a href="/about" style={{ color: '#fff', textDecoration: 'none' }}>About</a>
+          <a href="/privacy" style={{ color: '#fff', textDecoration: 'none' }}>Privacy Policy</a>
         </div>
         <span>aggrgtr 2026 — Not affiliated with Jagex Ltd.</span>
       </footer>
