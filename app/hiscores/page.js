@@ -198,7 +198,6 @@ export default function Hiscores() {
               <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Data</a>
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '12px', color: '#fff', marginTop: '24px' }}>Unique accounts that gained XP. Scraped from RS3 hiscores every 3 minutes.</div>}
         </aside>
 
         {/* Main */}

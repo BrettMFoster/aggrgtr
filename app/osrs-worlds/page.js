@@ -369,7 +369,6 @@ export default function OSRSWorlds() {
               </select>
             </div>
           </div>
-          {!isMobile && <div style={{ fontSize: '12px', color: '#fff', marginTop: '24px' }}>Data scraped from official RuneScape pages every 3 minutes.</div>}
         </aside>
 
         {/* Main */}

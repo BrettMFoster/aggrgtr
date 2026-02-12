@@ -17,7 +17,7 @@ export default function Home() {
       title: 'RuneScape Population',
       category: 'gaming',
       status: 'live',
-      desc: 'Live player counts for OSRS and RS3. Updated every 3 minutes from official sources.',
+      desc: 'Live player counts for OSRS and RS3.',
       stats: ['3-min intervals', 'Per-world data'],
       link: '/rs-population'
     },
