@@ -2076,15 +2076,9 @@ export default function RSTrends() {
                       })}
 
                       {(() => {
-                        const weeks = new Set()
-                        const labels = []
-                        for (let i = 0; i < threeMoData.length; i++) {
-                          const d = threeMoData[i].timestamp
-                          const weekKey = `${d.getFullYear()}-${d.getMonth()}-${Math.floor(d.getDate() / 7)}`
-                          if (!weeks.has(weekKey) && d.getDate() <= 7) {
-                            weeks.add(weekKey)
-                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) })
-                          }
+                        const labels = [], step = Math.max(1, Math.floor(threeMoData.length / 8))
+                        for (let i = 0; i < threeMoData.length; i += step) {
+                          labels.push({ index: i, text: threeMoData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) })
                         }
                         return labels
                       })().map((label, i) => (
@@ -3221,11 +3215,13 @@ export default function RSTrends() {
                         </text>
                       </g>
                     ))}
-                    {hs3moData.map((d, i) => (
-                      <text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
-                        {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </text>
-                    ))}
+                    {(() => {
+                      const labels = [], step = Math.max(1, Math.floor(hs3moData.length / 6))
+                      for (let i = 0; i < hs3moData.length; i += step) {
+                        labels.push(<text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs3moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                      }
+                      return labels
+                    })()}
                     <path d={`M ${CL},${TL_CB} ${hs3moData.map((d, i) => `L ${hs3moXPos(i)},${hs3moYPos(d.total)}`).join(' ')} L ${hs3moXPos(hs3moData.length - 1)},${TL_CB} Z`} fill="rgba(168, 85, 247, 0.15)" />
                     <path d={`M ${hs3moData.map((d, i) => `${hs3moXPos(i)},${hs3moYPos(d.total)}`).join(' L ')}`} fill="none" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
                     {hs3moTrendline.movingAvg.length > 1 && (
@@ -3308,11 +3304,13 @@ export default function RSTrends() {
                         </text>
                       </g>
                     ))}
-                    {hs1moData.map((d, i) => (
-                      <text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
-                        {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </text>
-                    ))}
+                    {(() => {
+                      const labels = [], step = Math.max(1, Math.floor(hs1moData.length / 5))
+                      for (let i = 0; i < hs1moData.length; i += step) {
+                        labels.push(<text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs1moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                      }
+                      return labels
+                    })()}
                     <path d={`M ${CL},${TL_CB} ${hs1moData.map((d, i) => `L ${hs1moXPos(i)},${hs1moYPos(d.total)}`).join(' ')} L ${hs1moXPos(hs1moData.length - 1)},${TL_CB} Z`} fill="rgba(168, 85, 247, 0.15)" />
                     <path d={`M ${hs1moData.map((d, i) => `${hs1moXPos(i)},${hs1moYPos(d.total)}`).join(' L ')}`} fill="none" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
                     {hs1moTrendline.movingAvg.length > 1 && (
