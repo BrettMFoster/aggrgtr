@@ -390,32 +390,27 @@ export default function RSPopulation() {
     }
 
     if (viewMode === 'year') {
-      const allMonths = []
-      const seenMonths = new Set()
+      // Collect first and last index for each month
+      const monthRanges = {}
+      const monthOrder = []
       for (let i = 0; i < filteredData.length; i++) {
         const d = filteredData[i]
         const monthKey = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
-        if (!seenMonths.has(monthKey)) {
-          seenMonths.add(monthKey)
-          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
-          allMonths.push({ index: i, text })
+        if (!monthRanges[monthKey]) {
+          monthRanges[monthKey] = { first: i, last: i, timestamp: d.timestamp }
+          monthOrder.push(monthKey)
+        } else {
+          monthRanges[monthKey].last = i
         }
       }
-      let monthsToUse = allMonths
-      if (allMonths.length > 1 && allMonths[1].index > 0) {
-        const firstMonthPct = allMonths[1].index / filteredData.length
-        if (firstMonthPct < 0.03) {
-          monthsToUse = allMonths.slice(1)
+      // Place label at midpoint of each month's data range for even spacing
+      return monthOrder.map(key => {
+        const r = monthRanges[key]
+        return {
+          index: Math.round((r.first + r.last) / 2),
+          text: r.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + r.timestamp.getFullYear().toString().slice(-2)
         }
-      }
-      const maxLabels = 12
-      if (monthsToUse.length <= maxLabels) return monthsToUse
-      const result = []
-      for (let i = 0; i < maxLabels; i++) {
-        const idx = Math.floor((i / (maxLabels - 1)) * (monthsToUse.length - 1))
-        result.push(monthsToUse[idx])
-      }
-      return result
+      })
     }
 
     const count = 6
@@ -701,7 +696,7 @@ export default function RSPopulation() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const minGap = 55
+                        const minGap = 40
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
