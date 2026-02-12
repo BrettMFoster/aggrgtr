@@ -1230,7 +1230,7 @@ export default function RSTrends() {
                             ) : (
                               <line x1={x} y1={y} x2={x + 10} y2={y} stroke={yearColors[year] || '#666'} strokeWidth={year === currentYear ? 3 : 2} />
                             )}
-                            <text x={x + 14} y={y + 4} fill="#ccc" fontSize="11">{year}</text>
+                            <text x={x + 14} y={y + 4} fill="#fff" fontSize="11">{year}</text>
                           </g>
                         )
                       })}
@@ -1498,11 +1498,11 @@ export default function RSTrends() {
                       {/* Legend */}
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -1656,11 +1656,11 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -1817,11 +1817,11 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -1979,11 +1979,11 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">30d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">30d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2140,11 +2140,11 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">14d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">14d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2298,11 +2298,11 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#ccc" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#ccc" fontSize="11">7d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize="11">7d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#ccc" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2419,9 +2419,9 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-80} y1={0} x2={-55} y2={0} stroke="rgba(251, 146, 60, 0.3)" strokeWidth="2" />
-                        <text x={-50} y={4} fill="#ccc" fontSize="11">Daily Peak</text>
+                        <text x={-50} y={4} fill="#fff" fontSize="11">Daily Peak</text>
                         <line x1={30} y1={0} x2={55} y2={0} stroke="#fb923c" strokeWidth="2.5" />
-                        <text x={60} y={4} fill="#ccc" fontSize="11">14d MA</text>
+                        <text x={60} y={4} fill="#fff" fontSize="11">14d MA</text>
                       </g>
                     </svg>
                   )}
@@ -2534,9 +2534,9 @@ export default function RSTrends() {
 
                       <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
                         <line x1={-80} y1={0} x2={-55} y2={0} stroke="rgba(96, 165, 250, 0.3)" strokeWidth="2" />
-                        <text x={-50} y={4} fill="#ccc" fontSize="11">Daily Trough</text>
+                        <text x={-50} y={4} fill="#fff" fontSize="11">Daily Trough</text>
                         <line x1={40} y1={0} x2={65} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={70} y={4} fill="#ccc" fontSize="11">14d MA</text>
+                        <text x={70} y={4} fill="#fff" fontSize="11">14d MA</text>
                       </g>
                     </svg>
                   )}
@@ -2679,7 +2679,7 @@ export default function RSTrends() {
                         return (
                           <g key={year}>
                             <line x1={x} y1={0} x2={x + 12} y2={0} stroke={yearColors[year] || '#666'} strokeWidth={year === currentYear ? 3 : 2} />
-                            <text x={x + 16} y={4} fill="#ccc" fontSize="12">{year}</text>
+                            <text x={x + 16} y={4} fill="#fff" fontSize="12">{year}</text>
                           </g>
                         )
                       })}
