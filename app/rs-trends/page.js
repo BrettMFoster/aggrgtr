@@ -2874,8 +2874,8 @@ export default function RSTrends() {
                           return (
                             <g key={i}>
                               <line x1={CL} y1={y} x2={CR} y2={y} stroke="#222" strokeWidth="1" />
-                              <text x={CL - 8} y={y + 4} textAnchor="end" fill="#666" fontSize="12">
-                                {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v.toLocaleString()}
+                              <text x={CL - 8} y={y + 4} textAnchor="end" fill="#fff" fontSize="12">
+                                {v.toLocaleString()}
                               </text>
                             </g>
                           )
@@ -2889,7 +2889,7 @@ export default function RSTrends() {
                         for (let i = 0; i < hiscoresData.length; i += step) {
                           const d = hiscoresData[i].timestamp
                           labels.push(
-                            <text key={i} x={hiscoresXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#666" fontSize="11">
+                            <text key={i} x={hiscoresXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
                               {d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
                             </text>
                           )
@@ -2944,11 +2944,11 @@ export default function RSTrends() {
                       {/* Legend */}
                       <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
                         <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                        <text x="25" y="4" fill="#888" fontSize="11">Weekly</text>
+                        <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
                         <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                        <text x="105" y="4" fill="#888" fontSize="11">90d MA</text>
+                        <text x="105" y="4" fill="#fff" fontSize="11">90d MA</text>
                         <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                        <text x="175" y="4" fill="#888" fontSize="11">Regression</text>
+                        <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
                       </g>
                     </svg>
                   )}
@@ -3028,15 +3028,15 @@ export default function RSTrends() {
                     {computeYTicks(hs1yrMax).map((v, i) => (
                       <g key={i}>
                         <line x1={CL} y1={hs1yrYPos(v)} x2={CR} y2={hs1yrYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs1yrYPos(v) + 4} textAnchor="end" fill="#666" fontSize="12">
-                          {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v.toLocaleString()}
+                        <text x={CL - 8} y={hs1yrYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                          {v.toLocaleString()}
                         </text>
                       </g>
                     ))}
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs1yrData.length / 12))
                       for (let i = 0; i < hs1yrData.length; i += step) {
-                        labels.push(<text key={i} x={hs1yrXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#666" fontSize="11">{hs1yrData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs1yrXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs1yrData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3056,11 +3056,11 @@ export default function RSTrends() {
                     )}
                     <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#888" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#888" fontSize="11">90d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize="11">90d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#888" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
                     </g>
                   </svg>
                   {hs1yrHoveredIndex >= 0 && (() => {
@@ -3122,15 +3122,15 @@ export default function RSTrends() {
                     {computeYTicks(hs6moMax).map((v, i) => (
                       <g key={i}>
                         <line x1={CL} y1={hs6moYPos(v)} x2={CR} y2={hs6moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs6moYPos(v) + 4} textAnchor="end" fill="#666" fontSize="12">
-                          {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v.toLocaleString()}
+                        <text x={CL - 8} y={hs6moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                          {v.toLocaleString()}
                         </text>
                       </g>
                     ))}
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs6moData.length / 10))
                       for (let i = 0; i < hs6moData.length; i += step) {
-                        labels.push(<text key={i} x={hs6moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#666" fontSize="11">{hs6moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs6moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs6moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3150,11 +3150,11 @@ export default function RSTrends() {
                     )}
                     <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#888" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#888" fontSize="11">30d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize="11">30d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#888" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
                     </g>
                   </svg>
                   {hs6moHoveredIndex >= 0 && (() => {
@@ -3216,13 +3216,13 @@ export default function RSTrends() {
                     {computeYTicks(hs3moMax).map((v, i) => (
                       <g key={i}>
                         <line x1={CL} y1={hs3moYPos(v)} x2={CR} y2={hs3moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs3moYPos(v) + 4} textAnchor="end" fill="#666" fontSize="12">
-                          {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v.toLocaleString()}
+                        <text x={CL - 8} y={hs3moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                          {v.toLocaleString()}
                         </text>
                       </g>
                     ))}
                     {hs3moData.map((d, i) => (
-                      <text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#666" fontSize="11">
+                      <text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
                         {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </text>
                     ))}
@@ -3242,11 +3242,11 @@ export default function RSTrends() {
                     )}
                     <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#888" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#888" fontSize="11">14d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize="11">14d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#888" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
                     </g>
                   </svg>
                   {hs3moHoveredIndex >= 0 && (() => {
@@ -3303,13 +3303,13 @@ export default function RSTrends() {
                     {computeYTicks(hs1moMax).map((v, i) => (
                       <g key={i}>
                         <line x1={CL} y1={hs1moYPos(v)} x2={CR} y2={hs1moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs1moYPos(v) + 4} textAnchor="end" fill="#666" fontSize="12">
-                          {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v >= 1000 ? `${Math.round(v / 1000)}K` : v.toLocaleString()}
+                        <text x={CL - 8} y={hs1moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                          {v.toLocaleString()}
                         </text>
                       </g>
                     ))}
                     {hs1moData.map((d, i) => (
-                      <text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#666" fontSize="11">
+                      <text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
                         {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </text>
                     ))}
@@ -3329,11 +3329,11 @@ export default function RSTrends() {
                     )}
                     <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#888" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#888" fontSize="11">7d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize="11">7d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#888" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
                     </g>
                   </svg>
                   {hs1moHoveredIndex >= 0 && (() => {
