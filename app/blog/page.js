@@ -1,7 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
 
-export default function DataPage() {
+const posts = [
+  {
+    date: '2026-02-12',
+    title: 'Welcome to the aggrgtr Blog',
+    body: `This is where I'll be posting commentary, analysis, and updates about the data we track. Check back for insights on RS3 population trends, hiscores movements, and other findings from the dashboards.`
+  },
+]
+
+export default function BlogPage() {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -39,46 +47,23 @@ export default function DataPage() {
               <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
               <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Hiscores</a>
               <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Trends</a>
-              <a href="/data" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Data</a>
-              <a href="/blog" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Blog</a>
+              <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Data</a>
+              <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '8px 12px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '13px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
             </div>
           </div>
         </aside>
 
         {/* Main */}
-        <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
-          <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 32px 0' }}>Data</h1>
+        <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px', maxWidth: '800px' }}>
+          <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 32px 0' }}>Blog</h1>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { file: 'RS_Population_Quarter_Hour.csv', label: 'Quarter Hour (MisplacedItems)', size: '30 MB' },
-              { file: 'RS_Population_Hour.csv', label: 'Hour (MisplacedItems)', size: '7.5 MB' },
-              { file: 'RS_Population_Day.csv', label: 'Day (MisplacedItems)', size: '323 KB' },
-              { file: 'RS_Population_Week.csv', label: 'Week (MisplacedItems)', size: '47 KB' },
-              { file: 'RS_Population_Month.csv', label: 'Month (MisplacedItems)', size: '11 KB' },
-              { file: 'RS_Population_Quarter_Year.csv', label: 'Quarter Year (MisplacedItems)', size: '4 KB' },
-              { file: 'RS_PlayerCount_Dev.csv', label: 'Quarter Hour (PlayerCount.dev)', size: '310 KB' },
-            ].map(d => (
-              <a
-                key={d.file}
-                href={`/csv/${d.file}`}
-                download
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: '#111',
-                  border: '1px solid #222',
-                  borderRadius: '6px',
-                  padding: '12px 16px',
-                  textDecoration: 'none',
-                  color: '#fff',
-                  maxWidth: '500px',
-                }}
-              >
-                <span style={{ fontWeight: '500' }}>{d.label}</span>
-                <span style={{ fontSize: '12px', color: '#666' }}>{d.size}</span>
-              </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            {posts.map((post, i) => (
+              <article key={i} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px' }}>
+                <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{new Date(post.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '600', color: '#fff', margin: '0 0 12px 0' }}>{post.title}</h2>
+                <div style={{ fontSize: '15px', lineHeight: '1.7', color: '#ccc', whiteSpace: 'pre-line' }}>{post.body}</div>
+              </article>
             ))}
           </div>
         </main>
