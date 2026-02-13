@@ -22,7 +22,7 @@ const P = ({ children }) => (
 function WelcomePost() {
   return (
     <>
-      <P>The site has been updated to what I hope will be a somewhat final version, amenable to feedback of course, with charts and data that are easily accessible and usable by anyone.</P>
+      <P>The site has been updated to what I hope will be a somewhat final version, amenable to feedback of course, with charts and data that are easily accessible and usable by anyone. And for RS data will always be free for use. I don't even run ads, although I may in the future.</P>
 
       <P>A bit about me: I have many strong feelings on RS3. I don't play frequently, but I'm maxed. I've been maxed in most skills essentially since 2008. I don't intend to play much this year, although I am a premier member on two separate accounts. I appreciate RS3 and want to see it be successful.</P>
 
