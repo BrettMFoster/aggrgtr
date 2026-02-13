@@ -1254,7 +1254,10 @@ export default function RSTrends() {
                     const left = (screenWidth - trendsMousePos.x) < tooltipWidth + 30
                       ? trendsMousePos.x - tooltipWidth - 15
                       : trendsMousePos.x + 15
-                    const top = trendsMousePos.y - 40
+                    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800
+                    const top = (trendsMousePos.y - 40 + tooltipHeight) > viewportHeight
+                      ? trendsMousePos.y - tooltipHeight - 10
+                      : trendsMousePos.y - 40
                     return (
                       <div style={{
                         position: 'fixed', left, top,
