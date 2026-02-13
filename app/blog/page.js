@@ -16,7 +16,7 @@ const DataBlock = ({ title, children, style }) => (
 )
 
 const P = ({ children }) => (
-  <p style={{ fontSize: '15px', lineHeight: '1.7', color: '#ccc', margin: '0 0 16px 0' }}>{children}</p>
+  <p style={{ fontSize: '17px', lineHeight: '1.7', color: '#ccc', margin: '0 0 16px 0' }}>{children}</p>
 )
 
 function WelcomePost() {
