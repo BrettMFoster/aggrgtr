@@ -38,7 +38,7 @@ const monthStarts = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
 const getDayOfYear = (ts) => {
-  const y = ts.getFullYear(), start = new Date(y, 0, 1)
+  const y = ts.getUTCFullYear(), start = new Date(Date.UTC(y, 0, 1))
   let doy = Math.floor((ts - start) / 86400000)
   if (isLeapYear(y) && doy >= 60) doy -= 1
   return doy
@@ -198,8 +198,8 @@ export default function RSTrends() {
     if (!dailyData.length) return {}
     const byYear = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getFullYear()
-      const startOfYear = new Date(year, 0, 1)
+      const year = d.timestamp.getUTCFullYear()
+      const startOfYear = new Date(Date.UTC(year, 0, 1))
       let dayOfYear = Math.floor((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
       if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1 // skip Feb 29, cap at 0-364
       if (!byYear[year]) byYear[year] = {}
@@ -229,8 +229,8 @@ export default function RSTrends() {
     // Group by year with day-of-year tracking for same-period comparisons
     const byYear = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getFullYear()
-      const startOfYear = new Date(year, 0, 1)
+      const year = d.timestamp.getUTCFullYear()
+      const startOfYear = new Date(Date.UTC(year, 0, 1))
       let dayOfYear = Math.floor((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
       if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1 // skip Feb 29, cap at 0-364
       if (!byYear[year]) byYear[year] = { year, entries: [], peak: 0, peakDate: null }
@@ -274,9 +274,9 @@ export default function RSTrends() {
       const periodStart = latest.firstDay
       const periodEnd = latest.lastDay
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      const startDate = new Date(latest.year, 0, periodStart + 1)
-      const endDate = new Date(latest.year, 0, periodEnd + 1)
-      const periodLabel = `${monthNames[startDate.getMonth()]} ${startDate.getDate()} \u2013 ${monthNames[endDate.getMonth()]} ${endDate.getDate()}`
+      const startDate = new Date(Date.UTC(latest.year, 0, periodStart + 1))
+      const endDate = new Date(Date.UTC(latest.year, 0, periodEnd + 1))
+      const periodLabel = `${monthNames[startDate.getUTCMonth()]} ${startDate.getUTCDate()} \u2013 ${monthNames[endDate.getUTCMonth()]} ${endDate.getUTCDate()}`
 
       for (const r of result) {
         const entries = byYear[r.year].entries.filter(e => e.dayOfYear >= periodStart && e.dayOfYear <= periodEnd)
@@ -309,8 +309,8 @@ export default function RSTrends() {
     const qLabels = ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)']
     const byYearQ = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getFullYear()
-      const q = Math.floor(d.timestamp.getMonth() / 3)
+      const year = d.timestamp.getUTCFullYear()
+      const q = Math.floor(d.timestamp.getUTCMonth() / 3)
       const key = `${year}-${q}`
       if (!byYearQ[key]) byYearQ[key] = { year, q, label: qLabels[q], peak: 0, peakDate: null, count: 0 }
       byYearQ[key].count++
@@ -1432,7 +1432,7 @@ export default function RSTrends() {
                         const years = new Set()
                         const labels = []
                         for (let i = 0; i < dailyData.length; i++) {
-                          const y = dailyData[i].timestamp.getFullYear()
+                          const y = dailyData[i].timestamp.getUTCFullYear()
                           if (!years.has(y)) {
                             years.add(y)
                             labels.push({ index: i, text: String(y) })
@@ -1600,7 +1600,7 @@ export default function RSTrends() {
                         const years = new Set()
                         const labels = []
                         for (let i = 0; i < fiveYrData.length; i++) {
-                          const y = fiveYrData[i].timestamp.getFullYear()
+                          const y = fiveYrData[i].timestamp.getUTCFullYear()
                           if (!years.has(y)) { years.add(y); labels.push({ index: i, text: String(y) }) }
                         }
                         return labels
@@ -1758,10 +1758,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < oneYrData.length; i++) {
                           const d = oneYrData[i].timestamp
-                          const key = `${d.getFullYear()}-${d.getMonth()}`
+                          const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
                           if (!months.has(key)) {
                             months.add(key)
-                            labels.push({ index: i, month: d.getMonth(), year: d.getFullYear(), text: d.toLocaleDateString('en-US', { month: 'short' }) })
+                            labels.push({ index: i, month: d.getUTCMonth(), year: d.getUTCFullYear(), text: d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) })
                           }
                         }
                         return labels
@@ -1919,10 +1919,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < sixMoData.length; i++) {
                           const d = sixMoData[i].timestamp
-                          const key = `${d.getFullYear()}-${d.getMonth()}`
+                          const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
                           if (!months.has(key)) {
                             months.add(key)
-                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short' }) })
+                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) })
                           }
                         }
                         return labels
@@ -2366,10 +2366,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < peaksData.length; i++) {
                           const d = peaksData[i].timestamp
-                          const monthKey = `${d.getFullYear()}-${d.getMonth()}`
+                          const monthKey = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
                           if (!months.has(monthKey)) {
                             months.add(monthKey)
-                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) })
+                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' }) })
                           }
                         }
                         return labels
