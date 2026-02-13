@@ -1,12 +1,151 @@
 'use client'
 import { useState, useEffect } from 'react'
 
+const DataRow = ({ label, value, highlight }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1a1a1a' }}>
+    <span style={{ color: '#999', fontSize: '13px' }}>{label}</span>
+    <span style={{ color: highlight || '#fff', fontSize: '13px', fontWeight: '600' }}>{value}</span>
+  </div>
+)
+
+const DataBlock = ({ title, children, style }) => (
+  <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '6px', padding: '12px 16px', margin: '16px 0', ...style }}>
+    {title && <div style={{ fontSize: '12px', fontWeight: '700', color: '#fff', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>{title}</div>}
+    {children}
+  </div>
+)
+
+const P = ({ children }) => (
+  <p style={{ fontSize: '15px', lineHeight: '1.7', color: '#ccc', margin: '0 0 16px 0' }}>{children}</p>
+)
+
+function WelcomePost() {
+  return (
+    <>
+      <P>The site has been updated to what I hope will be a somewhat final version, amenable to feedback of course, with charts and data that are easily accessible and usable by anyone.</P>
+
+      <P>A bit about me: I have many strong feelings on RS3. I don't play frequently, but I'm maxed. I've been maxed in most skills essentially since 2008. I don't intend to play much this year, although I am a premier member on two separate accounts. I appreciate RS3 and want to see it be successful.</P>
+
+      <div style={{ margin: '16px 0', textAlign: 'center' }}>
+        <img src="/images/99smith.png" alt="99 Smithing - Early 2008" style={{ maxWidth: '100%', borderRadius: '6px', border: '1px solid #222' }} />
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>99 Smithing, early 2008. 99 Crafting followed that summer.</div>
+      </div>
+
+      <P>This site is not an attempt to p-hack or lie with data or push whatever other narratives people have had and will have about me. The purpose is to be transparent, responsible, and honest about changes.</P>
+
+      <P>Overall, now that I have a full inventory of data and analysis I trust, I have thoughts on recent changes: I've noticed over the last decade that Jagex becomes especially antsy when the core player counts drop to or below an average of 20K people. At that point, I believe the corporate emails are being fired off frantically and courses are being corrected. I see no difference here.</P>
+
+      <DataBlock title="RS3 Average Population by Year">
+        <DataRow label="2020" value="31,484" />
+        <DataRow label="2021" value="33,386" />
+        <DataRow label="2022" value="25,714" />
+        <DataRow label="2023" value="24,476" />
+        <DataRow label="2024" value="20,876" highlight="#ef4444" />
+        <DataRow label="2025" value="20,759" highlight="#ef4444" />
+        <DataRow label="2026 (YTD)" value="21,971" highlight="#eab308" />
+      </DataBlock>
+
+      <P>Over the last couple of years, RS3 players have been routinely complaining about the lack of new content, the overuse of rare items and FOMO, and if you look at the last 5 year chart there has been a decline of 2,595 players on average per year. And only in the last year and only after beginning course correction has there been an uptick of 4K players per year (growth).</P>
+
+      <DataBlock title="5-Year Trendline">
+        <DataRow label="Avg yearly decline (5yr)" value="-2,595 players/yr" highlight="#ef4444" />
+        <DataRow label="1-Year trend (recent)" value="+4,050 players/yr" highlight="#4ade80" />
+      </DataBlock>
+
+      <P>While this trend looks positive, the impetus for it seems to be just how major the changes have been that Jagex is implementing. Removing Treasure Hunter, removing items, removing many things, actually, including gameplay loops (<a href="https://secure.runescape.com/m=news/a-new-era-for-runescape-begins-january-19-2026" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>see the full announcement</a>). Changes so drastic even I came back after almost a year hiatus to get rid of my items before they were deleted. It looks like many people were doing the same.</P>
+
+      <P>I see a lot of people hyping these changes. And I see many in fear of them.</P>
+
+      <P>At a very high, superficial level these changes look positive (and maybe they will sustain); however, digging into the drivers of these numbers reveals nothing much has changed. RS3 has a lot of seasonality at the end of the year (see below). And these dramatic announcements by Jagex have brought people back, but has it been to play the game again or out of fear and shock?</P>
+
+      <DataBlock title="Q4 (Oct-Dec) vs Full Year Average">
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #333', marginBottom: '4px' }}>
+          <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700' }}>Year</span>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700', width: '70px', textAlign: 'right' }}>Full Yr</span>
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700', width: '70px', textAlign: 'right' }}>Q4</span>
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: '700', width: '60px', textAlign: 'right' }}>Change</span>
+          </div>
+        </div>
+        {[
+          { yr: '2014', full: '34,152', q4: '37,372', pct: '+9.4%', color: '#4ade80' },
+          { yr: '2015', full: '35,192', q4: '31,280', pct: '-11.1%', color: '#ef4444' },
+          { yr: '2016', full: '29,969', q4: '26,241', pct: '-12.4%', color: '#ef4444' },
+          { yr: '2017', full: '27,961', q4: '24,810', pct: '-11.3%', color: '#ef4444' },
+          { yr: '2018', full: '24,725', q4: '23,764', pct: '-3.9%', color: '#ef4444' },
+          { yr: '2019', full: '21,687', q4: '18,985', pct: '-12.5%', color: '#ef4444' },
+          { yr: '2020', full: '31,484', q4: '33,853', pct: '+7.5%', color: '#4ade80' },
+          { yr: '2021', full: '33,386', q4: '31,373', pct: '-6.0%', color: '#ef4444' },
+          { yr: '2022', full: '25,714', q4: '26,153', pct: '+1.7%', color: '#4ade80' },
+          { yr: '2023', full: '24,476', q4: '23,852', pct: '-2.5%', color: '#ef4444' },
+          { yr: '2024', full: '20,876', q4: '24,358', pct: '+16.7%', color: '#eab308' },
+          { yr: '2025', full: '20,759', q4: '21,145', pct: '+1.9%', color: '#4ade80' },
+          { yr: '2026 (YTD)', full: '21,971', q4: '\u2014', pct: '\u2014', color: '#666' },
+        ].map(r => (
+          <div key={r.yr} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #1a1a1a' }}>
+            <span style={{ color: '#999', fontSize: '13px' }}>{r.yr}</span>
+            <div style={{ display: 'flex', gap: '24px' }}>
+              <span style={{ color: '#fff', fontSize: '13px', width: '70px', textAlign: 'right' }}>{r.full}</span>
+              <span style={{ color: '#fff', fontSize: '13px', width: '70px', textAlign: 'right' }}>{r.q4}</span>
+              <span style={{ color: r.color, fontSize: '13px', fontWeight: '600', width: '60px', textAlign: 'right' }}>{r.pct}</span>
+            </div>
+          </div>
+        ))}
+        <div style={{ fontSize: '11px', color: '#666', marginTop: '8px', fontStyle: 'italic' }}>2024 Q4 spike (+16.7%) was the largest since 2014. 2025 Q4 returned to a modest +1.9%, closer to historical norms.</div>
+      </DataBlock>
+
+      <P>The question is not whether population totals went up. They have. The question is whether that has been sustained, and as of right now, 2026 YTD is averaging 21,971 players. That is above 2025's average of 20,759, but it is still well below the 24,000-25,000 range that RS3 sat at just a few years ago. A month and a half into 2026 with 1K more total players when massive content changes have been announced is not a fact pattern... yet.</P>
+
+      <P>The <a href="/rs-trends" style={{ color: '#4ade80' }}>Trends page</a> on this site controls for seasonality using a multiplicative day-of-year seasonal index. For every day of the year (1-366), the index computes the average population on that day across all available years, divided by the global mean. Trendline regressions are run on seasonally-adjusted values. When you strip out seasonality effects, the underlying trajectory is clearer, and what it shows is that RS3 is still in a 5-year decline that recently flattened. See below. The table has gone from 23K per week to now being roughly 21K per week.</P>
+
+      <DataBlock title="Weekly Average RS3 Population (Recent)">
+        {[
+          { wk: 'Dec 1-7', val: '23,079', color: '#fff' },
+          { wk: 'Dec 8-14', val: '22,630', color: '#fff' },
+          { wk: 'Dec 15-21', val: '22,059', color: '#fff' },
+          { wk: 'Dec 22-28', val: '22,168', color: '#fff' },
+          { wk: 'Dec 29-31', val: '22,403', color: '#fff' },
+          { wk: 'Jan 1-4', val: '23,450', color: '#4ade80' },
+          { wk: 'Jan 5-11', val: '22,586', color: '#fff' },
+          { wk: 'Jan 12-18', val: '20,922', color: '#ef4444' },
+          { wk: 'Jan 19-25', val: '22,509', color: '#fff' },
+          { wk: 'Jan 26 - Feb 1', val: '22,270', color: '#fff' },
+          { wk: 'Feb 2-8', val: '21,309', color: '#ef4444' },
+          { wk: 'Feb 9-12', val: '20,958', color: '#ef4444' },
+        ].map(r => (
+          <div key={r.wk} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #1a1a1a' }}>
+            <span style={{ color: '#999', fontSize: '13px' }}>{r.wk}</span>
+            <span style={{ color: r.color, fontSize: '13px', fontWeight: '600' }}>{r.val}</span>
+          </div>
+        ))}
+        <div style={{ fontSize: '11px', color: '#666', marginTop: '8px', fontStyle: 'italic' }}>Jan 1-4 spiked to 23,450 after the Jagex announcements. Six weeks later, back to 20,958.</div>
+      </DataBlock>
+
+      <P>I have seen more interest in RS3 lately, and that is a good thing. I have seen some streamers coming back (<a href="https://www.youtube.com/watch?v=NaxJSqTEcEk" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>A Friend</a>, for example). And there have been many positive changes. Removing bloat, Tutorial Island returning, spawning at Lumbridge, etc. Many of the changes and reversions look smart. However, fully removing MTX lamps rather than gatekeeping them, removing events, reducing AFK... all of this makes the game harder. And I do not think that should be the goal when your average player is roughly 30 years old. (I agree with <a href="https://www.youtube.com/watch?v=_b6LzJ4Xum8" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>Protoxx's sentiments</a>, essentially, which were also seen as unpopular.)</P>
+
+      <P>I leveled my skills when Mining and Agility, for example, were 30K xp per hour at max in 2007. That is 10 hours per day for 30 days for each skill. I was ranked 778 in the world at 97 Mining. No one should need to do that. No one.</P>
+
+      <P>One thing I've learned over the years is that things change. And they should. Because I did it the hard way doesn't mean everyone should need to do it the same way. What matters, ultimately, isn't an achievement, isn't bragging rights, it's just having a good time. I don't think back to getting 99 Hunter with glee, I think about how it gave me carpal tunnel and was a massive waste of time, overall.</P>
+
+      <div style={{ margin: '16px 0', textAlign: 'center' }}>
+        <img src="/images/98mining.png" alt="97 Mining - Ranked 778 in the world" style={{ maxWidth: '100%', borderRadius: '6px', border: '1px solid #222' }} />
+        <div style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>Ranked 778 in the world at 97 Mining, 2007.</div>
+      </div>
+
+      <P>Overall, most people who play RS3 do not have time for it. Even Jagex knows this. CEO Jon Bellamy said in January 2026 that the playerbase "used to be angsty 16-year-olds listening to Breaking Benjamin. Now it's 33-year-old accountants and CEOs who've got 41 minutes in an evening" (<a href="https://www.gamesradar.com/games/mmo/stating-no-lies-runescape-ceo-says-the-mmos-players-used-to-be-angsty-16-year-olds-listening-to-breaking-benjamin-now-its-33-year-old-accountants-and-ceos-whove-got-41-minutes-in-an-evening/" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>GamesRadar</a>). 41 minutes. 41 minutes. And the expectation is to spend 1000s of hours getting skills maxed?</P>
+
+      <P>Why is Jagex making changes that will essentially run off older players? My guess is they're counting on newer players to come in when they see people streaming the game on Twitch. I will say this, right now, things don't look as rosy as they could, but they could also look worse. Let's hope this game of chicken Jagex is playing works out. I don't care that I don't rank on hiscores anymore, but I would care if the game died.</P>
+
+      <P>I'm overall neutral on the changes. I think some people do want to see RS3 die. Others, I believe, are wrong. But there is a lot of data abuse and misinformation right now. Even A Friend called a secular event, a <a href="https://en.wikipedia.org/wiki/January_2026_North_American_winter_storm" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>massive snowstorm in the US</a>, a good day for RS's new changes when there is likely no correlation.</P>
+
+      <P>In conclusion, I just want this site to function where there is a blind spot in what's happening with the game.</P>
+
+    </>
+  )
+}
+
 const posts = [
-  {
-    date: '2026-02-12',
-    title: 'Welcome to the aggrgtr Blog',
-    body: `This is where I'll be posting commentary, analysis, and updates about the data we track. Check back for insights on RS3 population trends, hiscores movements, and other findings from the dashboards.`
-  },
+  { date: '2026-02-12', title: 'Welcome to aggrgtr', content: WelcomePost },
 ]
 
 export default function BlogPage() {
@@ -58,13 +197,16 @@ export default function BlogPage() {
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 32px 0' }}>Blog</h1>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            {posts.map((post, i) => (
-              <article key={i} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px' }}>
-                <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{new Date(post.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '600', color: '#fff', margin: '0 0 12px 0' }}>{post.title}</h2>
-                <div style={{ fontSize: '15px', lineHeight: '1.7', color: '#ccc', whiteSpace: 'pre-line' }}>{post.body}</div>
-              </article>
-            ))}
+            {posts.map((post, i) => {
+              const Content = post.content
+              return (
+                <article key={i} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px' }}>
+                  <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{new Date(post.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                  <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '600', color: '#fff', margin: '0 0 16px 0' }}>{post.title}</h2>
+                  <Content />
+                </article>
+              )
+            })}
           </div>
         </main>
       </div>
