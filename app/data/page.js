@@ -59,6 +59,7 @@ export default function DataPage() {
               { file: 'RS_Population_Month.csv', label: 'Month (MisplacedItems)', size: '11 KB' },
               { file: 'RS_Population_Quarter_Year.csv', label: 'Quarter Year (MisplacedItems)', size: '4 KB' },
               { file: 'RS_PlayerCount_Dev.csv', label: 'Quarter Hour (PlayerCount.dev)', size: '310 KB' },
+              { file: 'RS_Wayback_Population.csv', label: 'Wayback Machine (2002-2013)', size: '172 KB' },
             ].map(d => (
               <a
                 key={d.file}
