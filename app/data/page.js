@@ -64,7 +64,7 @@ export default function DataPage() {
                 key={d.file}
                 href={`/csv/${d.file}`}
                 download
-                onClick={() => track('csv_download', { file: d.file, size: d.size })}
+                onClick={() => track(`download_${d.file}`)}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
