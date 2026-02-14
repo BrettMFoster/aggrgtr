@@ -38,8 +38,8 @@ const monthStarts = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
 const getDayOfYear = (ts) => {
-  const y = ts.getUTCFullYear(), start = new Date(Date.UTC(y, 0, 1))
-  let doy = Math.floor((ts - start) / 86400000)
+  const y = ts.getFullYear(), start = new Date(y, 0, 1)
+  let doy = Math.round((ts - start) / 86400000)
   if (isLeapYear(y) && doy >= 60) doy -= 1
   return doy
 }
@@ -181,16 +181,20 @@ export default function RSTrends() {
     if (!data.length) return []
     const byDay = {}
     for (const d of data) {
-      const dayKey = d.timestamp.toISOString().split('T')[0]
+      const t = d.timestamp
+      const dayKey = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
       if (!byDay[dayKey]) byDay[dayKey] = { rs3: [], timestamp: d.timestamp }
       byDay[dayKey].rs3.push(d.rs3)
     }
-    return Object.entries(byDay).map(([day, v]) => ({
-      timestamp: new Date(day),
-      rs3: Math.round(v.rs3.reduce((a, b) => a + b, 0) / v.rs3.length),
-      rs3_peak: Math.max(...v.rs3),
-      rs3_min: Math.min(...v.rs3.filter(x => x > 0)) || 0,
-    })).sort((a, b) => a.timestamp - b.timestamp)
+    return Object.entries(byDay).map(([day, v]) => {
+      const [y, m, d] = day.split('-').map(Number)
+      return {
+        timestamp: new Date(y, m - 1, d),
+        rs3: Math.round(v.rs3.reduce((a, b) => a + b, 0) / v.rs3.length),
+        rs3_peak: Math.max(...v.rs3),
+        rs3_min: Math.min(...v.rs3.filter(x => x > 0)) || 0,
+      }
+    }).sort((a, b) => a.timestamp - b.timestamp)
   }, [data])
 
   // ============ YoY DATA ============
@@ -198,9 +202,9 @@ export default function RSTrends() {
     if (!dailyData.length) return {}
     const byYear = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getUTCFullYear()
-      const startOfYear = new Date(Date.UTC(year, 0, 1))
-      let dayOfYear = Math.floor((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
+      const year = d.timestamp.getFullYear()
+      const startOfYear = new Date(year, 0, 1)
+      let dayOfYear = Math.round((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
       if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1 // skip Feb 29, cap at 0-364
       if (!byYear[year]) byYear[year] = {}
       byYear[year][dayOfYear] = d.rs3
@@ -229,9 +233,9 @@ export default function RSTrends() {
     // Group by year with day-of-year tracking for same-period comparisons
     const byYear = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getUTCFullYear()
-      const startOfYear = new Date(Date.UTC(year, 0, 1))
-      let dayOfYear = Math.floor((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
+      const year = d.timestamp.getFullYear()
+      const startOfYear = new Date(year, 0, 1)
+      let dayOfYear = Math.round((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
       if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1 // skip Feb 29, cap at 0-364
       if (!byYear[year]) byYear[year] = { year, entries: [], peak: 0, peakDate: null }
       byYear[year].entries.push({ rs3: d.rs3, dayOfYear })
@@ -274,9 +278,9 @@ export default function RSTrends() {
       const periodStart = latest.firstDay
       const periodEnd = latest.lastDay
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      const startDate = new Date(Date.UTC(latest.year, 0, periodStart + 1))
-      const endDate = new Date(Date.UTC(latest.year, 0, periodEnd + 1))
-      const periodLabel = `${monthNames[startDate.getUTCMonth()]} ${startDate.getUTCDate()} \u2013 ${monthNames[endDate.getUTCMonth()]} ${endDate.getUTCDate()}`
+      const startDate = new Date(latest.year, 0, periodStart + 1)
+      const endDate = new Date(latest.year, 0, periodEnd + 1)
+      const periodLabel = `${monthNames[startDate.getMonth()]} ${startDate.getDate()} - ${monthNames[endDate.getMonth()]} ${endDate.getDate()}`
 
       for (const r of result) {
         const entries = byYear[r.year].entries.filter(e => e.dayOfYear >= periodStart && e.dayOfYear <= periodEnd)
@@ -309,8 +313,8 @@ export default function RSTrends() {
     const qLabels = ['Q1 (Jan–Mar)', 'Q2 (Apr–Jun)', 'Q3 (Jul–Sep)', 'Q4 (Oct–Dec)']
     const byYearQ = {}
     for (const d of dailyData) {
-      const year = d.timestamp.getUTCFullYear()
-      const q = Math.floor(d.timestamp.getUTCMonth() / 3)
+      const year = d.timestamp.getFullYear()
+      const q = Math.floor(d.timestamp.getMonth() / 3)
       const key = `${year}-${q}`
       if (!byYearQ[key]) byYearQ[key] = { year, q, label: qLabels[q], peak: 0, peakDate: null, count: 0 }
       byYearQ[key].count++
@@ -1380,11 +1384,11 @@ export default function RSTrends() {
                   {trendlineData.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: trendlineData.regression.pctChange > 1 ? '#4ade80'
                           : trendlineData.regression.pctChange < -1 ? '#ef4444'
                           : '#eab308'
@@ -1392,8 +1396,8 @@ export default function RSTrends() {
                         {Math.round(trendlineData.regression.slope * 365) > 0 ? '+' : ''}{Math.round(trendlineData.regression.slope * 365).toLocaleString()} players/year
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: trendlineData.regression.pctChange > 1 ? '#052e16'
                           : trendlineData.regression.pctChange < -1 ? '#450a0a'
                           : '#422006',
@@ -1435,7 +1439,7 @@ export default function RSTrends() {
                         const years = new Set()
                         const labels = []
                         for (let i = 0; i < dailyData.length; i++) {
-                          const y = dailyData[i].timestamp.getUTCFullYear()
+                          const y = dailyData[i].timestamp.getFullYear()
                           if (!years.has(y)) {
                             years.add(y)
                             labels.push({ index: i, text: String(y) })
@@ -1550,11 +1554,11 @@ export default function RSTrends() {
                   {fiveYrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: fiveYrTrendline.regression.pctChange > 1 ? '#4ade80'
                           : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444'
                           : '#eab308'
@@ -1562,8 +1566,8 @@ export default function RSTrends() {
                         {Math.round(fiveYrTrendline.regression.slope * 365) > 0 ? '+' : ''}{Math.round(fiveYrTrendline.regression.slope * 365).toLocaleString()} players/year
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: fiveYrTrendline.regression.pctChange > 1 ? '#052e16'
                           : fiveYrTrendline.regression.pctChange < -1 ? '#450a0a'
                           : '#422006',
@@ -1603,7 +1607,7 @@ export default function RSTrends() {
                         const years = new Set()
                         const labels = []
                         for (let i = 0; i < fiveYrData.length; i++) {
-                          const y = fiveYrData[i].timestamp.getUTCFullYear()
+                          const y = fiveYrData[i].timestamp.getFullYear()
                           if (!years.has(y)) { years.add(y); labels.push({ index: i, text: String(y) }) }
                         }
                         return labels
@@ -1707,11 +1711,11 @@ export default function RSTrends() {
                   {oneYrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: oneYrTrendline.regression.pctChange > 3 ? '#4ade80'
                           : oneYrTrendline.regression.pctChange < -3 ? '#ef4444'
                           : '#eab308'
@@ -1719,8 +1723,8 @@ export default function RSTrends() {
                         {Math.round(oneYrTrendline.regression.slope * 365) > 0 ? '+' : ''}{Math.round(oneYrTrendline.regression.slope * 365).toLocaleString()} players/year
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: oneYrTrendline.regression.pctChange > 3 ? '#052e16'
                           : oneYrTrendline.regression.pctChange < -3 ? '#450a0a'
                           : '#422006',
@@ -1761,10 +1765,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < oneYrData.length; i++) {
                           const d = oneYrData[i].timestamp
-                          const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
+                          const key = `${d.getFullYear()}-${d.getMonth()}`
                           if (!months.has(key)) {
                             months.add(key)
-                            labels.push({ index: i, month: d.getUTCMonth(), year: d.getUTCFullYear(), text: d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) })
+                            labels.push({ index: i, month: d.getMonth(), year: d.getFullYear(), text: d.toLocaleDateString('en-US', { month: 'short' }) })
                           }
                         }
                         return labels
@@ -1868,11 +1872,11 @@ export default function RSTrends() {
                   {sixMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: sixMoTrendline.regression.pctChange > 5 ? '#4ade80'
                           : sixMoTrendline.regression.pctChange < -5 ? '#ef4444'
                           : '#eab308'
@@ -1880,8 +1884,8 @@ export default function RSTrends() {
                         {sixMoTrendline.regression.monthlyChange > 0 ? '+' : ''}{sixMoTrendline.regression.monthlyChange.toLocaleString()} players/mo
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: sixMoTrendline.regression.pctChange > 5 ? '#052e16'
                           : sixMoTrendline.regression.pctChange < -5 ? '#450a0a'
                           : '#422006',
@@ -1922,10 +1926,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < sixMoData.length; i++) {
                           const d = sixMoData[i].timestamp
-                          const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
+                          const key = `${d.getFullYear()}-${d.getMonth()}`
                           if (!months.has(key)) {
                             months.add(key)
-                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }) })
+                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short' }) })
                           }
                         }
                         return labels
@@ -2030,11 +2034,11 @@ export default function RSTrends() {
                   {threeMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: threeMoTrendline.regression.pctChange > 7 ? '#4ade80'
                           : threeMoTrendline.regression.pctChange < -7 ? '#ef4444'
                           : '#eab308'
@@ -2042,8 +2046,8 @@ export default function RSTrends() {
                         {threeMoTrendline.regression.monthlyChange > 0 ? '+' : ''}{threeMoTrendline.regression.monthlyChange.toLocaleString()} players/mo
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: threeMoTrendline.regression.pctChange > 7 ? '#052e16'
                           : threeMoTrendline.regression.pctChange < -7 ? '#450a0a'
                           : '#422006',
@@ -2185,11 +2189,11 @@ export default function RSTrends() {
                   {oneMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: oneMoTrendline.regression.pctChange > 10 ? '#4ade80'
                           : oneMoTrendline.regression.pctChange < -10 ? '#ef4444'
                           : '#eab308'
@@ -2197,8 +2201,8 @@ export default function RSTrends() {
                         {oneMoTrendline.regression.dailyChange > 0 ? '+' : ''}{oneMoTrendline.regression.dailyChange.toLocaleString()} players/day
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: oneMoTrendline.regression.pctChange > 10 ? '#052e16'
                           : oneMoTrendline.regression.pctChange < -10 ? '#450a0a'
                           : '#422006',
@@ -2369,10 +2373,10 @@ export default function RSTrends() {
                         const labels = []
                         for (let i = 0; i < peaksData.length; i++) {
                           const d = peaksData[i].timestamp
-                          const monthKey = `${d.getUTCFullYear()}-${d.getUTCMonth()}`
+                          const monthKey = `${d.getFullYear()}-${d.getMonth()}`
                           if (!months.has(monthKey)) {
                             months.add(monthKey)
-                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' }) })
+                            labels.push({ index: i, text: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) })
                           }
                         }
                         return labels
@@ -2825,11 +2829,11 @@ export default function RSTrends() {
                   {hiscoresTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: hiscoresTrendline.regression.pctChange > 1 ? '#4ade80'
                           : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444'
                           : '#eab308'
@@ -2837,8 +2841,8 @@ export default function RSTrends() {
                         {Math.round(hiscoresTrendline.regression.slope * 52) > 0 ? '+' : ''}{Math.round(hiscoresTrendline.regression.slope * 52).toLocaleString()}/yr
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: hiscoresTrendline.regression.pctChange > 1 ? '#052e16'
                           : hiscoresTrendline.regression.pctChange < -1 ? '#450a0a'
                           : '#422006',
@@ -2991,11 +2995,11 @@ export default function RSTrends() {
                   {hs1yrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: hs1yrTrendline.regression.pctChange > 3 ? '#4ade80'
                           : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444'
                           : '#eab308'
@@ -3003,8 +3007,8 @@ export default function RSTrends() {
                         {Math.round(hs1yrTrendline.regression.slope * 52) > 0 ? '+' : ''}{Math.round(hs1yrTrendline.regression.slope * 52).toLocaleString()}/yr
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: hs1yrTrendline.regression.pctChange > 3 ? '#052e16'
                           : hs1yrTrendline.regression.pctChange < -3 ? '#450a0a'
                           : '#422006',
@@ -3085,11 +3089,11 @@ export default function RSTrends() {
                   {hs6moTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: hs6moTrendline.regression.pctChange > 5 ? '#4ade80'
                           : hs6moTrendline.regression.pctChange < -5 ? '#ef4444'
                           : '#eab308'
@@ -3097,8 +3101,8 @@ export default function RSTrends() {
                         {Math.round(hs6moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs6moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: hs6moTrendline.regression.pctChange > 5 ? '#052e16'
                           : hs6moTrendline.regression.pctChange < -5 ? '#450a0a'
                           : '#422006',
@@ -3179,11 +3183,11 @@ export default function RSTrends() {
                   {hs3moTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: hs3moTrendline.regression.pctChange > 7 ? '#4ade80'
                           : hs3moTrendline.regression.pctChange < -7 ? '#ef4444'
                           : '#eab308'
@@ -3191,8 +3195,8 @@ export default function RSTrends() {
                         {Math.round(hs3moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs3moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: hs3moTrendline.regression.pctChange > 7 ? '#052e16'
                           : hs3moTrendline.regression.pctChange < -7 ? '#450a0a'
                           : '#422006',
@@ -3275,18 +3279,18 @@ export default function RSTrends() {
                     return (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '12px',
+                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
                       position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
                     }}>
                       <span style={{
-                        fontSize: '14px', fontWeight: '700',
+                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
                         color: moPct > 10 ? '#4ade80' : moPct < -10 ? '#ef4444' : '#eab308'
                       }}>
                         {Math.round(hs1moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs1moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
                       <span style={{
-                        fontSize: '12px', fontWeight: '600',
-                        padding: '2px 8px', borderRadius: '4px',
+                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
+                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
                         background: moPct > 10 ? '#052e16' : moPct < -10 ? '#450a0a' : '#422006',
                         color: moPct > 10 ? '#4ade80' : moPct < -10 ? '#ef4444' : '#eab308'
                       }}>

@@ -184,7 +184,8 @@ export default function RSPopulation() {
   const aggregateByDay = (data) => {
     const byDay = {}
     for (const point of data) {
-      const dayKey = point.timestamp.toISOString().split('T')[0]
+      const t = point.timestamp
+      const dayKey = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
       if (!byDay[dayKey]) {
         byDay[dayKey] = { osrs: [], rs3: [], total: [] }
       }
@@ -192,12 +193,15 @@ export default function RSPopulation() {
       byDay[dayKey].rs3.push(point.rs3)
       byDay[dayKey].total.push(point.total)
     }
-    return Object.entries(byDay).map(([day, values]) => ({
-      timestamp: new Date(day),
-      osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
-      rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
-      total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
-    })).sort((a, b) => a.timestamp - b.timestamp)
+    return Object.entries(byDay).map(([day, values]) => {
+      const [y, m, d] = day.split('-').map(Number)
+      return {
+        timestamp: new Date(y, m - 1, d),
+        osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
+        rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
+        total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
+      }
+    }).sort((a, b) => a.timestamp - b.timestamp)
   }
 
   const aggregateByWeek = (data) => {
@@ -207,7 +211,7 @@ export default function RSPopulation() {
       const day = d.getDay()
       const monday = new Date(d)
       monday.setDate(d.getDate() - ((day + 6) % 7))
-      const weekKey = monday.toISOString().split('T')[0]
+      const weekKey = `${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`
       if (!byWeek[weekKey]) {
         byWeek[weekKey] = { osrs: [], rs3: [], total: [] }
       }
@@ -215,18 +219,22 @@ export default function RSPopulation() {
       byWeek[weekKey].rs3.push(point.rs3)
       byWeek[weekKey].total.push(point.total)
     }
-    return Object.entries(byWeek).map(([week, values]) => ({
-      timestamp: new Date(week),
-      osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
-      rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
-      total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
-    })).sort((a, b) => a.timestamp - b.timestamp)
+    return Object.entries(byWeek).map(([week, values]) => {
+      const [y, m, d] = week.split('-').map(Number)
+      return {
+        timestamp: new Date(y, m - 1, d),
+        osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
+        rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
+        total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
+      }
+    }).sort((a, b) => a.timestamp - b.timestamp)
   }
 
   const aggregateByHour = (data) => {
     const byHour = {}
     for (const point of data) {
-      const hourKey = point.timestamp.toISOString().slice(0, 13)
+      const t = point.timestamp
+      const hourKey = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}T${String(t.getHours()).padStart(2,'0')}`
       if (!byHour[hourKey]) {
         byHour[hourKey] = { osrs: [], rs3: [], total: [] }
       }
@@ -234,12 +242,16 @@ export default function RSPopulation() {
       byHour[hourKey].rs3.push(point.rs3)
       byHour[hourKey].total.push(point.total)
     }
-    return Object.entries(byHour).map(([hour, values]) => ({
-      timestamp: new Date(hour + ':00:00Z'),
-      osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
-      rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
-      total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
-    })).sort((a, b) => a.timestamp - b.timestamp)
+    return Object.entries(byHour).map(([hour, values]) => {
+      const [datePart, h] = hour.split('T')
+      const [y, m, d] = datePart.split('-').map(Number)
+      return {
+        timestamp: new Date(y, m - 1, d, parseInt(h)),
+        osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
+        rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
+        total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
+      }
+    }).sort((a, b) => a.timestamp - b.timestamp)
   }
 
   // Compute nice y-axis ticks
@@ -450,7 +462,7 @@ export default function RSPopulation() {
       } else if (viewMode === 'year') {
         key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
       } else if (viewMode === 'week' || viewMode === 'month') {
-        key = d.timestamp.toISOString().split('T')[0]
+        key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}-${d.timestamp.getDate()}`
       } else if (viewMode === 'live') {
         key = d.timestamp.getHours()
       }
