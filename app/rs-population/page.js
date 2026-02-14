@@ -174,7 +174,7 @@ export default function RSPopulation() {
         const cutoff = now.getTime() - 365 * 24 * 60 * 60 * 1000
         filtered = data.filter(d => d.timestamp.getTime() > cutoff)
       }
-      filtered = aggregateByWeek(filtered)
+      filtered = aggregateByDay(filtered)
     } else {
       const cutoffs = {
         'live': 24 * 60 * 60 * 1000,
@@ -528,7 +528,7 @@ export default function RSPopulation() {
         const key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}-${slot}`
         if (!seen.has(key)) {
           seen.add(key)
-          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
+          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
           result.push({ index: i, text })
         }
       }
