@@ -12,6 +12,12 @@ const CH = CB - CT // chart height
 const VW = 920   // viewBox width
 const VH = 585   // viewBox height
 
+// Time-of-Day chart vertical constants
+const TOD_CT = 15
+const TOD_CB = 330
+const TOD_CH = TOD_CB - TOD_CT
+const TOD_VH = 375
+
 export default function RSPopulation() {
   const [viewMode, setViewMode] = useState('live')
   const [hoveredPoint, setHoveredPoint] = useState(null)
@@ -23,6 +29,9 @@ export default function RSPopulation() {
   const [monthFilterOn, setMonthFilterOn] = useState(false)
   const [yearFilterOn, setYearFilterOn] = useState(false)
   const chartRef = useRef(null)
+  const todChartRef = useRef(null)
+  const [todHoveredHour, setTodHoveredHour] = useState(-1)
+  const [todMousePos, setTodMousePos] = useState({ x: 0, y: 0 })
 
   // SWR for data fetching with caching
   const { data: historicalJson, error: historicalError } = useSWR(
@@ -333,6 +342,77 @@ export default function RSPopulation() {
   const avgYearRs3 = lastYear.length > 0
     ? Math.round(lastYear.reduce((sum, d) => sum + d.rs3, 0) / lastYear.length)
     : 0
+
+  // Time of Day chart data - last 30 days of live data (reflects current population levels)
+  const hourlyAverage = useMemo(() => {
+    if (last30Days.length === 0) return Array.from({ length: 24 }, (_, h) => ({ hour: h, avgRs3: 0, count: 0 }))
+    const byHour = Array.from({ length: 24 }, () => [])
+    for (const point of last30Days) {
+      byHour[point.timestamp.getHours()].push(point.rs3)
+    }
+    return byHour.map((values, hour) => ({
+      hour,
+      avgRs3: values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0,
+      count: values.length
+    }))
+  }, [last30Days])
+
+  const todayRs3Data = useMemo(() => {
+    if (data.length === 0) return []
+    const now = new Date()
+    const ty = now.getFullYear(), tm = now.getMonth(), td = now.getDate()
+    return data.filter(pt => {
+      const t = pt.timestamp
+      return t.getFullYear() === ty && t.getMonth() === tm && t.getDate() === td
+    })
+  }, [data])
+
+  const todayByHourLookup = useMemo(() => {
+    const lookup = {}
+    for (const pt of todayRs3Data) {
+      const h = pt.timestamp.getHours()
+      if (!lookup[h]) lookup[h] = []
+      lookup[h].push(pt.rs3)
+    }
+    const result = {}
+    for (const [h, values] of Object.entries(lookup)) {
+      result[parseInt(h)] = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+    }
+    return result
+  }, [todayRs3Data])
+
+  const todPeakHour = hourlyAverage.reduce((best, h) => h.avgRs3 > best.avgRs3 ? h : best, hourlyAverage[0])
+  const todOffPeakHour = hourlyAverage.filter(h => h.count > 0).reduce((best, h) => h.avgRs3 < best.avgRs3 ? h : best, hourlyAverage[0])
+  const todCurrentHour = new Date().getHours()
+  const todCurrentAvg = hourlyAverage[todCurrentHour]?.avgRs3 || 0
+  const todVsAvg = (latest?.rs3 || 0) - todCurrentAvg
+
+  const formatHour = (h) => {
+    if (h === 0 || h === 24) return '12 AM'
+    if (h === 12) return '12 PM'
+    return h < 12 ? `${h} AM` : `${h - 12} PM`
+  }
+
+  const todChartMax = Math.max(...hourlyAverage.map(h => h.avgRs3), ...todayRs3Data.map(d => d.rs3), 1)
+  const todYTicks = computeYTicks(todChartMax)
+  const todYMax = todYTicks[todYTicks.length - 1] || 1
+  const todX = (h) => CL + (h / 24) * CW
+  const todY = (v) => TOD_CB - (v / todYMax) * TOD_CH
+
+  const handleTodInteraction = (clientX, clientY) => {
+    if (!todChartRef.current) return
+    const rect = todChartRef.current.getBoundingClientRect()
+    const x = clientX - rect.left
+    const chartStartPct = CL / VW
+    const chartEndPct = CR / VW
+    const chartAreaWidth = rect.width * (chartEndPct - chartStartPct)
+    const chartAreaStart = rect.width * chartStartPct
+    const relativeX = x - chartAreaStart
+    const pct = Math.max(0, Math.min(1, relativeX / chartAreaWidth))
+    const hour = Math.round(pct * 23)
+    setTodHoveredHour(Math.max(0, Math.min(23, hour)))
+    setTodMousePos({ x: clientX, y: clientY })
+  }
 
   const viewModes = [
     { id: 'live', label: 'Hour' },
@@ -938,6 +1018,152 @@ export default function RSPopulation() {
                 <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
                   <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>1-Year Avg RS3</div>
                   <div style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{avgYearRs3.toLocaleString()}</div>
+                </div>
+              </div>
+
+              {/* RS3 Time of Day */}
+              <div style={{ marginTop: '8px' }}>
+                <div style={{ marginBottom: '4px' }}>
+                  <h2 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '600', color: '#fff', margin: '0 0 1px 0', letterSpacing: '-0.5px' }}>RS3 Time of Day</h2>
+                  <div style={{ fontSize: '13px', color: '#999' }}>30-day average RS3 players by hour with today overlaid</div>
+                </div>
+
+                {/* TOD KPI Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Peak Hour</div>
+                    <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2' }}>{formatHour(todPeakHour?.hour ?? 0)}</div>
+                    <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{(todPeakHour?.avgRs3 ?? 0).toLocaleString()} avg</div>
+                  </div>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Off-Peak Hour</div>
+                    <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#60a5fa', lineHeight: '1.2' }}>{formatHour(todOffPeakHour?.hour ?? 0)}</div>
+                    <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>{(todOffPeakHour?.avgRs3 ?? 0).toLocaleString()} avg</div>
+                  </div>
+                  <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '8px 12px' : '10px 14px', textAlign: 'center' }}>
+                    <div style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#fff', marginBottom: '1px', textTransform: 'uppercase', letterSpacing: '0.04em', lineHeight: '1.2' }}>Now vs Average</div>
+                    <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: todVsAvg >= 0 ? '#4ade80' : '#f87171', lineHeight: '1.2', fontVariantNumeric: 'tabular-nums' }}>
+                      {todVsAvg >= 0 ? '+' : ''}{todVsAvg.toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#fff', marginTop: '2px', lineHeight: '1.2' }}>for {formatHour(todCurrentHour)}</div>
+                  </div>
+                </div>
+
+                {/* TOD Chart */}
+                <div style={{ position: 'relative', width: '100%', height: isMobile ? '300px' : '450px', background: '#111', border: '1px solid #222', borderRadius: '8px', overflow: 'hidden' }}>
+                  <svg
+                    ref={todChartRef}
+                    viewBox={`0 0 ${VW} ${TOD_VH}`}
+                    preserveAspectRatio="none"
+                    style={{ width: '100%', height: '100%', display: 'block' }}
+                    onMouseMove={(e) => handleTodInteraction(e.clientX, e.clientY)}
+                    onMouseLeave={() => setTodHoveredHour(-1)}
+                    onTouchMove={(e) => { if (e.touches[0]) { e.preventDefault(); handleTodInteraction(e.touches[0].clientX, e.touches[0].clientY) } }}
+                    onTouchEnd={() => setTodHoveredHour(-1)}
+                  >
+                    {/* Y-axis grid lines and labels */}
+                    {todYTicks.map(v => (
+                      <g key={v}>
+                        <line x1={CL} y1={todY(v)} x2={CR} y2={todY(v)} stroke="#222" strokeWidth="1" />
+                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                          {v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : v}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* X-axis labels every 3 hours */}
+                    {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
+                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                        {formatHour(h)}
+                      </text>
+                    ))}
+
+                    {/* Historical average filled area */}
+                    <path
+                      d={`M ${todX(0)} ${todY(hourlyAverage[0]?.avgRs3 || 0)} ${hourlyAverage.map(h => `L ${todX(h.hour)} ${todY(h.avgRs3)}`).join(' ')} L ${todX(23)} ${TOD_CB} L ${todX(0)} ${TOD_CB} Z`}
+                      fill="rgba(96, 165, 250, 0.1)"
+                    />
+
+                    {/* Historical average line */}
+                    <path
+                      d={hourlyAverage.map((h, i) => `${i === 0 ? 'M' : 'L'} ${todX(h.hour)} ${todY(h.avgRs3)}`).join(' ')}
+                      fill="none"
+                      stroke="rgba(96, 165, 250, 0.4)"
+                      strokeWidth="2"
+                    />
+
+                    {/* Today's RS3 line */}
+                    {todayRs3Data.length > 1 && (
+                      <path
+                        d={todayRs3Data.map((d, i) => {
+                          const fh = d.timestamp.getHours() + d.timestamp.getMinutes() / 60
+                          return `${i === 0 ? 'M' : 'L'} ${todX(fh)} ${todY(d.rs3)}`
+                        }).join(' ')}
+                        fill="none"
+                        stroke="#60a5fa"
+                        strokeWidth="3"
+                      />
+                    )}
+
+                    {/* Peak hour marker */}
+                    <line
+                      x1={todX(todPeakHour?.hour ?? 12)} y1={TOD_CT}
+                      x2={todX(todPeakHour?.hour ?? 12)} y2={TOD_CB}
+                      stroke="#60a5fa" strokeWidth="1" strokeDasharray="4,4" opacity="0.3"
+                    />
+                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize="9" opacity="0.7" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
+
+                    {/* "Now" indicator */}
+                    {(() => {
+                      const n = new Date()
+                      const fh = n.getHours() + n.getMinutes() / 60
+                      return (
+                        <>
+                          <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1.5" strokeDasharray="4,4" opacity="0.5" />
+                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize="9" opacity="0.7" style={{ fontFamily: 'sans-serif' }}>NOW</text>
+                        </>
+                      )
+                    })()}
+
+                    {/* Hover indicator */}
+                    {todHoveredHour >= 0 && (
+                      <>
+                        <line x1={todX(todHoveredHour)} y1={TOD_CT} x2={todX(todHoveredHour)} y2={TOD_CB} stroke="#fff" strokeWidth="1" opacity="0.3" />
+                        <circle cx={todX(todHoveredHour)} cy={todY(hourlyAverage[todHoveredHour]?.avgRs3 || 0)} r="5" fill="rgba(96, 165, 250, 0.3)" stroke="rgba(96, 165, 250, 0.6)" strokeWidth="2" />
+                        {todayByHourLookup[todHoveredHour] !== undefined && (
+                          <circle cx={todX(todHoveredHour)} cy={todY(todayByHourLookup[todHoveredHour])} r="5" fill="#60a5fa" stroke="#fff" strokeWidth="2" />
+                        )}
+                      </>
+                    )}
+
+                    {/* Legend */}
+                    <rect x={CR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
+                    <text x={CR - 186} y={TOD_CT + 14} fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <line x1={CR - 105} y1={TOD_CT + 10} x2={CR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
+                    <text x={CR - 76} y={TOD_CT + 14} fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Today</text>
+                  </svg>
+
+                  {/* Tooltip */}
+                  {todHoveredHour >= 0 && (() => {
+                    const tipW = 160, tipH = 80
+                    const spaceRight = window.innerWidth - todMousePos.x
+                    const spaceBottom = window.innerHeight - todMousePos.y
+                    const left = spaceRight < tipW + 30 ? todMousePos.x - tipW - 15 : todMousePos.x + 15
+                    const top = spaceBottom < tipH + 20 ? todMousePos.y - tipH - 10 : todMousePos.y - 10
+                    return (
+                      <div style={{
+                        position: 'fixed', left, top,
+                        background: '#1a1a2e', border: '1px solid #333', borderRadius: '6px',
+                        padding: '8px 12px', pointerEvents: 'none', zIndex: 1000, fontSize: '13px', minWidth: `${tipW}px`
+                      }}>
+                        <div style={{ fontWeight: '600', color: '#fff', marginBottom: '4px' }}>{formatHour(todHoveredHour)}</div>
+                        <div style={{ color: 'rgba(96, 165, 250, 0.7)' }}>Avg: {(hourlyAverage[todHoveredHour]?.avgRs3 || 0).toLocaleString()}</div>
+                        {todayByHourLookup[todHoveredHour] !== undefined && (
+                          <div style={{ color: '#60a5fa' }}>Today: {todayByHourLookup[todHoveredHour].toLocaleString()}</div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </>
