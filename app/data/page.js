@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { track } from '@vercel/analytics'
 
 export default function DataPage() {
   const [isMobile, setIsMobile] = useState(false)
@@ -63,6 +64,7 @@ export default function DataPage() {
                 key={d.file}
                 href={`/csv/${d.file}`}
                 download
+                onClick={() => track('csv_download', { file: d.file, size: d.size })}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
