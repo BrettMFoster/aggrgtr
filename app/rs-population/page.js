@@ -10,7 +10,7 @@ const CT = 15    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
 const VW = 920   // viewBox width
-const VH = 585   // viewBox height
+const VH = 625   // viewBox height
 
 // Time-of-Day chart vertical constants
 const TOD_CT = 15
@@ -32,6 +32,8 @@ export default function RSPopulation() {
   const todChartRef = useRef(null)
   const [todHoveredHour, setTodHoveredHour] = useState(-1)
   const [todMousePos, setTodMousePos] = useState({ x: 0, y: 0 })
+  const [todHoverMode, setTodHoverMode] = useState('avg')
+  const [todNearestToday, setTodNearestToday] = useState(null)
 
   // SWR for data fetching with caching
   const { data: historicalJson, error: historicalError } = useSWR(
@@ -403,14 +405,46 @@ export default function RSPopulation() {
     if (!todChartRef.current) return
     const rect = todChartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
+    const y = clientY - rect.top
     const chartStartPct = CL / VW
     const chartEndPct = CR / VW
     const chartAreaWidth = rect.width * (chartEndPct - chartStartPct)
     const chartAreaStart = rect.width * chartStartPct
     const relativeX = x - chartAreaStart
     const pct = Math.max(0, Math.min(1, relativeX / chartAreaWidth))
-    const hour = Math.round(pct * 23)
-    setTodHoveredHour(Math.max(0, Math.min(23, hour)))
+    const fracHour = pct * 24
+    const roundedHour = Math.max(0, Math.min(23, Math.round(fracHour)))
+
+    // Find nearest today data point by time
+    let nearestPt = null
+    let minTimeDist = Infinity
+    for (const pt of todayRs3Data) {
+      const fh = pt.timestamp.getHours() + pt.timestamp.getMinutes() / 60
+      const dist = Math.abs(fh - fracHour)
+      if (dist < minTimeDist) {
+        minTimeDist = dist
+        nearestPt = pt
+      }
+    }
+
+    // Convert mouse Y to data value to determine which line is closer
+    const svgY = (y / rect.height) * TOD_VH
+    const mouseValue = ((TOD_CB - svgY) / TOD_CH) * todYMax
+
+    const avgValue = hourlyAverage[roundedHour]?.avgRs3 || 0
+    const todayValue = nearestPt?.rs3 || 0
+    const avgDist = Math.abs(mouseValue - avgValue)
+    const todayDist = nearestPt ? Math.abs(mouseValue - todayValue) : Infinity
+
+    if (todayDist < avgDist && nearestPt) {
+      setTodHoverMode('today')
+      setTodNearestToday(nearestPt)
+    } else {
+      setTodHoverMode('avg')
+      setTodNearestToday(null)
+    }
+
+    setTodHoveredHour(roundedHour)
     setTodMousePos({ x: clientX, y: clientY })
   }
 
@@ -471,7 +505,7 @@ export default function RSPopulation() {
           allMonths.push({ index: i, text })
         }
       }
-      const maxLabels = 16
+      const maxLabels = 28
       if (allMonths.length <= maxLabels) return allMonths
       const result = []
       for (let i = 0; i < maxLabels; i++) {
@@ -482,27 +516,23 @@ export default function RSPopulation() {
     }
 
     if (viewMode === 'year') {
-      // Collect first and last index for each month
-      const monthRanges = {}
-      const monthOrder = []
+      // Label every ~2 weeks for more granularity
+      const seen = new Set()
+      const result = []
       for (let i = 0; i < filteredData.length; i++) {
         const d = filteredData[i]
-        const monthKey = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}`
-        if (!monthRanges[monthKey]) {
-          monthRanges[monthKey] = { first: i, last: i, timestamp: d.timestamp }
-          monthOrder.push(monthKey)
-        } else {
-          monthRanges[monthKey].last = i
+        const day = d.timestamp.getDate()
+        // Show 1st and 15th of each month
+        const slot = day < 8 ? 1 : day < 22 ? 15 : null
+        if (slot === null) continue
+        const key = `${d.timestamp.getFullYear()}-${d.timestamp.getMonth()}-${slot}`
+        if (!seen.has(key)) {
+          seen.add(key)
+          const text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + " '" + d.timestamp.getFullYear().toString().slice(-2)
+          result.push({ index: i, text })
         }
       }
-      // Place label at midpoint of each month's data range for even spacing
-      return monthOrder.map(key => {
-        const r = monthRanges[key]
-        return {
-          index: Math.round((r.first + r.last) / 2),
-          text: r.timestamp.toLocaleDateString('en-US', { month: 'short' }) + " '" + r.timestamp.getFullYear().toString().slice(-2)
-        }
-      })
+      return result
     }
 
     const count = 6
@@ -736,7 +766,7 @@ export default function RSPopulation() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: isMobile ? '350px' : '650px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                  style={{ height: isMobile ? '350px' : '690px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                   onTouchMove={handleTouchMove}
@@ -789,7 +819,8 @@ export default function RSPopulation() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const minGap = 40
+                        const isAngled = viewMode === 'all' || viewMode === 'year'
+                        const minGap = isAngled ? 20 : 40
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -800,19 +831,23 @@ export default function RSPopulation() {
                           }
                         }
                         return visible
-                      })().map((label, i) => (
-                        <text
-                          key={i}
-                          x={label.x}
-                          y={CB + 22}
-                          fill="#fff"
-                          fontSize="12"
-                          fontWeight="bold"
-                          textAnchor="middle"
-                        >
-                          {label.text}
-                        </text>
-                      ))}
+                      })().map((label, i) => {
+                        const isAngled = viewMode === 'all' || viewMode === 'year'
+                        return (
+                          <text
+                            key={i}
+                            x={label.x}
+                            y={CB + 22}
+                            fill="#fff"
+                            fontSize={isAngled ? '10' : '12'}
+                            fontWeight="bold"
+                            textAnchor={isAngled ? 'end' : 'middle'}
+                            transform={isAngled ? `rotate(-45, ${label.x}, ${CB + 22})` : undefined}
+                          >
+                            {label.text}
+                          </text>
+                        )
+                      })}
 
                       {/* OSRS area fill */}
                       <path
@@ -921,7 +956,7 @@ export default function RSPopulation() {
                       })()}
 
                       {/* Legend at bottom of chart */}
-                      <g transform={`translate(${VW / 2}, ${CB + 50})`}>
+                      <g transform={`translate(${VW / 2}, ${CB + 85})`}>
                         <rect x={-248} y={-6} width={12} height={12} rx={2} fill="#4ade80" />
                         <text x={-232} y={5} fill="#ccc" fontSize="11">OSRS</text>
                         <rect x={-178} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
@@ -1057,7 +1092,7 @@ export default function RSPopulation() {
                     preserveAspectRatio="none"
                     style={{ width: '100%', height: '100%', display: 'block' }}
                     onMouseMove={(e) => handleTodInteraction(e.clientX, e.clientY)}
-                    onMouseLeave={() => setTodHoveredHour(-1)}
+                    onMouseLeave={() => { setTodHoveredHour(-1); setTodHoverMode('avg'); setTodNearestToday(null) }}
                     onTouchMove={(e) => { if (e.touches[0]) { e.preventDefault(); handleTodInteraction(e.touches[0].clientX, e.touches[0].clientY) } }}
                     onTouchEnd={() => setTodHoveredHour(-1)}
                   >
@@ -1126,15 +1161,27 @@ export default function RSPopulation() {
                     })()}
 
                     {/* Hover indicator */}
-                    {todHoveredHour >= 0 && (
-                      <>
-                        <line x1={todX(todHoveredHour)} y1={TOD_CT} x2={todX(todHoveredHour)} y2={TOD_CB} stroke="#fff" strokeWidth="1" opacity="0.3" />
-                        <circle cx={todX(todHoveredHour)} cy={todY(hourlyAverage[todHoveredHour]?.avgRs3 || 0)} r="5" fill="rgba(96, 165, 250, 0.3)" stroke="rgba(96, 165, 250, 0.6)" strokeWidth="2" />
-                        {todayByHourLookup[todHoveredHour] !== undefined && (
-                          <circle cx={todX(todHoveredHour)} cy={todY(todayByHourLookup[todHoveredHour])} r="5" fill="#60a5fa" stroke="#fff" strokeWidth="2" />
-                        )}
-                      </>
-                    )}
+                    {todHoveredHour >= 0 && (() => {
+                      if (todHoverMode === 'today' && todNearestToday) {
+                        const fh = todNearestToday.timestamp.getHours() + todNearestToday.timestamp.getMinutes() / 60
+                        return (
+                          <>
+                            <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1" opacity="0.3" />
+                            <circle cx={todX(fh)} cy={todY(todNearestToday.rs3)} r="5" fill="#60a5fa" stroke="#fff" strokeWidth="2" />
+                            <circle cx={todX(todHoveredHour)} cy={todY(hourlyAverage[todHoveredHour]?.avgRs3 || 0)} r="4" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.3)" strokeWidth="1" />
+                          </>
+                        )
+                      }
+                      return (
+                        <>
+                          <line x1={todX(todHoveredHour)} y1={TOD_CT} x2={todX(todHoveredHour)} y2={TOD_CB} stroke="#fff" strokeWidth="1" opacity="0.3" />
+                          <circle cx={todX(todHoveredHour)} cy={todY(hourlyAverage[todHoveredHour]?.avgRs3 || 0)} r="5" fill="rgba(96, 165, 250, 0.3)" stroke="rgba(96, 165, 250, 0.6)" strokeWidth="2" />
+                          {todayByHourLookup[todHoveredHour] !== undefined && (
+                            <circle cx={todX(todHoveredHour)} cy={todY(todayByHourLookup[todHoveredHour])} r="4" fill="#60a5fa" stroke="#fff" strokeWidth="1" />
+                          )}
+                        </>
+                      )
+                    })()}
 
                     {/* Legend */}
                     <rect x={CR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
@@ -1150,6 +1197,22 @@ export default function RSPopulation() {
                     const spaceBottom = window.innerHeight - todMousePos.y
                     const left = spaceRight < tipW + 30 ? todMousePos.x - tipW - 15 : todMousePos.x + 15
                     const top = spaceBottom < tipH + 20 ? todMousePos.y - tipH - 10 : todMousePos.y - 10
+
+                    if (todHoverMode === 'today' && todNearestToday) {
+                      const time = todNearestToday.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                      return (
+                        <div style={{
+                          position: 'fixed', left, top,
+                          background: '#1a1a2e', border: '1px solid #333', borderRadius: '6px',
+                          padding: '8px 12px', pointerEvents: 'none', zIndex: 1000, fontSize: '13px', minWidth: `${tipW}px`
+                        }}>
+                          <div style={{ fontWeight: '600', color: '#fff', marginBottom: '4px' }}>{time}</div>
+                          <div style={{ color: '#60a5fa', fontWeight: '600' }}>Today: {todNearestToday.rs3.toLocaleString()}</div>
+                          <div style={{ color: 'rgba(96, 165, 250, 0.5)' }}>Avg: {(hourlyAverage[todHoveredHour]?.avgRs3 || 0).toLocaleString()}</div>
+                        </div>
+                      )
+                    }
+
                     return (
                       <div style={{
                         position: 'fixed', left, top,
