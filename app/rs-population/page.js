@@ -28,6 +28,10 @@ export default function RSPopulation() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
   const [monthFilterOn, setMonthFilterOn] = useState(false)
   const [yearFilterOn, setYearFilterOn] = useState(false)
+  const [allFilterOn, setAllFilterOn] = useState(false)
+  const [showPre2013, setShowPre2013] = useState(true)
+  const [allFilterStart, setAllFilterStart] = useState('2002-12-01')
+  const [allFilterEnd, setAllFilterEnd] = useState(new Date().toISOString().split('T')[0])
   const chartRef = useRef(null)
   const todChartRef = useRef(null)
   const [todHoveredHour, setTodHoveredHour] = useState(-1)
@@ -60,6 +64,19 @@ export default function RSPopulation() {
   useSWR(viewMode !== 'year' ? '/api/steam-data?view=year' : null, { refreshInterval: 15 * 60 * 1000 })
   useSWR(viewMode !== 'all' ? '/api/steam-data?view=all' : null, { refreshInterval: 15 * 60 * 1000 })
 
+  // Wayback Machine data (2002-2013 pre-EOC era)
+  const { data: waybackData } = useSWR('/csv/RS_Wayback_Population.csv', async (url) => {
+    const res = await fetch(url)
+    const text = await res.text()
+    return text.trim().split('\n').slice(1).map(line => {
+      const cols = line.split(',')
+      return {
+        timestamp: new Date(`${cols[0]}T${cols[1]}Z`),
+        preEOC: parseInt(cols[4]) || 0
+      }
+    }).filter(d => d.preEOC > 0)
+  }, { revalidateOnFocus: false, revalidateOnReconnect: false })
+
   const loading = !historicalJson || !liveJson
   const error = historicalError || liveError
 
@@ -67,16 +84,32 @@ export default function RSPopulation() {
   const data = useMemo(() => {
     if (!historicalJson || !liveJson) return []
 
+    // Wayback data: pre-EOC before Nov 20 2012, RS3 after EOC launch
+    const EOC_DATE = new Date('2012-11-20T00:00:00Z')
+    const wayback = (waybackData || []).map(r => {
+      const ts = new Date(r.timestamp)
+      const isPreEOC = ts < EOC_DATE
+      return {
+        timestamp: ts,
+        osrs: 0,
+        rs3: isPreEOC ? 0 : r.preEOC,
+        preEOC: isPreEOC ? r.preEOC : 0,
+        total: r.preEOC
+      }
+    })
+
     const historicalData = (historicalJson.rows || []).map(r => ({
       ...r,
+      preEOC: 0,
       timestamp: new Date(r.timestamp)
     }))
     const liveData = (liveJson.rows || []).map(r => ({
       ...r,
+      preEOC: 0,
       timestamp: new Date(r.timestamp)
     }))
 
-    const combined = [...historicalData]
+    const combined = [...(showPre2013 ? wayback : []), ...historicalData]
     const latestHistorical = historicalData.length > 0
       ? Math.max(...historicalData.map(d => d.timestamp.getTime()))
       : 0
@@ -88,7 +121,7 @@ export default function RSPopulation() {
     }
     combined.sort((a, b) => a.timestamp - b.timestamp)
     return combined
-  }, [historicalJson, liveJson])
+  }, [historicalJson, liveJson, waybackData, showPre2013])
 
   const steamChartData = useMemo(() => {
     if (!steamHistorical?.rows) return []
@@ -101,8 +134,13 @@ export default function RSPopulation() {
   }, [steamHistorical])
 
   const getNearestSteamValues = (timestamp) => {
-    if (!steamChartData.length) return { osrs: 0, rs3: 0, dragonwilds: 0 }
+    if (!steamChartData.length) return null
     const t = timestamp.getTime()
+    const steamMin = steamChartData[0].timestamp.getTime()
+    const steamMax = steamChartData[steamChartData.length - 1].timestamp.getTime()
+    // Only show steam data if hovered point is within the steam data time range (with 1 day buffer)
+    const buffer = 24 * 60 * 60 * 1000
+    if (t < steamMin - buffer || t > steamMax + buffer) return null
     const result = { osrs: 0, rs3: 0, dragonwilds: 0 }
     for (const key of ['osrs', 'rs3', 'dragonwilds']) {
       let minDiff = Infinity
@@ -176,13 +214,19 @@ export default function RSPopulation() {
       }
       filtered = aggregateByDay(filtered)
     } else {
-      const cutoffs = {
-        'live': 24 * 60 * 60 * 1000,
-        'week': 7 * 24 * 60 * 60 * 1000,
-        'all': Infinity
+      if (viewMode === 'all' && allFilterOn) {
+        const startDate = new Date(allFilterStart + 'T00:00:00')
+        const endDate = new Date(allFilterEnd + 'T23:59:59')
+        filtered = data.filter(d => d.timestamp >= startDate && d.timestamp <= endDate)
+      } else {
+        const cutoffs = {
+          'live': 24 * 60 * 60 * 1000,
+          'week': 7 * 24 * 60 * 60 * 1000,
+          'all': Infinity
+        }
+        const cutoff = now.getTime() - cutoffs[viewMode]
+        filtered = data.filter(d => d.timestamp.getTime() > cutoff)
       }
-      const cutoff = now.getTime() - cutoffs[viewMode]
-      filtered = data.filter(d => d.timestamp.getTime() > cutoff)
       if (viewMode === 'all') {
         filtered = aggregateByDay(filtered)
       } else if (viewMode === 'week') {
@@ -198,11 +242,12 @@ export default function RSPopulation() {
       const t = point.timestamp
       const dayKey = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`
       if (!byDay[dayKey]) {
-        byDay[dayKey] = { osrs: [], rs3: [], total: [] }
+        byDay[dayKey] = { osrs: [], rs3: [], preEOC: [], total: [] }
       }
-      byDay[dayKey].osrs.push(point.osrs)
-      byDay[dayKey].rs3.push(point.rs3)
-      byDay[dayKey].total.push(point.total)
+      byDay[dayKey].osrs.push(point.osrs || 0)
+      byDay[dayKey].rs3.push(point.rs3 || 0)
+      byDay[dayKey].preEOC.push(point.preEOC || 0)
+      byDay[dayKey].total.push(point.total || 0)
     }
     return Object.entries(byDay).map(([day, values]) => {
       const [y, m, d] = day.split('-').map(Number)
@@ -210,6 +255,7 @@ export default function RSPopulation() {
         timestamp: new Date(y, m - 1, d),
         osrs: Math.round(values.osrs.reduce((a, b) => a + b, 0) / values.osrs.length),
         rs3: Math.round(values.rs3.reduce((a, b) => a + b, 0) / values.rs3.length),
+        preEOC: Math.round(values.preEOC.reduce((a, b) => a + b, 0) / values.preEOC.length),
         total: Math.round(values.total.reduce((a, b) => a + b, 0) / values.total.length)
       }
     }).sort((a, b) => a.timestamp - b.timestamp)
@@ -291,8 +337,12 @@ export default function RSPopulation() {
   const filteredData = getFilteredData()
   const latest = data[data.length - 1]
 
-  // Left Y-axis: RS population data only
-  const rawMax = filteredData.length > 0 ? Math.max(...filteredData.map(d => d.osrs), 1) : 1
+  // Left Y-axis: RS population data + Pre-EOC when in 'all' view
+  const rawMax = filteredData.length > 0 ? Math.max(
+    ...filteredData.map(d => d.osrs),
+    ...(viewMode === 'all' ? filteredData.map(d => d.preEOC || 0) : []),
+    1
+  ) : 1
   const yTicks = computeYTicks(rawMax)
   const maxVal = yTicks[yTicks.length - 1] || 1
 
@@ -726,6 +776,49 @@ export default function RSPopulation() {
                         ))}
                       </select>
                     )}
+                    {viewMode === 'all' && !isMobile && (
+                      <button
+                        onClick={() => setShowPre2013(!showPre2013)}
+                        style={{
+                          background: showPre2013 ? '#1a1a1a' : 'transparent',
+                          border: showPre2013 ? '1px solid #4ade80' : '1px solid #333',
+                          color: showPre2013 ? '#4ade80' : '#666',
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                        }}
+                      >
+                        Pre-2013
+                      </button>
+                    )}
+                    {viewMode === 'all' && !isMobile && (
+                      <button
+                        onClick={() => setAllFilterOn(!allFilterOn)}
+                        style={{
+                          background: allFilterOn ? '#1a1a1a' : 'transparent',
+                          border: allFilterOn ? '1px solid #4ade80' : '1px solid #333',
+                          color: allFilterOn ? '#4ade80' : '#666',
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                        }}
+                      >
+                        Filter
+                      </button>
+                    )}
+                    {viewMode === 'all' && allFilterOn && !isMobile && (
+                      <>
+                        <input
+                          type="date"
+                          value={allFilterStart}
+                          onChange={(e) => setAllFilterStart(e.target.value)}
+                          style={{ background: '#1a1a1a', border: '1px solid #333', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', colorScheme: 'dark' }}
+                        />
+                        <span style={{ color: '#666', fontSize: '12px' }}>to</span>
+                        <input
+                          type="date"
+                          value={allFilterEnd}
+                          onChange={(e) => setAllFilterEnd(e.target.value)}
+                          style={{ background: '#1a1a1a', border: '1px solid #333', color: '#fff', padding: '4px 8px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', colorScheme: 'dark' }}
+                        />
+                      </>
+                    )}
                     {viewMode === 'month' && monthFilterOn && (
                       <select
                         value={selectedMonth}
@@ -762,7 +855,54 @@ export default function RSPopulation() {
                     ))}
                   </div>
                 </div>
-
+                {viewMode === 'all' && isMobile && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+                    <button
+                      onClick={() => setShowPre2013(!showPre2013)}
+                      style={{
+                        background: showPre2013 ? '#1a1a1a' : 'transparent',
+                        border: showPre2013 ? '1px solid #4ade80' : '1px solid #333',
+                        color: showPre2013 ? '#4ade80' : '#666',
+                        padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer'
+                      }}
+                    >
+                      Pre-2013
+                    </button>
+                    <button
+                      onClick={() => setAllFilterOn(!allFilterOn)}
+                      style={{
+                        background: allFilterOn ? '#1a1a1a' : 'transparent',
+                        border: allFilterOn ? '1px solid #4ade80' : '1px solid #333',
+                        color: allFilterOn ? '#4ade80' : '#666',
+                        padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer'
+                      }}
+                    >
+                      Filter
+                    </button>
+                    {allFilterOn && (
+                      <>
+                        <input
+                          type="date"
+                          value={allFilterStart}
+                          onChange={(e) => setAllFilterStart(e.target.value)}
+                          style={{ background: '#1a1a1a', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', colorScheme: 'dark' }}
+                        />
+                        <span style={{ color: '#666', fontSize: '13px' }}>to</span>
+                        <input
+                          type="date"
+                          value={allFilterEnd}
+                          onChange={(e) => setAllFilterEnd(e.target.value)}
+                          style={{ background: '#1a1a1a', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', colorScheme: 'dark' }}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+                {viewMode === 'all' && showPre2013 && (
+                  <div style={{ fontSize: '11px', color: '#a3a3a3', marginBottom: '8px', fontStyle: 'italic' }}>
+                    Warning: Pre-2013 data from Wayback were mostly captured at peak hours. Averages were likely lower. Post-2013 data are daily averages.
+                  </div>
+                )}
 
                 <div
                   ref={chartRef}
@@ -850,42 +990,69 @@ export default function RSPopulation() {
                       })}
 
                       {/* OSRS area fill */}
-                      <path
-                        d={`M ${CL},${CB} ${filteredData.map((d, i) => `L ${xPos(i)},${yPos(d.osrs)}`).join(' ')} L ${CR},${CB} Z`}
-                        fill="rgba(74, 222, 128, 0.15)"
-                      />
+                      {(() => {
+                        const pts = filteredData.map((d, i) => ({ ...d, idx: i })).filter(d => d.osrs > 0)
+                        if (pts.length < 2) return null
+                        return <path d={`M ${xPos(pts[0].idx)},${CB} ${pts.map(d => `L ${xPos(d.idx)},${yPos(d.osrs)}`).join(' ')} L ${xPos(pts[pts.length - 1].idx)},${CB} Z`} fill="rgba(74, 222, 128, 0.15)" />
+                      })()}
                       {/* OSRS line */}
-                      <path
-                        d={`M ${filteredData.map((d, i) => `${xPos(i)},${yPos(d.osrs)}`).join(' L ')}`}
-                        fill="none"
-                        stroke="#4ade80"
-                        strokeWidth="2.5"
-                      />
+                      {(() => {
+                        const pts = filteredData.map((d, i) => ({ ...d, idx: i })).filter(d => d.osrs > 0)
+                        if (pts.length < 2) return null
+                        return <path d={`M ${pts.map(d => `${xPos(d.idx)},${yPos(d.osrs)}`).join(' L ')}`} fill="none" stroke="#4ade80" strokeWidth="2.5" />
+                      })()}
                       {/* OSRS dots */}
                       {showDots && filteredData.map((d, i) => (
-                        i % dotInterval === 0 && (
+                        i % dotInterval === 0 && d.osrs > 0 && (
                           <circle key={`o${i}`} cx={xPos(i)} cy={yPos(d.osrs)} r="2.5" fill="#4ade80" stroke="#111" strokeWidth="1" />
                         )
                       ))}
 
                       {/* RS3 area fill */}
-                      <path
-                        d={`M ${CL},${CB} ${filteredData.map((d, i) => `L ${xPos(i)},${yPos(d.rs3)}`).join(' ')} L ${CR},${CB} Z`}
-                        fill="rgba(96, 165, 250, 0.15)"
-                      />
+                      {(() => {
+                        const pts = filteredData.map((d, i) => ({ ...d, idx: i })).filter(d => d.rs3 > 0)
+                        if (pts.length < 2) return null
+                        return <path d={`M ${xPos(pts[0].idx)},${CB} ${pts.map(d => `L ${xPos(d.idx)},${yPos(d.rs3)}`).join(' ')} L ${xPos(pts[pts.length - 1].idx)},${CB} Z`} fill="rgba(96, 165, 250, 0.15)" />
+                      })()}
                       {/* RS3 line */}
-                      <path
-                        d={`M ${filteredData.map((d, i) => `${xPos(i)},${yPos(d.rs3)}`).join(' L ')}`}
-                        fill="none"
-                        stroke="#60a5fa"
-                        strokeWidth="2.5"
-                      />
+                      {(() => {
+                        const pts = filteredData.map((d, i) => ({ ...d, idx: i })).filter(d => d.rs3 > 0)
+                        if (pts.length < 2) return null
+                        return <path d={`M ${pts.map(d => `${xPos(d.idx)},${yPos(d.rs3)}`).join(' L ')}`} fill="none" stroke="#60a5fa" strokeWidth="2.5" />
+                      })()}
                       {/* RS3 dots */}
                       {showDots && filteredData.map((d, i) => (
-                        i % dotInterval === 0 && (
+                        i % dotInterval === 0 && d.rs3 > 0 && (
                           <circle key={`r${i}`} cx={xPos(i)} cy={yPos(d.rs3)} r="2.5" fill="#60a5fa" stroke="#111" strokeWidth="1" />
                         )
                       ))}
+
+                      {/* Pre-EOC area fill (wayback data, All Time view only) */}
+                      {viewMode === 'all' && (() => {
+                        const preEocPoints = filteredData.map((d, i) => ({ ...d, idx: i })).filter(d => d.preEOC > 0)
+                        if (preEocPoints.length < 2) return null
+                        const first = preEocPoints[0]
+                        const last = preEocPoints[preEocPoints.length - 1]
+                        return (
+                          <>
+                            <path
+                              d={`M ${xPos(first.idx)},${CB} ${preEocPoints.map(d => `L ${xPos(d.idx)},${yPos(d.preEOC)}`).join(' ')} L ${xPos(last.idx)},${CB} Z`}
+                              fill="rgba(212, 212, 212, 0.1)"
+                            />
+                            <path
+                              d={`M ${preEocPoints.map(d => `${xPos(d.idx)},${yPos(d.preEOC)}`).join(' L ')}`}
+                              fill="none"
+                              stroke="#d4d4d4"
+                              strokeWidth="2.5"
+                            />
+                            {showDots && preEocPoints.map((d) => (
+                              d.idx % dotInterval === 0 && (
+                                <circle key={`p${d.idx}`} cx={xPos(d.idx)} cy={yPos(d.preEOC)} r="2.5" fill="#d4d4d4" stroke="#111" strokeWidth="1" />
+                              )
+                            ))}
+                          </>
+                        )
+                      })()}
 
                       {/* Steam time-series lines */}
                       {steamChartData.length > 1 && filteredData.length > 1 && (() => {
@@ -946,8 +1113,9 @@ export default function RSPopulation() {
                         return (
                           <>
                             <line x1={x} y1={CT} x2={x} y2={CB} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-                            <circle cx={x} cy={yPos(hoveredPoint.osrs)} r="5" fill="#4ade80" stroke="#111" strokeWidth="1.5" />
-                            <circle cx={x} cy={yPos(hoveredPoint.rs3)} r="5" fill="#60a5fa" stroke="#111" strokeWidth="1.5" />
+                            {hoveredPoint.osrs > 0 && <circle cx={x} cy={yPos(hoveredPoint.osrs)} r="5" fill="#4ade80" stroke="#111" strokeWidth="1.5" />}
+                            {hoveredPoint.rs3 > 0 && <circle cx={x} cy={yPos(hoveredPoint.rs3)} r="5" fill="#60a5fa" stroke="#111" strokeWidth="1.5" />}
+                            {hoveredPoint.preEOC > 0 && <circle cx={x} cy={yPos(hoveredPoint.preEOC)} r="5" fill="#d4d4d4" stroke="#111" strokeWidth="1.5" />}
                             {sp?.osrs > 0 && <circle cx={x} cy={steamYPos(sp.osrs)} r="5" fill="#f59e0b" stroke="#111" strokeWidth="1.5" />}
                             {sp?.rs3 > 0 && <circle cx={x} cy={steamYPos(sp.rs3)} r="5" fill="#22d3ee" stroke="#111" strokeWidth="1.5" />}
                             {sp?.dragonwilds > 0 && <circle cx={x} cy={steamYPos(sp.dragonwilds)} r="5" fill="#a855f7" stroke="#111" strokeWidth="1.5" />}
@@ -957,16 +1125,22 @@ export default function RSPopulation() {
 
                       {/* Legend at bottom of chart */}
                       <g transform={`translate(${VW / 2}, ${CB + 85})`}>
-                        <rect x={-248} y={-6} width={12} height={12} rx={2} fill="#4ade80" />
-                        <text x={-232} y={5} fill="#ccc" fontSize="11">OSRS</text>
-                        <rect x={-178} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
-                        <text x={-162} y={5} fill="#ccc" fontSize="11">RS3</text>
-                        <line x1={-108} y1={0} x2={-78} y2={0} stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={-72} y={5} fill="#ccc" fontSize="11">OSRS Steam</text>
-                        <line x1={12} y1={0} x2={42} y2={0} stroke="#22d3ee" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={48} y={5} fill="#ccc" fontSize="11">RS3 Steam</text>
-                        <line x1={132} y1={0} x2={162} y2={0} stroke="#a855f7" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={168} y={5} fill="#ccc" fontSize="11">Dragonwilds</text>
+                        <rect x={-290} y={-6} width={12} height={12} rx={2} fill="#4ade80" />
+                        <text x={-274} y={5} fill="#ccc" fontSize="11">OSRS</text>
+                        <rect x={-224} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
+                        <text x={-208} y={5} fill="#ccc" fontSize="11">RS3</text>
+                        {viewMode === 'all' && (
+                          <>
+                            <rect x={-164} y={-6} width={12} height={12} rx={2} fill="#d4d4d4" />
+                            <text x={-148} y={5} fill="#ccc" fontSize="11">Pre-2013</text>
+                          </>
+                        )}
+                        <line x1={viewMode === 'all' ? -78 : -150} y1={0} x2={viewMode === 'all' ? -48 : -120} y2={0} stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6,3" />
+                        <text x={viewMode === 'all' ? -42 : -114} y={5} fill="#ccc" fontSize="11">OSRS Steam</text>
+                        <line x1={viewMode === 'all' ? 48 : -30} y1={0} x2={viewMode === 'all' ? 78 : 0} y2={0} stroke="#22d3ee" strokeWidth="2.5" strokeDasharray="6,3" />
+                        <text x={viewMode === 'all' ? 84 : 6} y={5} fill="#ccc" fontSize="11">RS3 Steam</text>
+                        <line x1={viewMode === 'all' ? 168 : 90} y1={0} x2={viewMode === 'all' ? 198 : 120} y2={0} stroke="#a855f7" strokeWidth="2.5" strokeDasharray="6,3" />
+                        <text x={viewMode === 'all' ? 204 : 126} y={5} fill="#ccc" fontSize="11">Dragonwilds</text>
                       </g>
                     </svg>
                   )}
@@ -998,12 +1172,21 @@ export default function RSPopulation() {
                         {hoveredPoint.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         {viewMode === 'live' && ` ${hoveredPoint.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`}
                       </div>
-                      <div style={{ fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
-                        <span style={{ color: '#4ade80', fontWeight: '700' }}>OSRS:</span> {hoveredPoint.osrs.toLocaleString()}
-                      </div>
-                      <div style={{ fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
-                        <span style={{ color: '#60a5fa', fontWeight: '700' }}>RS3:</span> {hoveredPoint.rs3.toLocaleString()}
-                      </div>
+                      {hoveredPoint.preEOC > 0 && (
+                        <div style={{ fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
+                          <span style={{ color: '#d4d4d4', fontWeight: '700' }}>Pre-2013:</span> {hoveredPoint.preEOC.toLocaleString()}
+                        </div>
+                      )}
+                      {hoveredPoint.osrs > 0 && (
+                        <div style={{ fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
+                          <span style={{ color: '#4ade80', fontWeight: '700' }}>OSRS:</span> {hoveredPoint.osrs.toLocaleString()}
+                        </div>
+                      )}
+                      {hoveredPoint.rs3 > 0 && (
+                        <div style={{ fontSize: '14px', color: '#fff', marginBottom: '4px' }}>
+                          <span style={{ color: '#60a5fa', fontWeight: '700' }}>RS3:</span> {hoveredPoint.rs3.toLocaleString()}
+                        </div>
+                      )}
                       {(() => {
                         const sp = getNearestSteamValues(hoveredPoint.timestamp)
                         if (!sp) return null
