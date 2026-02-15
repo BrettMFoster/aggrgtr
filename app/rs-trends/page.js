@@ -713,25 +713,31 @@ export default function RSTrends() {
 
   // ============ HISCORES YoY DATA ============
   const getWeekOfYear = (date) => {
-    const y = date.getUTCFullYear()
-    const start = new Date(Date.UTC(y, 0, 1))
-    return Math.ceil(((date - start) / 86400000 + start.getUTCDay() + 1) / 7)
+    // ISO week: Week 1 contains Jan 4, weeks start Monday
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+    // Find Thursday of this week (ISO weeks are identified by their Thursday)
+    const dayOfWeek = (d.getUTCDay() + 6) % 7 // 0=Mon, 6=Sun
+    d.setUTCDate(d.getUTCDate() + 3 - dayOfWeek) // Thursday
+    const jan4 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+    const daysSinceMon = (jan4.getUTCDay() + 6) % 7
+    const week1Thursday = new Date(jan4.getTime() + (3 - daysSinceMon) * 86400000)
+    return 1 + Math.round((d - week1Thursday) / (7 * 86400000))
+  }
+
+  const getISOYear = (date) => {
+    // ISO year is the year that contains the Thursday of the week
+    const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+    const dayOfWeek = (d.getUTCDay() + 6) % 7 // 0=Mon, 6=Sun
+    d.setUTCDate(d.getUTCDate() + 3 - dayOfWeek) // Thursday
+    return d.getUTCFullYear()
   }
 
   const hsYoyData = useMemo(() => {
     if (!hiscoresData.length) return {}
     const byYear = {}
     for (const d of hiscoresData) {
-      let year = d.timestamp.getUTCFullYear()
-      let week = getWeekOfYear(d.timestamp)
-      // If period_start is in late Dec but the week midpoint is in Jan, assign to next year as Week 1
-      if (d.timestamp.getUTCMonth() === 11 && d.timestamp.getUTCDate() >= 28) {
-        const midpoint = new Date(d.timestamp.getTime() + 3 * 86400000)
-        if (midpoint.getUTCMonth() === 0) {
-          year = midpoint.getUTCFullYear()
-          week = 1
-        }
-      }
+      const year = getISOYear(d.timestamp)
+      const week = getWeekOfYear(d.timestamp)
       if (!byYear[year]) byYear[year] = {}
       byYear[year][week] = d.total
     }
@@ -2698,11 +2704,12 @@ export default function RSTrends() {
 
                   {/* YoY Tooltip */}
                   {hsYoyHoveredWeek >= 1 && (() => {
-                    // Compute date range: Week 1 starts on the Sunday before/on Jan 1
-                    const jan1 = new Date(Date.UTC(currentYear, 0, 1))
-                    const jan1Day = jan1.getUTCDay() // 0=Sunday
-                    const week1Start = new Date(jan1.getTime() - jan1Day * 86400000)
-                    const weekStart = new Date(week1Start.getTime() + (hsYoyHoveredWeek - 1) * 7 * 86400000)
+                    // Compute date range: ISO weeks start Monday
+                    // ISO Week 1 contains Jan 4; find its Monday
+                    const jan4 = new Date(Date.UTC(currentYear, 0, 4))
+                    const daysSinceMon = (jan4.getUTCDay() + 6) % 7
+                    const week1Monday = new Date(jan4.getTime() - daysSinceMon * 86400000)
+                    const weekStart = new Date(week1Monday.getTime() + (hsYoyHoveredWeek - 1) * 7 * 86400000)
                     const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
                     const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                     const startStr = `${mNames[weekStart.getUTCMonth()]} ${weekStart.getUTCDate()}`
