@@ -722,8 +722,16 @@ export default function RSTrends() {
     if (!hiscoresData.length) return {}
     const byYear = {}
     for (const d of hiscoresData) {
-      const year = d.timestamp.getUTCFullYear()
-      const week = getWeekOfYear(d.timestamp)
+      let year = d.timestamp.getUTCFullYear()
+      let week = getWeekOfYear(d.timestamp)
+      // If period_start is in late Dec but the week midpoint is in Jan, assign to next year as Week 1
+      if (d.timestamp.getUTCMonth() === 11 && d.timestamp.getUTCDate() >= 28) {
+        const midpoint = new Date(d.timestamp.getTime() + 3 * 86400000)
+        if (midpoint.getUTCMonth() === 0) {
+          year = midpoint.getUTCFullYear()
+          week = 1
+        }
+      }
       if (!byYear[year]) byYear[year] = {}
       byYear[year][week] = d.total
     }
@@ -1090,7 +1098,7 @@ export default function RSTrends() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ minHeight: isMobile ? '100dvh' : '100vh', background: '#0a0a0a', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       {/* Nav */}
       <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: isMobile ? '16px' : '18px' }}>aggrgtr</a>
@@ -2690,11 +2698,11 @@ export default function RSTrends() {
 
                   {/* YoY Tooltip */}
                   {hsYoyHoveredWeek >= 1 && (() => {
-                    // Compute date range for this week, aligned with getWeekOfYear formula
+                    // Compute date range: Week 1 starts on the Sunday before/on Jan 1
                     const jan1 = new Date(Date.UTC(currentYear, 0, 1))
-                    const jan1Day = jan1.getUTCDay() // 0=Sun, matches getWeekOfYear's week boundary
-                    const weekStartDays = (hsYoyHoveredWeek - 1) * 7 - jan1Day
-                    const weekStart = new Date(Date.UTC(currentYear, 0, 1 + weekStartDays))
+                    const jan1Day = jan1.getUTCDay() // 0=Sunday
+                    const week1Start = new Date(jan1.getTime() - jan1Day * 86400000)
+                    const weekStart = new Date(week1Start.getTime() + (hsYoyHoveredWeek - 1) * 7 * 86400000)
                     const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
                     const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                     const startStr = `${mNames[weekStart.getUTCMonth()]} ${weekStart.getUTCDate()}`
