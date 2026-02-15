@@ -197,13 +197,9 @@ export async function GET(request) {
             const snapJson = await snapResponse.json()
             if (snapJson.rows?.[0]) {
               const snap = snapJson.rows[0].f
-              // Use the Sunday of the current week as the timestamp
-              const snapDate = new Date(parseInt(snap[0].v) * 1000)
-              const day = snapDate.getUTCDay() // 0=Sunday
-              const sunday = new Date(snapDate.getTime() - day * 86400000)
-              sunday.setUTCHours(0, 0, 0, 0)
+              // Use last weekly entry + 7 days as this week's period_start
               rows.push({
-                timestamp: Math.floor(sunday.getTime() / 1000),
+                timestamp: lastWeekTs + 7 * 86400,
                 total_accounts: parseInt(snap[1].v) || 0,
                 last_page: parseInt(snap[2].v) || 0,
               })
