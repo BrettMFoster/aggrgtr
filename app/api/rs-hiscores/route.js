@@ -176,6 +176,45 @@ export async function GET(request) {
       last_page: parseInt(row.f[2].v) || 0,
     }))
 
+    // For weekly view: append current week from latest snapshot if not yet in weekly table
+    if (view === 'all_weekly' && rows.length > 0) {
+      const lastWeekTs = rows[rows.length - 1].timestamp
+      const nowTs = Math.floor(Date.now() / 1000)
+      // If the last weekly entry is more than 6 days old, current week is missing
+      if (nowTs - lastWeekTs > 6 * 86400) {
+        try {
+          const snapQuery = `
+            SELECT UNIX_SECONDS(scraped_at) as timestamp, total_accounts, last_page
+            FROM \`${projectId}.rs_hiscores.snapshots\`
+            ORDER BY scraped_at DESC LIMIT 1
+          `
+          const snapResponse = await fetch(bigqueryUrl, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: snapQuery, useLegacySql: false, timeoutMs: 10000 })
+          })
+          if (snapResponse.ok) {
+            const snapJson = await snapResponse.json()
+            if (snapJson.rows?.[0]) {
+              const snap = snapJson.rows[0].f
+              // Use the Sunday of the current week as the timestamp
+              const snapDate = new Date(parseInt(snap[0].v) * 1000)
+              const day = snapDate.getUTCDay() // 0=Sunday
+              const sunday = new Date(snapDate.getTime() - day * 86400000)
+              sunday.setUTCHours(0, 0, 0, 0)
+              rows.push({
+                timestamp: Math.floor(sunday.getTime() / 1000),
+                total_accounts: parseInt(snap[1].v) || 0,
+                last_page: parseInt(snap[2].v) || 0,
+              })
+            }
+          }
+        } catch (e) {
+          // Non-critical, just skip current week
+        }
+      }
+    }
+
     // Parse summary
     let summary = {}
     if (summaryResponse.ok) {
