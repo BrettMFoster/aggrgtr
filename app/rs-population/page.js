@@ -4,12 +4,12 @@ import useSWR from 'swr'
 
 // Chart layout constants
 const CL = 55    // chart left edge
-const CR = 870   // chart right edge
+const CR = 900   // chart right edge
 const CW = CR - CL // chart width
 const CT = 15    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
-const VW = 920   // viewBox width
+const VW = 980   // viewBox width
 const VH = 625   // viewBox height
 
 // Time-of-Day chart vertical constants
@@ -38,6 +38,7 @@ export default function RSPopulation() {
   const [todMousePos, setTodMousePos] = useState({ x: 0, y: 0 })
   const [todHoverMode, setTodHoverMode] = useState('avg')
   const [todNearestToday, setTodNearestToday] = useState(null)
+  const [todFilter, setTodFilter] = useState('dow3m')
 
   // SWR for data fetching with caching
   const { data: historicalJson, error: historicalError } = useSWR(
@@ -377,6 +378,7 @@ export default function RSPopulation() {
 
   const now = new Date()
   const thirtyDaysAgo = now.getTime() - 30 * 24 * 60 * 60 * 1000
+  const threeMonthsAgo = now.getTime() - 90 * 24 * 60 * 60 * 1000
   const oneYearAgo = now.getTime() - 365 * 24 * 60 * 60 * 1000
 
   const last30Days = data.filter(d => d.timestamp.getTime() > thirtyDaysAgo)
@@ -395,11 +397,23 @@ export default function RSPopulation() {
     ? Math.round(lastYear.reduce((sum, d) => sum + d.rs3, 0) / lastYear.length)
     : 0
 
-  // Time of Day chart data - last 30 days of live data (reflects current population levels)
+  // Time of Day chart data - filtered by todFilter
+  const todFilteredData = useMemo(() => {
+    const todayDow = now.getDay()
+    if (todFilter === '3mo') {
+      return data.filter(d => d.timestamp.getTime() > threeMonthsAgo)
+    } else if (todFilter === 'dow1m') {
+      return data.filter(d => d.timestamp.getTime() > thirtyDaysAgo && d.timestamp.getDay() === todayDow)
+    } else if (todFilter === 'dow3m') {
+      return data.filter(d => d.timestamp.getTime() > threeMonthsAgo && d.timestamp.getDay() === todayDow)
+    }
+    return last30Days // default '30d'
+  }, [data, last30Days, todFilter, threeMonthsAgo])
+
   const hourlyAverage = useMemo(() => {
-    if (last30Days.length === 0) return Array.from({ length: 24 }, (_, h) => ({ hour: h, avgRs3: 0, count: 0 }))
+    if (todFilteredData.length === 0) return Array.from({ length: 24 }, (_, h) => ({ hour: h, avgRs3: 0, count: 0 }))
     const byHour = Array.from({ length: 24 }, () => [])
-    for (const point of last30Days) {
+    for (const point of todFilteredData) {
       byHour[point.timestamp.getHours()].push(point.rs3)
     }
     return byHour.map((values, hour) => ({
@@ -407,7 +421,7 @@ export default function RSPopulation() {
       avgRs3: values.length > 0 ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0,
       count: values.length
     }))
-  }, [last30Days])
+  }, [todFilteredData])
 
   const todayRs3Data = useMemo(() => {
     if (data.length === 0) return []
@@ -914,7 +928,7 @@ export default function RSPopulation() {
                   onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
                   {filteredData.length > 0 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${(viewMode === 'year' || viewMode === 'all') ? VH : VH - 25}`} preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
                         const x1 = xPos(band.start)
@@ -1124,24 +1138,40 @@ export default function RSPopulation() {
                       })()}
 
                       {/* Legend at bottom of chart */}
-                      <g transform={`translate(${VW / 2}, ${CB + 85})`}>
-                        <rect x={-290} y={-6} width={12} height={12} rx={2} fill="#4ade80" />
-                        <text x={-274} y={5} fill="#ccc" fontSize="11">OSRS</text>
-                        <rect x={-224} y={-6} width={12} height={12} rx={2} fill="#60a5fa" />
-                        <text x={-208} y={5} fill="#ccc" fontSize="11">RS3</text>
-                        {viewMode === 'all' && (
-                          <>
-                            <rect x={-164} y={-6} width={12} height={12} rx={2} fill="#d4d4d4" />
-                            <text x={-148} y={5} fill="#ccc" fontSize="11">Pre-2013</text>
-                          </>
-                        )}
-                        <line x1={viewMode === 'all' ? -78 : -150} y1={0} x2={viewMode === 'all' ? -48 : -120} y2={0} stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={viewMode === 'all' ? -42 : -114} y={5} fill="#ccc" fontSize="11">OSRS Steam</text>
-                        <line x1={viewMode === 'all' ? 48 : -30} y1={0} x2={viewMode === 'all' ? 78 : 0} y2={0} stroke="#22d3ee" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={viewMode === 'all' ? 84 : 6} y={5} fill="#ccc" fontSize="11">RS3 Steam</text>
-                        <line x1={viewMode === 'all' ? 168 : 90} y1={0} x2={viewMode === 'all' ? 198 : 120} y2={0} stroke="#a855f7" strokeWidth="2.5" strokeDasharray="6,3" />
-                        <text x={viewMode === 'all' ? 204 : 126} y={5} fill="#ccc" fontSize="11">Dragonwilds</text>
-                      </g>
+                      {(() => {
+                        const items = [
+                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45 },
+                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35 },
+                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60 }] : []),
+                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80 },
+                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72 },
+                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82 },
+                        ]
+                        const itemPad = 16 // icon width + gap to text
+                        const gapBetween = 20
+                        const totalWidth = items.reduce((s, it) => s + itemPad + it.w, 0) + gapBetween * (items.length - 1)
+                        const startX = (CL + CR) / 2 - totalWidth / 2
+                        const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
+                        let cx = startX
+                        return (
+                          <g transform={`translate(0, ${legendY})`}>
+                            {items.map((item) => {
+                              const x = cx
+                              cx += itemPad + item.w + gapBetween
+                              return (
+                                <g key={item.label}>
+                                  {item.type === 'rect' ? (
+                                    <rect x={x} y={-7} width={14} height={14} rx={2} fill={item.color} />
+                                  ) : (
+                                    <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
+                                  )}
+                                  <text x={x + 18} y={5} fill="#fff" fontSize="13" fontWeight="500">{item.label}</text>
+                                </g>
+                              )
+                            })}
+                          </g>
+                        )
+                      })()}
                     </svg>
                   )}
 
@@ -1243,7 +1273,12 @@ export default function RSPopulation() {
               <div style={{ marginTop: '8px' }}>
                 <div style={{ marginBottom: '4px' }}>
                   <h2 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: '600', color: '#fff', margin: '0 0 1px 0', letterSpacing: '-0.5px' }}>RS3 Time of Day</h2>
-                  <div style={{ fontSize: '13px', color: '#999' }}>30-day average RS3 players by hour with today overlaid</div>
+                  <div style={{ fontSize: '13px', color: '#999' }}>
+                    {todFilter === '30d' && '30-day average RS3 players by hour with today overlaid'}
+                    {todFilter === '3mo' && '3-month average RS3 players by hour with today overlaid'}
+                    {todFilter === 'dow1m' && `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]} average (last 30 days) with today overlaid`}
+                    {todFilter === 'dow3m' && `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]} average (last 3 months) with today overlaid`}
+                  </div>
                 </div>
 
                 {/* TOD KPI Cards */}
@@ -1268,7 +1303,36 @@ export default function RSPopulation() {
                 </div>
 
                 {/* TOD Chart */}
-                <div style={{ position: 'relative', width: '100%', height: isMobile ? '300px' : '450px', background: '#111', border: '1px solid #222', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '10px' : '12px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '8px' : '12px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>
+                      {todFilter === '30d' && '30-Day Average'}
+                      {todFilter === '3mo' && '3-Month Average'}
+                      {todFilter === 'dow1m' && `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]} Average (1M)`}
+                      {todFilter === 'dow3m' && `${['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()]} Average (3M)`}
+                    </h3>
+                    <div style={{ display: 'flex', gap: '4px', background: '#1a1a1a', borderRadius: '8px', padding: '3px' }}>
+                      {[
+                        { id: '30d', label: '30 Day' },
+                        { id: '3mo', label: '3 Month' },
+                        { id: 'dow1m', label: 'Day of Week (1M)' },
+                        { id: 'dow3m', label: 'Day of Week (3M)' },
+                      ].map(f => (
+                        <button key={f.id} onClick={() => setTodFilter(f.id)} style={{
+                          background: todFilter === f.id ? '#333' : 'transparent',
+                          border: 'none',
+                          color: todFilter === f.id ? '#fff' : '#ddd',
+                          padding: isMobile ? '8px 14px' : '8px 18px',
+                          borderRadius: '6px',
+                          fontSize: isMobile ? '13px' : '15px',
+                          cursor: 'pointer',
+                          fontWeight: todFilter === f.id ? '600' : '400',
+                          transition: 'all 0.15s ease'
+                        }}>{f.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div style={{ position: 'relative', width: '100%', height: isMobile ? '350px' : '550px', overflow: 'hidden' }}>
                   <svg
                     ref={todChartRef}
                     viewBox={`0 0 ${VW} ${TOD_VH}`}
@@ -1283,15 +1347,15 @@ export default function RSPopulation() {
                     {todYTicks.map(v => (
                       <g key={v}>
                         <line x1={CL} y1={todY(v)} x2={CR} y2={todY(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
-                          {v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : v}
+                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                          {v.toLocaleString()}
                         </text>
                       </g>
                     ))}
 
                     {/* X-axis labels every 3 hours */}
                     {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
-                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
                         {formatHour(h)}
                       </text>
                     ))}
@@ -1327,9 +1391,9 @@ export default function RSPopulation() {
                     <line
                       x1={todX(todPeakHour?.hour ?? 12)} y1={TOD_CT}
                       x2={todX(todPeakHour?.hour ?? 12)} y2={TOD_CB}
-                      stroke="#60a5fa" strokeWidth="1" strokeDasharray="4,4" opacity="0.3"
+                      stroke="#60a5fa" strokeWidth="1" strokeDasharray="4,4" opacity="0.5"
                     />
-                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize="9" opacity="0.7" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
+                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize="9" opacity="0.8" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
 
                     {/* "Now" indicator */}
                     {(() => {
@@ -1337,8 +1401,8 @@ export default function RSPopulation() {
                       const fh = n.getHours() + n.getMinutes() / 60
                       return (
                         <>
-                          <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1.5" strokeDasharray="4,4" opacity="0.5" />
-                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize="9" opacity="0.7" style={{ fontFamily: 'sans-serif' }}>NOW</text>
+                          <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1.5" strokeDasharray="4,4" />
+                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize="9" style={{ fontFamily: 'sans-serif' }}>NOW</text>
                         </>
                       )
                     })()}
@@ -1368,9 +1432,9 @@ export default function RSPopulation() {
 
                     {/* Legend */}
                     <rect x={CR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
-                    <text x={CR - 186} y={TOD_CT + 14} fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <text x={CR - 186} y={TOD_CT + 14} fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Average</text>
                     <line x1={CR - 105} y1={TOD_CT + 10} x2={CR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
-                    <text x={CR - 76} y={TOD_CT + 14} fill="#888" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Today</text>
+                    <text x={CR - 76} y={TOD_CT + 14} fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Today</text>
                   </svg>
 
                   {/* Tooltip */}
@@ -1410,6 +1474,7 @@ export default function RSPopulation() {
                       </div>
                     )
                   })()}
+                </div>
                 </div>
               </div>
             </>
