@@ -36,6 +36,8 @@ const yearColors = {
 
 const monthStarts = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const monthMidpoints = [16, 45, 75, 105, 136, 166, 197, 228, 258, 289, 319, 350]
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0
 const getDayOfYear = (ts) => {
   const y = ts.getFullYear(), start = new Date(y, 0, 1)
@@ -102,6 +104,7 @@ export default function RSTrends() {
   const [peaksMousePos, setPeaksMousePos] = useState({ x: 0, y: 0 })
   const [troughsHoveredIndex, setTroughsHoveredIndex] = useState(-1)
   const [troughsMousePos, setTroughsMousePos] = useState({ x: 0, y: 0 })
+  const [yoyFilter, setYoyFilter] = useState('dow')
   const [hiscoresHoveredIndex, setHiscoresHoveredIndex] = useState(-1)
   const [hiscoresMousePos, setHiscoresMousePos] = useState({ x: 0, y: 0 })
   const [hs1yrHoveredIndex, setHs1yrHoveredIndex] = useState(-1)
@@ -198,19 +201,65 @@ export default function RSTrends() {
   }, [data])
 
   // ============ YoY DATA ============
+  const todayDow = new Date().getDay()
+  const todayDayName = dayNames[todayDow]
+
   const yoyData = useMemo(() => {
     if (!dailyData.length) return {}
+
+    if (yoyFilter === 'monthly') {
+      const byYearMonth = {}
+      for (const d of dailyData) {
+        const year = d.timestamp.getFullYear()
+        const month = d.timestamp.getMonth()
+        const key = `${year}-${month}`
+        if (!byYearMonth[key]) byYearMonth[key] = { year, month, values: [] }
+        byYearMonth[key].values.push(d.rs3)
+      }
+      const byYear = {}
+      for (const { year, month, values } of Object.values(byYearMonth)) {
+        if (!byYear[year]) byYear[year] = {}
+        const avg = Math.round(values.reduce((a, b) => a + b, 0) / values.length)
+        byYear[year][monthMidpoints[month]] = avg
+      }
+      return byYear
+    }
+
+    if (yoyFilter === 'dow') {
+      // All days, positioned by ISO week + day-of-week instead of calendar date
+      // Aligns 2nd Sunday vs 2nd Sunday, 2nd Saturday vs 2nd Saturday, etc.
+      const isoWeekOf = (date) => {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+        const dow = (d.getUTCDay() + 6) % 7
+        d.setUTCDate(d.getUTCDate() + 3 - dow)
+        const jan4 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+        const daysSinceMon = (jan4.getUTCDay() + 6) % 7
+        const wk1Thu = new Date(jan4.getTime() + (3 - daysSinceMon) * 86400000)
+        return 1 + Math.round((d - wk1Thu) / (7 * 86400000))
+      }
+      const byYear = {}
+      for (const d of dailyData) {
+        const year = d.timestamp.getFullYear()
+        const dow = (d.timestamp.getDay() + 6) % 7 // Mon=0, Sun=6
+        const week = isoWeekOf(d.timestamp)
+        const pos = Math.min(363, (Math.min(week, 52) - 1) * 7 + dow)
+        if (!byYear[year]) byYear[year] = {}
+        byYear[year][pos] = d.rs3
+      }
+      return byYear
+    }
+
     const byYear = {}
     for (const d of dailyData) {
       const year = d.timestamp.getFullYear()
       const startOfYear = new Date(year, 0, 1)
       let dayOfYear = Math.round((d.timestamp - startOfYear) / (24 * 60 * 60 * 1000))
-      if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1 // skip Feb 29, cap at 0-364
+      if (isLeapYear(year) && dayOfYear >= 60) dayOfYear -= 1
       if (!byYear[year]) byYear[year] = {}
       byYear[year][dayOfYear] = d.rs3
     }
     return byYear
-  }, [dailyData])
+  }, [dailyData, yoyFilter])
 
   const yoyYears = useMemo(() => {
     return Object.keys(yoyData).map(Number).sort((a, b) => a - b)
@@ -967,7 +1016,16 @@ export default function RSTrends() {
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
     const pct = Math.max(0, Math.min(1, relX / areaWidth))
-    const dayOfYear = Math.round(pct * 364)
+    let dayOfYear = Math.round(pct * 364)
+    if (yoyFilter === 'monthly') {
+      let nearest = monthMidpoints[0]
+      let minDist = Math.abs(dayOfYear - nearest)
+      for (const mp of monthMidpoints) {
+        const dist = Math.abs(dayOfYear - mp)
+        if (dist < minDist) { minDist = dist; nearest = mp }
+      }
+      dayOfYear = nearest
+    }
     setTrendsHoveredDay(dayOfYear)
     setTrendsMousePos({ x: e.clientX, y: e.clientY })
   }
@@ -1150,7 +1208,36 @@ export default function RSTrends() {
             <>
               {/* ============ SECTION 1: YoY Comparison ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Year-over-Year RS3 Population</h2>
+                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>
+                  {yoyFilter === 'daily' && 'Year-over-Year RS3 Population'}
+                  {yoyFilter === 'dow' && 'Year-over-Year RS3 Population (Day of Week)'}
+                  {yoyFilter === 'monthly' && 'Year-over-Year RS3 Population (Monthly Avg)'}
+                </h2>
+
+                <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  {[
+                    { key: 'daily', label: 'Daily' },
+                    { key: 'dow', label: 'Day of Week' },
+                    { key: 'monthly', label: 'Monthly' },
+                  ].map(f => (
+                    <button
+                      key={f.key}
+                      onClick={() => setYoyFilter(f.key)}
+                      style={{
+                        background: yoyFilter === f.key ? '#fff' : 'transparent',
+                        color: yoyFilter === f.key ? '#000' : '#fff',
+                        border: yoyFilter === f.key ? '1px solid #fff' : '1px solid #444',
+                        borderRadius: '20px',
+                        padding: '4px 14px',
+                        fontSize: '13px',
+                        fontWeight: yoyFilter === f.key ? '600' : '400',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
 
                 <div
                   ref={yoyChartRef}
@@ -1258,8 +1345,10 @@ export default function RSTrends() {
 
                   {/* YoY Tooltip */}
                   {trendsHoveredDay >= 0 && (() => {
-                    const month = monthLabels[monthStarts.findLastIndex(s => trendsHoveredDay >= s)]
-                    const dayInMonth = trendsHoveredDay - monthStarts[monthStarts.findLastIndex(s => trendsHoveredDay >= s)] + 1
+                    const monthIdx = monthStarts.findLastIndex(s => trendsHoveredDay >= s)
+                    const month = monthLabels[monthIdx]
+                    const dayInMonth = trendsHoveredDay - monthStarts[monthIdx] + 1
+                    const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
                     const valuesForDay = yoyYears.map(year => ({
                       year,
                       val: yoyData[year]?.[trendsHoveredDay],
@@ -1283,7 +1372,12 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '150px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {month} {dayInMonth}
+                          {yoyFilter === 'monthly' ? fullMonthNames[monthIdx] : yoyFilter === 'dow' ? (() => {
+                            const isoDowNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                            const weekNum = Math.floor(trendsHoveredDay / 7) + 1
+                            const dowIdx = trendsHoveredDay % 7
+                            return `Week ${weekNum}, ${isoDowNames[dowIdx]}`
+                          })() : `${month} ${dayInMonth}`}
                         </div>
                         {valuesForDay.map(v => (
                           <div key={v.year} style={{ fontSize: '13px', color: '#fff', marginBottom: '2px', display: 'flex', justifyContent: 'space-between', gap: '12px' }}>

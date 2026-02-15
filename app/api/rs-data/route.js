@@ -119,7 +119,9 @@ export async function GET(request) {
 
         let isoTimestamp
         try {
-          isoTimestamp = new Date(timestamp).toISOString()
+          // Parse as noon UTC to prevent timezone day-shift
+          // (YYYY-MM-DD defaults to midnight UTC, which becomes previous day in US timezones)
+          isoTimestamp = new Date(timestamp + 'T12:00:00Z').toISOString()
         } catch {
           return null
         }
