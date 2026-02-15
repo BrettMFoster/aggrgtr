@@ -1379,13 +1379,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 3: Long-term Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>Long-term</h2>
                   {trendlineData.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -1549,13 +1549,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 4: 5-Year Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>5-Year</h2>
                   {fiveYrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -1706,13 +1706,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 5: 1-Year Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Year</h2>
                   {oneYrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -1867,13 +1867,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 6: 6-Month Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>6-Month</h2>
                   {sixMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -2029,13 +2029,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 7: 3-Month Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>3-Month</h2>
                   {threeMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -2184,13 +2184,13 @@ export default function RSTrends() {
 
               {/* ============ SECTION 8: 1-Month Trendline ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '0' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center' }}>
+                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Month</h2>
                   {oneMoTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -2690,8 +2690,11 @@ export default function RSTrends() {
 
                   {/* YoY Tooltip */}
                   {hsYoyHoveredWeek >= 1 && (() => {
-                    // Compute date range for this week (using current year as reference)
-                    const weekStart = new Date(Date.UTC(currentYear, 0, 1 + (hsYoyHoveredWeek - 1) * 7))
+                    // Compute date range for this week, aligned with getWeekOfYear formula
+                    const jan1 = new Date(Date.UTC(currentYear, 0, 1))
+                    const jan1Day = jan1.getUTCDay() // 0=Sun, matches getWeekOfYear's week boundary
+                    const weekStartDays = (hsYoyHoveredWeek - 1) * 7 - jan1Day
+                    const weekStart = new Date(Date.UTC(currentYear, 0, 1 + weekStartDays))
                     const weekEnd = new Date(weekStart.getTime() + 6 * 86400000)
                     const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
                     const startStr = `${mNames[weekStart.getUTCMonth()]} ${weekStart.getUTCDate()}`
@@ -2824,13 +2827,13 @@ export default function RSTrends() {
 
               {/* Hiscores Trendlines */}
               <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e' }}>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>Total Ranked Accounts</h2>
                   {hiscoresTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -2990,13 +2993,13 @@ export default function RSTrends() {
               {/* 1-Year Hiscores */}
               {hs1yrData.length > 1 && (
               <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>1-Year</h2>
                   {hs1yrTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -3084,13 +3087,13 @@ export default function RSTrends() {
               {/* 6-Month Hiscores */}
               {hs6moData.length > 1 && (
               <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>6-Month</h2>
                   {hs6moTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -3178,13 +3181,13 @@ export default function RSTrends() {
               {/* 3-Month Hiscores */}
               {hs3moData.length > 1 && (
               <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>3-Month</h2>
                   {hs3moTrendline.regression && (
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
@@ -3272,7 +3275,7 @@ export default function RSTrends() {
               {/* 1-Month Hiscores */}
               {hs1moData.length > 1 && (
               <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
+                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
                   <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>1-Month</h2>
                   {hs1moTrendline.regression && (() => {
                     const moPct = hs1moTrendline.regression.startY ? (hs1moTrendline.regression.slope * 4.33 / hs1moTrendline.regression.startY) * 100 : 0
@@ -3280,7 +3283,7 @@ export default function RSTrends() {
                     <div style={{
                       background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
                       padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)'
+                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
                     }}>
                       <span style={{
                         fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
