@@ -43,11 +43,11 @@ export default function RSPopulation() {
   // SWR for data fetching with caching
   const { data: historicalJson, error: historicalError } = useSWR(
     '/api/rs-data?sheet=Historical',
-    { refreshInterval: 5 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const { data: liveJson, error: liveError } = useSWR(
     '/api/rs-data?sheet=Data',
-    { refreshInterval: 5 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const { data: steamData } = useSWR(
     '/api/steam-players',
@@ -55,15 +55,15 @@ export default function RSPopulation() {
   )
   const { data: steamHistorical } = useSWR(
     `/api/steam-data?view=${viewMode}`,
-    { refreshInterval: viewMode === 'live' ? 3 * 60 * 1000 : 15 * 60 * 1000, keepPreviousData: true }
+    { refreshInterval: 3 * 60 * 1000, keepPreviousData: true }
   )
 
   // Prefetch all steam views so tab switching is instant
-  useSWR(viewMode !== 'live' ? '/api/steam-data?view=live' : null, { refreshInterval: 15 * 60 * 1000 })
-  useSWR(viewMode !== 'week' ? '/api/steam-data?view=week' : null, { refreshInterval: 15 * 60 * 1000 })
-  useSWR(viewMode !== 'month' ? '/api/steam-data?view=month' : null, { refreshInterval: 15 * 60 * 1000 })
-  useSWR(viewMode !== 'year' ? '/api/steam-data?view=year' : null, { refreshInterval: 15 * 60 * 1000 })
-  useSWR(viewMode !== 'all' ? '/api/steam-data?view=all' : null, { refreshInterval: 15 * 60 * 1000 })
+  useSWR(viewMode !== 'live' ? '/api/steam-data?view=live' : null, { refreshInterval: 3 * 60 * 1000 })
+  useSWR(viewMode !== 'week' ? '/api/steam-data?view=week' : null, { refreshInterval: 3 * 60 * 1000 })
+  useSWR(viewMode !== 'month' ? '/api/steam-data?view=month' : null, { refreshInterval: 3 * 60 * 1000 })
+  useSWR(viewMode !== 'year' ? '/api/steam-data?view=year' : null, { refreshInterval: 3 * 60 * 1000 })
+  useSWR(viewMode !== 'all' ? '/api/steam-data?view=all' : null, { refreshInterval: 3 * 60 * 1000 })
 
   // Wayback Machine data (2002-2013 pre-EOC era)
   const { data: waybackData } = useSWR('/csv/RS_Wayback_Population.csv', async (url) => {

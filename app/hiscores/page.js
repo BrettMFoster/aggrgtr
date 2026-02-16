@@ -18,7 +18,7 @@ export default function Hiscores() {
   const [isMobile, setIsMobile] = useState(false)
   const chartRef = useRef(null)
 
-  const refreshInterval = viewMode === 'live' ? 3 * 60 * 1000 : (viewMode === 'week' || viewMode === 'month') ? 15 * 60 * 1000 : 60 * 60 * 1000
+  const refreshInterval = 3 * 60 * 1000
 
   const { data: apiData, error } = useSWR(
     `/api/rs-hiscores?view=${viewMode}`,

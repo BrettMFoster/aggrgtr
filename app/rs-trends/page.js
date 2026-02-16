@@ -212,19 +212,19 @@ export default function RSTrends() {
 
   const { data: historicalJson, error: historicalError } = useSWR(
     '/api/rs-data?sheet=Historical',
-    { refreshInterval: 5 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const { data: liveJson, error: liveError } = useSWR(
     '/api/rs-data?sheet=Data',
-    { refreshInterval: 5 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const { data: hiscoresJson, error: hiscoresError } = useSWR(
     '/api/rs-hiscores?view=all_weekly',
-    { refreshInterval: 60 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const { data: hiscoresMonthlyJson } = useSWR(
     '/api/rs-hiscores?view=all_monthly',
-    { refreshInterval: 60 * 60 * 1000 }
+    { refreshInterval: 3 * 60 * 1000 }
   )
   const loading = !historicalJson || !liveJson
   const error = historicalError || liveError
