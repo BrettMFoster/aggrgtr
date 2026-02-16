@@ -531,7 +531,7 @@ export default function RSTrends() {
     const regression = fourierRegression(
       oneYrData.map(d => d.timestamp),
       oneYrData.map(d => d.rs3),
-      { weeklyHarmonics: 3, annualHarmonics: 3 }
+      { weeklyHarmonics: 3, annualHarmonics: 0 }
     )
     const window = 90, movingAvg = []
     let windowSum = 0

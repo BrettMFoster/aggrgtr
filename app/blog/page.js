@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 const DataRow = ({ label, value, highlight }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #1a1a1a' }}>
@@ -18,6 +18,14 @@ const DataBlock = ({ title, children, style }) => (
 const P = ({ children }) => (
   <p style={{ fontSize: '17px', lineHeight: '1.7', color: '#ccc', margin: '0 0 16px 0' }}>{children}</p>
 )
+
+function Feb15Post() {
+  return (
+    <>
+      <P>Coming soon.</P>
+    </>
+  )
+}
 
 function WelcomePost() {
   return (
@@ -144,12 +152,33 @@ function WelcomePost() {
   )
 }
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
 const posts = [
+  { date: '2026-02-15', title: 'Untitled', content: Feb15Post },
   { date: '2026-02-12', title: 'Welcome to aggrgtr', content: WelcomePost },
 ]
 
+function buildArchive(posts) {
+  const tree = {}
+  posts.forEach((post, idx) => {
+    const d = new Date(post.date + 'T12:00:00')
+    const year = d.getFullYear()
+    const month = d.getMonth()
+    if (!tree[year]) tree[year] = {}
+    if (!tree[year][month]) tree[year][month] = []
+    tree[year][month].push({ ...post, idx })
+  })
+  return tree
+}
+
 export default function BlogPage() {
   const [isMobile, setIsMobile] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [expandedYears, setExpandedYears] = useState({})
+  const [expandedMonths, setExpandedMonths] = useState({})
+
+  const archive = useMemo(() => buildArchive(posts), [])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -157,6 +186,31 @@ export default function BlogPage() {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Default: expand current year and current month
+  useEffect(() => {
+    const now = new Date()
+    const yr = now.getFullYear()
+    const mo = now.getMonth()
+    setExpandedYears({ [yr]: true })
+    setExpandedMonths({ [`${yr}-${mo}`]: true })
+  }, [])
+
+  const toggleYear = (yr) => {
+    setExpandedYears(prev => ({ ...prev, [yr]: !prev[yr] }))
+  }
+
+  const toggleMonth = (key) => {
+    setExpandedMonths(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const scrollToPost = (date) => {
+    const el = document.getElementById(`post-${date}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (isMobile) setSidebarOpen(false)
+  }
+
+  const years = Object.keys(archive).sort((a, b) => b - a)
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#e5e5e5', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -173,34 +227,154 @@ export default function BlogPage() {
 
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', maxWidth: '1400px', margin: '0' }}>
         {/* Sidebar */}
-        <aside style={{
-          width: isMobile ? '100%' : '220px',
-          padding: isMobile ? '12px 16px' : '12px 24px 12px 32px',
-          borderRight: isMobile ? 'none' : '1px solid #222',
-          borderBottom: isMobile ? '1px solid #222' : 'none'
-        }}>
-          <div style={{ marginBottom: isMobile ? '12px' : '24px' }}>
-            {!isMobile && <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>}
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', gap: isMobile ? '4px' : '6px', flexWrap: 'wrap' }}>
-              <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Population</a>
-              <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
-              <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Hiscores</a>
-              <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Trends</a>
-              <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Data</a>
-              <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
+        {isMobile ? (
+          /* Mobile: toggle bar + expandable panel */
+          <>
+            <div
+              onClick={() => setSidebarOpen(prev => !prev)}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderBottom: '1px solid #222', cursor: 'pointer', userSelect: 'none' }}
+            >
+              <span style={{ fontSize: '14px', color: '#999', transform: sidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>&#9654;</span>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>Menu</span>
             </div>
-          </div>
-        </aside>
+            {sidebarOpen && (
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid #222' }}>
+                {/* Dashboard links */}
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                  <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Population</a>
+                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>OSRS Worlds</a>
+                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Hiscores</a>
+                  <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Trends</a>
+                  <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Data</a>
+                  <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
+                </div>
+
+                {/* Archive tree */}
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Archive</div>
+                {years.map(yr => {
+                  const months = Object.keys(archive[yr]).sort((a, b) => b - a)
+                  const yrOpen = expandedYears[yr]
+                  return (
+                    <div key={yr}>
+                      <div onClick={() => toggleYear(yr)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', cursor: 'pointer', userSelect: 'none' }}>
+                        <span style={{ fontSize: '10px', color: '#666', transform: yrOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>&#9654;</span>
+                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{yr}</span>
+                      </div>
+                      {yrOpen && months.map(mo => {
+                        const moKey = `${yr}-${mo}`
+                        const moOpen = expandedMonths[moKey]
+                        const entries = archive[yr][mo]
+                        return (
+                          <div key={moKey} style={{ paddingLeft: '16px' }}>
+                            <div onClick={() => toggleMonth(moKey)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 0', cursor: 'pointer', userSelect: 'none' }}>
+                              <span style={{ fontSize: '9px', color: '#666', transform: moOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>&#9654;</span>
+                              <span style={{ fontSize: '13px', color: '#ccc' }}>{MONTH_NAMES[mo]}</span>
+                              <span style={{ fontSize: '11px', color: '#555' }}>({entries.length})</span>
+                            </div>
+                            {moOpen && entries.map(entry => (
+                              <div
+                                key={entry.date}
+                                onClick={() => scrollToPost(entry.date)}
+                                style={{ paddingLeft: '22px', padding: '3px 0 3px 22px', cursor: 'pointer', fontSize: '12px', color: '#4ade80', userSelect: 'none' }}
+                              >
+                                {entry.title}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          /* Desktop: collapsible sidebar */
+          <aside style={{
+            width: sidebarOpen ? '220px' : '40px',
+            minWidth: sidebarOpen ? '220px' : '40px',
+            transition: 'width 0.2s, min-width 0.2s',
+            borderRight: '1px solid #222',
+            overflow: 'hidden',
+            position: 'sticky',
+            top: 0,
+            alignSelf: 'flex-start',
+            maxHeight: '100vh',
+            overflowY: 'auto',
+          }}>
+            {/* Toggle button */}
+            <div
+              onClick={() => setSidebarOpen(prev => !prev)}
+              style={{ padding: '12px', cursor: 'pointer', textAlign: sidebarOpen ? 'right' : 'center', userSelect: 'none' }}
+            >
+              <span style={{ fontSize: '14px', color: '#666', display: 'inline-block', transform: sidebarOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>&#9654;</span>
+            </div>
+
+            {sidebarOpen && (
+              <div style={{ padding: '0 24px 24px 24px' }}>
+                {/* Dashboard links */}
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
+                  <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Population</a>
+                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>OSRS Worlds</a>
+                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Hiscores</a>
+                  <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Trends</a>
+                  <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Data</a>
+                  <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
+                </div>
+
+                {/* Archive tree */}
+                <div style={{ fontSize: '13px', fontWeight: '700', color: '#fff', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Archive</div>
+                {years.map(yr => {
+                  const months = Object.keys(archive[yr]).sort((a, b) => b - a)
+                  const yrOpen = expandedYears[yr]
+                  return (
+                    <div key={yr}>
+                      <div onClick={() => toggleYear(yr)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0', cursor: 'pointer', userSelect: 'none' }}>
+                        <span style={{ fontSize: '10px', color: '#666', transform: yrOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>&#9654;</span>
+                        <span style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>{yr}</span>
+                      </div>
+                      {yrOpen && months.map(mo => {
+                        const moKey = `${yr}-${mo}`
+                        const moOpen = expandedMonths[moKey]
+                        const entries = archive[yr][mo]
+                        return (
+                          <div key={moKey} style={{ paddingLeft: '16px' }}>
+                            <div onClick={() => toggleMonth(moKey)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '3px 0', cursor: 'pointer', userSelect: 'none' }}>
+                              <span style={{ fontSize: '9px', color: '#666', transform: moOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', display: 'inline-block' }}>&#9654;</span>
+                              <span style={{ fontSize: '13px', color: '#ccc' }}>{MONTH_NAMES[mo]}</span>
+                              <span style={{ fontSize: '11px', color: '#555' }}>({entries.length})</span>
+                            </div>
+                            {moOpen && entries.map(entry => (
+                              <div
+                                key={entry.date}
+                                onClick={() => scrollToPost(entry.date)}
+                                style={{ paddingLeft: '22px', padding: '3px 0 3px 22px', cursor: 'pointer', fontSize: '12px', color: '#4ade80', userSelect: 'none' }}
+                              >
+                                {entry.title}
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </aside>
+        )}
 
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px', maxWidth: '800px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 32px 0' }}>Blog</h1>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-            {posts.map((post, i) => {
+            {posts.map((post) => {
               const Content = post.content
               return (
-                <article key={i} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px' }}>
+                <article key={post.date} id={`post-${post.date}`} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '16px' : '24px', scrollMarginTop: '16px' }}>
                   <div style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{new Date(post.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
                   <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '600', color: '#fff', margin: '0 0 16px 0' }}>{post.title}</h2>
                   <Content />
