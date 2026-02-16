@@ -22,7 +22,35 @@ const P = ({ children }) => (
 function Feb15Post() {
   return (
     <>
-      <P>Coming soon.</P>
+      <P>I added Day of Week (DoW) filters to the year over year (YoY) charts on both the <a href="/rs-population" style={{ color: '#4ade80' }}>Population</a> and <a href="/rs-trends" style={{ color: '#4ade80' }}>Trends</a> pages. You can now compare Daily (all days), DoW (e.g., all Sundays vs. all Sundays), or Monthly averages across years.</P>
+
+      <P><strong style={{ color: '#fff' }}>Why does this matter?</strong> Sunday is typically the highest population day on RuneScape, while midweek days tend to be lower. When you look at a YoY chart using daily data, you're comparing a Sunday in 2026 against a Wednesday in 2025, which is not an apples:apples comparison. The DoW filter fixes this by aligning the same weekday across years. That said, the daily view can still be useful for spotting broader patterns.</P>
+
+      <P>I also noticed that the regression trendlines on the <a href="/rs-trends" style={{ color: '#4ade80' }}>Trends</a> page were sometimes showing player gains even when recent data clearly showed a sustained downtrend. The issue was in how seasonality was being handled.</P>
+
+      <DataBlock title="What Changed">
+        <DataRow label="Old method" value="Seasonal index + Theil-Sen" />
+        <DataRow label="New method" value="Fourier regression (OLS)" />
+      </DataBlock>
+
+      <P>The old approach computed a multiplicative seasonal index by averaging each day of the year across all available years, then dividing by the global mean. The problem is that if the population in 2013 was 60,000 and in 2026 it's 21,000, those values get averaged together, contaminating the seasonal adjustment. It also averaged out the weekly cycle entirely, since Monday through Sunday all fell on different calendar days each year.</P>
+
+      <P>The new method uses Fourier regression, which models the linear trend and seasonal patterns simultaneously. It fits sin/cos harmonics at weekly (period = 7 days) and annual (period = 365.25 days) frequencies using ordinary least squares (OLS). This means the weekly cycle (weekday vs. weekend) and annual seasonality (summer lows, holiday spikes) are estimated alongside the trend, not separately. The result is a regression line that strips out both weekly and annual noise to give a more accurate estimate of the actual direction of population change.</P>
+
+      <DataBlock title="Harmonic Configuration by Chart Window">
+        <DataRow label="All-Time, 5-Year" value="Weekly (3) + Annual (3)" />
+        <DataRow label="1-Year and below" value="Weekly (3) only" />
+      </DataBlock>
+
+      <P>Annual harmonics are only used on windows with 2+ years of data. On shorter windows (1 year, 6 months, 3 months, 1 month), only weekly harmonics are applied, because annual harmonics overfit when you have less than a full cycle. I discovered this the hard way when testing the 6-month regression line went from 0 to 40,000, which was clearly wrong.</P>
+
+      <P>The trendlines are now tighter, more responsive to recent data, and better aligned with what the moving averages show. If the data says RS3 is flat or declining, the regression will reflect that instead of being pulled by stale seasonal estimates from a decade ago.</P>
+
+      <P><strong style={{ color: '#fff' }}>In conclusion,</strong> these estimates are much closer to reality. Jagex likely has their own data scientists sweating over these numbers, one would hope. Jagex does have a major update scheduled for next week, the <a href="https://secure.runescape.com/m=news/road-to-restoration--early-game-rebalance--dailyscape-overhaul" target="_blank" rel="noopener" style={{ color: '#4ade80' }}>Early Game Rebalance</a> (part of the Road to Restoration), that will likely increase concurrent player counts and people hitting the hiscores. We will see.</P>
+
+      <P>We are currently looking at the lowest hiscores period since October 2025. As of February 15, weekly accounts on hiscores sit at 134,375, the 4th lowest week out of 110 weeks on record, only above the late September/early October 2025 trough (which bottomed at 127,225).</P>
+
+      <P>This does not bode well for the game. Expect some major motion next week.</P>
     </>
   )
 }
@@ -155,7 +183,7 @@ function WelcomePost() {
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const posts = [
-  { date: '2026-02-15', title: 'Untitled', content: Feb15Post },
+  { date: '2026-02-15', title: 'Fixed Some Issues', content: Feb15Post },
   { date: '2026-02-12', title: 'Welcome to aggrgtr', content: WelcomePost },
 ]
 
