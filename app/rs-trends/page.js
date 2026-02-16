@@ -228,20 +228,21 @@ export default function RSTrends() {
     if (yoyFilter === 'dow') {
       // All days, positioned by ISO week + day-of-week instead of calendar date
       // Aligns 2nd Sunday vs 2nd Sunday, 2nd Saturday vs 2nd Saturday, etc.
-      const isoWeekOf = (date) => {
+      const isoWeekInfo = (date) => {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
         const dow = (d.getUTCDay() + 6) % 7
-        d.setUTCDate(d.getUTCDate() + 3 - dow)
-        const jan4 = new Date(Date.UTC(d.getUTCFullYear(), 0, 4))
+        d.setUTCDate(d.getUTCDate() + 3 - dow) // shift to Thursday of same ISO week
+        const isoYear = d.getUTCFullYear() // ISO week-numbering year (from Thursday)
+        const jan4 = new Date(Date.UTC(isoYear, 0, 4))
         const daysSinceMon = (jan4.getUTCDay() + 6) % 7
         const wk1Thu = new Date(jan4.getTime() + (3 - daysSinceMon) * 86400000)
-        return 1 + Math.round((d - wk1Thu) / (7 * 86400000))
+        const week = 1 + Math.round((d - wk1Thu) / (7 * 86400000))
+        return { week, year: isoYear }
       }
       const byYear = {}
       for (const d of dailyData) {
-        const year = d.timestamp.getFullYear()
         const dow = (d.timestamp.getDay() + 6) % 7 // Mon=0, Sun=6
-        const week = isoWeekOf(d.timestamp)
+        const { week, year } = isoWeekInfo(d.timestamp) // use ISO year, not calendar year
         const pos = Math.min(363, (Math.min(week, 52) - 1) * 7 + dow)
         if (!byYear[year]) byYear[year] = {}
         byYear[year][pos] = d.rs3
