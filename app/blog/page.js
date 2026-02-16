@@ -270,9 +270,9 @@ export default function BlogPage() {
                 {/* Dashboard links */}
                 <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '16px' }}>
                   <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Population</a>
-                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>OSRS Worlds</a>
-                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Hiscores</a>
+                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Hiscores Counts</a>
                   <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Trends</a>
+                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>OSRS Worlds</a>
                   <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
                 </div>
 
@@ -344,9 +344,9 @@ export default function BlogPage() {
                 <div style={{ fontSize: '18px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>Dashboards</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '24px' }}>
                   <a href="/rs-population" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Population</a>
-                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>OSRS Worlds</a>
-                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Hiscores</a>
+                  <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Hiscores Counts</a>
                   <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Trends</a>
+                  <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>OSRS Worlds</a>
                   <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
                 </div>
 
