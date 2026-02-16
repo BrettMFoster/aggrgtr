@@ -273,7 +273,6 @@ export default function BlogPage() {
                   <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>OSRS Worlds</a>
                   <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Hiscores</a>
                   <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Trends</a>
-                  <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none' }}>Data</a>
                   <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '11px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
                 </div>
 
@@ -348,7 +347,6 @@ export default function BlogPage() {
                   <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>OSRS Worlds</a>
                   <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Hiscores</a>
                   <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Trends</a>
-                  <a href="/data" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none' }}>Data</a>
                   <a href="/blog" style={{ background: '#222', border: 'none', color: '#fff', padding: '6px 8px', borderRadius: '4px', fontSize: '16px', textDecoration: 'none', fontWeight: '600' }}>Blog</a>
                 </div>
 
