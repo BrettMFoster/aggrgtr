@@ -53,7 +53,7 @@ const medianOf = (arr) => {
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
 }
 
-// Theil-Sen median regression (robust to outliers)
+// Theil-Sen median regression (robust to outliers) - used for hiscores (weekly data)
 const theilSenRegression = (ys) => {
   const n = ys.length
   if (n < 2) return null
@@ -80,6 +80,83 @@ const theilSenRegression = (ys) => {
   const intercept = medianOf(intercepts)
   const startY = intercept
   const endY = slope * (n - 1) + intercept
+  const pctChange = startY !== 0 ? ((endY - startY) / startY) * 100 : 0
+  return { slope, intercept, startY, endY, pctChange }
+}
+
+// Solve linear system Ax = b via Gaussian elimination with partial pivoting
+const gaussianSolve = (A, b) => {
+  const n = A.length
+  const aug = A.map((row, i) => [...row, b[i]])
+  for (let col = 0; col < n; col++) {
+    let maxRow = col
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row
+    }
+    ;[aug[col], aug[maxRow]] = [aug[maxRow], aug[col]]
+    if (Math.abs(aug[col][col]) < 1e-12) continue
+    for (let row = col + 1; row < n; row++) {
+      const f = aug[row][col] / aug[col][col]
+      for (let j = col; j <= n; j++) aug[row][j] -= f * aug[col][j]
+    }
+  }
+  const x = new Array(n).fill(0)
+  for (let i = n - 1; i >= 0; i--) {
+    x[i] = aug[i][n]
+    for (let j = i + 1; j < n; j++) x[i] -= aug[i][j] * x[j]
+    x[i] /= aug[i][i]
+  }
+  return x
+}
+
+// Fourier regression: simultaneous trend + weekly + annual seasonality via OLS
+// timestamps: array of Date objects, values: array of numbers
+// options: { weeklyHarmonics: 0-3, annualHarmonics: 0-3 }
+// Returns { slope (per day), intercept, startY, endY, pctChange }
+const fourierRegression = (timestamps, values, { weeklyHarmonics = 3, annualHarmonics = 0 } = {}) => {
+  const n = timestamps.length
+  if (n < 2) return null
+  const t0 = timestamps[0].getTime()
+  const msPerDay = 86400000
+  const tDays = timestamps.map(ts => (ts.getTime() - t0) / msPerDay)
+  const TWO_PI = 2 * Math.PI
+
+  // Build feature columns: [intercept, trend, weekly sin/cos, annual sin/cos]
+  const cols = [
+    new Array(n).fill(1),   // intercept
+    tDays,                   // linear trend
+  ]
+  for (let k = 1; k <= weeklyHarmonics; k++) {
+    cols.push(tDays.map(t => Math.sin(TWO_PI * k * t / 7)))
+    cols.push(tDays.map(t => Math.cos(TWO_PI * k * t / 7)))
+  }
+  for (let k = 1; k <= annualHarmonics; k++) {
+    cols.push(tDays.map(t => Math.sin(TWO_PI * k * t / 365.25)))
+    cols.push(tDays.map(t => Math.cos(TWO_PI * k * t / 365.25)))
+  }
+
+  // Need more observations than features
+  const m = cols.length
+  if (n <= m) return null
+
+  // Compute X'X (m x m) and X'y (m x 1)
+  const XtX = Array.from({ length: m }, () => new Array(m).fill(0))
+  const Xty = new Array(m).fill(0)
+  for (let i = 0; i < m; i++) {
+    for (let j = i; j < m; j++) {
+      let s = 0
+      for (let k = 0; k < n; k++) s += cols[i][k] * cols[j][k]
+      XtX[i][j] = s
+      XtX[j][i] = s
+    }
+    for (let k = 0; k < n; k++) Xty[i] += cols[i][k] * values[k]
+  }
+
+  const coeffs = gaussianSolve(XtX, Xty)
+  const slope = coeffs[1] // daily trend (players per day)
+  const intercept = coeffs[0]
+  const startY = intercept
+  const endY = intercept + slope * tDays[n - 1]
   const pctChange = startY !== 0 ? ((endY - startY) / startY) * 100 : 0
   return { slope, intercept, startY, endY, pctChange }
 }
@@ -382,37 +459,18 @@ export default function RSTrends() {
     return rows
   }, [dailyData])
 
-  // ============ SEASONAL INDEX ============
-  const seasonalIndex = useMemo(() => {
-    if (!dailyData.length) return {}
-    const dayTotals = {}
-    let globalSum = 0
-    for (const d of dailyData) {
-      const doy = getDayOfYear(d.timestamp)
-      if (!dayTotals[doy]) dayTotals[doy] = { sum: 0, count: 0 }
-      dayTotals[doy].sum += d.rs3
-      dayTotals[doy].count++
-      globalSum += d.rs3
-    }
-    const globalMean = globalSum / dailyData.length
-    const index = {}
-    for (const [day, { sum, count }] of Object.entries(dayTotals)) {
-      index[parseInt(day)] = (sum / count) / globalMean
-    }
-    return index
-  }, [dailyData])
+  // (Seasonal adjustment now handled by Fourier regression within each trendline)
 
   // ============ TRENDLINE ============
   const trendlineData = useMemo(() => {
     if (dailyData.length < 2) return { regression: null, movingAvg: [] }
 
     const n = dailyData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(dailyData[i].timestamp)] || 1
-      ys.push(dailyData[i].rs3 / sa)
-    }
-    const regression = theilSenRegression(ys)
+    const regression = fourierRegression(
+      dailyData.map(d => d.timestamp),
+      dailyData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 3 }
+    )
 
     // 90-day moving average
     const window = 90
@@ -431,7 +489,7 @@ export default function RSTrends() {
     }
 
     return { regression, movingAvg }
-  }, [dailyData, seasonalIndex])
+  }, [dailyData])
 
   // ============ 5-YEAR TRENDLINE ============
   const fiveYrData = useMemo(() => {
@@ -444,12 +502,11 @@ export default function RSTrends() {
   const fiveYrTrendline = useMemo(() => {
     if (fiveYrData.length < 2) return { regression: null, movingAvg: [] }
     const n = fiveYrData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(fiveYrData[i].timestamp)] || 1
-      ys.push(fiveYrData[i].rs3 / sa)
-    }
-    const regression = theilSenRegression(ys)
+    const regression = fourierRegression(
+      fiveYrData.map(d => d.timestamp),
+      fiveYrData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 3 }
+    )
     const window = 90, movingAvg = []
     let windowSum = 0
     for (let i = 0; i < n; i++) {
@@ -458,7 +515,7 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: fiveYrData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { regression, movingAvg }
-  }, [fiveYrData, seasonalIndex])
+  }, [fiveYrData])
 
   // ============ 1-YEAR TRENDLINE ============
   const oneYrData = useMemo(() => {
@@ -471,12 +528,11 @@ export default function RSTrends() {
   const oneYrTrendline = useMemo(() => {
     if (oneYrData.length < 2) return { regression: null, movingAvg: [] }
     const n = oneYrData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(oneYrData[i].timestamp)] || 1
-      ys.push(oneYrData[i].rs3 / sa)
-    }
-    const regression = theilSenRegression(ys)
+    const regression = fourierRegression(
+      oneYrData.map(d => d.timestamp),
+      oneYrData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 3 }
+    )
     const window = 90, movingAvg = []
     let windowSum = 0
     for (let i = 0; i < n; i++) {
@@ -485,7 +541,7 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: oneYrData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { regression, movingAvg }
-  }, [oneYrData, seasonalIndex])
+  }, [oneYrData])
 
   // ============ 6-MONTH TRENDLINE ============
   const sixMoData = useMemo(() => {
@@ -498,14 +554,13 @@ export default function RSTrends() {
   const sixMoTrendline = useMemo(() => {
     if (sixMoData.length < 2) return { regression: null, movingAvg: [] }
     const n = sixMoData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(sixMoData[i].timestamp)] || 1
-      ys.push(sixMoData[i].rs3 / sa)
-    }
-    const ts = theilSenRegression(ys)
-    const monthlyChange = Math.round(ts.slope * 30.44)
-    const regression = { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, monthlyChange, pctChange: ts.pctChange }
+    const ts = fourierRegression(
+      sixMoData.map(d => d.timestamp),
+      sixMoData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 0 }
+    )
+    const monthlyChange = ts ? Math.round(ts.slope * 30.44) : 0
+    const regression = ts ? { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, monthlyChange, pctChange: ts.pctChange } : null
     const window = 30, movingAvg = []
     let windowSum = 0
     for (let i = 0; i < n; i++) {
@@ -514,7 +569,7 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: sixMoData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { regression, movingAvg }
-  }, [sixMoData, seasonalIndex])
+  }, [sixMoData])
 
   // ============ 3-MONTH TRENDLINE ============
   const threeMoData = useMemo(() => {
@@ -527,14 +582,13 @@ export default function RSTrends() {
   const threeMoTrendline = useMemo(() => {
     if (threeMoData.length < 2) return { regression: null, movingAvg: [] }
     const n = threeMoData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(threeMoData[i].timestamp)] || 1
-      ys.push(threeMoData[i].rs3 / sa)
-    }
-    const ts = theilSenRegression(ys)
-    const monthlyChange = Math.round(ts.slope * 30.44)
-    const regression = { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, monthlyChange, pctChange: ts.pctChange }
+    const ts = fourierRegression(
+      threeMoData.map(d => d.timestamp),
+      threeMoData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 0 }
+    )
+    const monthlyChange = ts ? Math.round(ts.slope * 30.44) : 0
+    const regression = ts ? { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, monthlyChange, pctChange: ts.pctChange } : null
     const window = 14, movingAvg = []
     let windowSum = 0
     for (let i = 0; i < n; i++) {
@@ -543,7 +597,7 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: threeMoData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { regression, movingAvg }
-  }, [threeMoData, seasonalIndex])
+  }, [threeMoData])
 
   // ============ 1-MONTH TRENDLINE ============
   const oneMoData = useMemo(() => {
@@ -556,14 +610,13 @@ export default function RSTrends() {
   const oneMoTrendline = useMemo(() => {
     if (oneMoData.length < 2) return { regression: null, movingAvg: [] }
     const n = oneMoData.length
-    const ys = []
-    for (let i = 0; i < n; i++) {
-      const sa = seasonalIndex[getDayOfYear(oneMoData[i].timestamp)] || 1
-      ys.push(oneMoData[i].rs3 / sa)
-    }
-    const ts = theilSenRegression(ys)
-    const dailyChange = Math.round(ts.slope)
-    const regression = { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, dailyChange, pctChange: ts.pctChange }
+    const ts = fourierRegression(
+      oneMoData.map(d => d.timestamp),
+      oneMoData.map(d => d.rs3),
+      { weeklyHarmonics: 3, annualHarmonics: 0 }
+    )
+    const dailyChange = ts ? Math.round(ts.slope) : 0
+    const regression = ts ? { slope: ts.slope, intercept: ts.intercept, startY: ts.startY, endY: ts.endY, dailyChange, pctChange: ts.pctChange } : null
     const window = 7, movingAvg = []
     let windowSum = 0
     for (let i = 0; i < n; i++) {
@@ -572,7 +625,7 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: oneMoData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { regression, movingAvg }
-  }, [oneMoData, seasonalIndex])
+  }, [oneMoData])
 
   // ============ 3-MONTH PEAKS ============
   const peaksData = useMemo(() => {
