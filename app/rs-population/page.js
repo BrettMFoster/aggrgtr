@@ -2,6 +2,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import useSWR from 'swr'
 
+// Compact number formatter for mobile axis labels
+const fmtK = (v) => {
+  if (v >= 1000000) return (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + 'M'
+  if (v >= 1000) return (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'K'
+  return v.toString()
+}
+
 // Chart layout constants
 const CL = 55    // chart left edge
 const CR = 900   // chart right edge
@@ -457,6 +464,11 @@ export default function RSPopulation() {
     if (h === 0 || h === 24) return '12 AM'
     if (h === 12) return '12 PM'
     return h < 12 ? `${h} AM` : `${h - 12} PM`
+  }
+  const fmtHourShort = (h) => {
+    if (h === 0 || h === 24) return '12a'
+    if (h === 12) return '12p'
+    return h < 12 ? `${h}a` : `${h - 12}p`
   }
 
   const todChartMax = Math.max(...hourlyAverage.map(h => h.avgRs3), ...todayRs3Data.map(d => d.rs3), 1)
@@ -951,7 +963,7 @@ export default function RSPopulation() {
                           <g key={i}>
                             <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
                             <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
-                              {val.toLocaleString()}
+                              {isMobile ? fmtK(val) : val.toLocaleString()}
                             </text>
                           </g>
                         )
@@ -963,7 +975,7 @@ export default function RSPopulation() {
                         return (
                           <g key={`sy${i}`}>
                             <text x={CR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
-                              {val.toLocaleString()}
+                              {isMobile ? fmtK(val) : val.toLocaleString()}
                             </text>
                           </g>
                         )
@@ -1138,16 +1150,17 @@ export default function RSPopulation() {
 
                       {/* Legend at bottom of chart */}
                       {(() => {
+                        const s = isMobile ? 1.7 : 1
                         const items = [
-                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45 },
-                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35 },
-                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60 }] : []),
-                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80 },
-                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72 },
-                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82 },
+                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45 * s },
+                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35 * s },
+                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60 * s }] : []),
+                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80 * s },
+                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72 * s },
+                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82 * s },
                         ]
-                        const itemPad = 16 // icon width + gap to text
-                        const gapBetween = 20
+                        const itemPad = isMobile ? 28 : 16 // icon width + gap to text
+                        const gapBetween = isMobile ? 12 : 20
                         const totalWidth = items.reduce((s, it) => s + itemPad + it.w, 0) + gapBetween * (items.length - 1)
                         const startX = (CL + CR) / 2 - totalWidth / 2
                         const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
@@ -1160,9 +1173,9 @@ export default function RSPopulation() {
                               return (
                                 <g key={item.label}>
                                   {item.type === 'rect' ? (
-                                    <rect x={x} y={-7} width={14} height={14} rx={2} fill={item.color} />
+                                    <rect x={x} y={isMobile ? -12 : -7} width={isMobile ? 22 : 14} height={isMobile ? 22 : 14} rx={2} fill={item.color} />
                                   ) : (
-                                    <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
+                                    <line x1={x} y1={0} x2={x + (isMobile ? 22 : 14)} y2={0} stroke={item.color} strokeWidth={isMobile ? '5' : '3'} strokeDasharray="6,3" />
                                   )}
                                   <text x={x + 18} y={5} fill="#fff" fontSize={isMobile ? '22' : '13'} fontWeight="500">{item.label}</text>
                                 </g>
@@ -1347,7 +1360,7 @@ export default function RSPopulation() {
                       <g key={v}>
                         <line x1={CL} y1={todY(v)} x2={CR} y2={todY(v)} stroke="#222" strokeWidth="1" />
                         <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
-                          {v.toLocaleString()}
+                          {isMobile ? fmtK(v) : v.toLocaleString()}
                         </text>
                       </g>
                     ))}
@@ -1355,7 +1368,7 @@ export default function RSPopulation() {
                     {/* X-axis labels every 3 hours */}
                     {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
                       <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
-                        {formatHour(h)}
+                        {isMobile ? fmtHourShort(h) : formatHour(h)}
                       </text>
                     ))}
 
