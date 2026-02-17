@@ -146,8 +146,9 @@ export default function RSPopulation() {
     const t = timestamp.getTime()
     const steamMin = steamChartData[0].timestamp.getTime()
     const steamMax = steamChartData[steamChartData.length - 1].timestamp.getTime()
-    // Only show steam data if hovered point is within the steam data time range (with 1 day buffer)
-    const buffer = 24 * 60 * 60 * 1000
+    // Only show steam data if hovered point is within the steam data time range
+    // 8-day buffer covers weekly aggregation gaps in the "all" view
+    const buffer = 8 * 24 * 60 * 60 * 1000
     if (t < steamMin - buffer || t > steamMax + buffer) return null
     const result = { osrs: 0, rs3: 0, dragonwilds: 0 }
     for (const key of ['osrs', 'rs3', 'dragonwilds']) {
