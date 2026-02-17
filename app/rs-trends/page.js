@@ -10,6 +10,8 @@ const CT = 15
 const CB = 530
 const CH = CB - CT
 const VW = 920
+const MVW_YOY = 665  // Mobile viewBox width for YoY charts (VH=620 in 375x350 container)
+const MVW_TL = 545   // Mobile viewBox width for trendline charts (TL_VH=435 in 375x300 container)
 const VH = 620
 
 // Trendline chart (shorter)
@@ -722,7 +724,7 @@ export default function RSTrends() {
   }, [hiscoresData])
 
   const hiscoresMax = useMemo(() => hiscoresData.length ? Math.max(...hiscoresData.map(d => d.total), 1) : 1, [hiscoresData])
-  const hiscoresXPos = (i) => CL + (i / (hiscoresData.length - 1 || 1)) * CW
+  const hiscoresXPos = (i) => CL + (i / (hiscoresData.length - 1 || 1)) * tlCW
   const hiscoresYPos = (v) => TL_CB - (v / hiscoresMax) * TL_CH
 
   const handleHiscoresHover = (e) => {
@@ -730,7 +732,7 @@ export default function RSTrends() {
     const rect = hiscoresChartRef.current.getBoundingClientRect()
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left
     const chartWidth = rect.width
-    const pct = Math.max(0, Math.min(1, (x - (CL / VW) * chartWidth) / ((CW / VW) * chartWidth)))
+    const pct = Math.max(0, Math.min(1, (x - (CL / tlVW) * chartWidth) / ((tlCW / tlVW) * chartWidth)))
     const idx = Math.round(pct * (hiscoresData.length - 1))
     setHiscoresHoveredIndex(Math.max(0, Math.min(hiscoresData.length - 1, idx)))
     setHiscoresMousePos({ x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY })
@@ -928,19 +930,19 @@ export default function RSTrends() {
 
   // Hiscores sub-chart position helpers
   const hs1yrMax = useMemo(() => hs1yrData.length ? Math.max(...hs1yrData.map(d => d.total), 1) : 1, [hs1yrData])
-  const hs1yrXPos = (i) => CL + (i / (hs1yrData.length - 1 || 1)) * CW
+  const hs1yrXPos = (i) => CL + (i / (hs1yrData.length - 1 || 1)) * tlCW
   const hs1yrYPos = (v) => TL_CB - (v / hs1yrMax) * TL_CH
 
   const hs6moMax = useMemo(() => hs6moData.length ? Math.max(...hs6moData.map(d => d.total), 1) : 1, [hs6moData])
-  const hs6moXPos = (i) => CL + (i / (hs6moData.length - 1 || 1)) * CW
+  const hs6moXPos = (i) => CL + (i / (hs6moData.length - 1 || 1)) * tlCW
   const hs6moYPos = (v) => TL_CB - (v / hs6moMax) * TL_CH
 
   const hs3moMax = useMemo(() => hs3moData.length ? Math.max(...hs3moData.map(d => d.total), 1) : 1, [hs3moData])
-  const hs3moXPos = (i) => CL + (i / (hs3moData.length - 1 || 1)) * CW
+  const hs3moXPos = (i) => CL + (i / (hs3moData.length - 1 || 1)) * tlCW
   const hs3moYPos = (v) => TL_CB - (v / hs3moMax) * TL_CH
 
   const hs1moMax = useMemo(() => hs1moData.length ? Math.max(...hs1moData.map(d => d.total), 1) : 1, [hs1moData])
-  const hs1moXPos = (i) => CL + (i / (hs1moData.length - 1 || 1)) * CW
+  const hs1moXPos = (i) => CL + (i / (hs1moData.length - 1 || 1)) * tlCW
   const hs1moYPos = (v) => TL_CB - (v / hs1moMax) * TL_CH
 
   // Hiscores sub-chart hover handlers
@@ -949,7 +951,7 @@ export default function RSTrends() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left
     const chartWidth = rect.width
-    const pct = Math.max(0, Math.min(1, (x - (CL / VW) * chartWidth) / ((CW / VW) * chartWidth)))
+    const pct = Math.max(0, Math.min(1, (x - (CL / tlVW) * chartWidth) / ((tlCW / tlVW) * chartWidth)))
     const idx = Math.round(pct * (chartData.length - 1))
     setIndex(Math.max(0, Math.min(chartData.length - 1, idx)))
     setMouse({ x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY })
@@ -961,14 +963,14 @@ export default function RSTrends() {
 
   // Hiscores YoY position helpers
   const hsMonthWeeks = [1, 5, 9, 14, 18, 22, 27, 31, 35, 40, 44, 48]
-  const hsYoyXPos = (week) => CL + ((week - 1) / 51) * CW
+  const hsYoyXPos = (week) => CL + ((week - 1) / 51) * yoyCW
 
   const handleHsYoyHover = (e) => {
     if (!hsYoyChartRef.current || !hsYoyYears.length) return
     const rect = hsYoyChartRef.current.getBoundingClientRect()
     const x = (e.clientX || e.touches?.[0]?.clientX) - rect.left
     const chartWidth = rect.width
-    const pct = Math.max(0, Math.min(1, (x - (CL / VW) * chartWidth) / ((CW / VW) * chartWidth)))
+    const pct = Math.max(0, Math.min(1, (x - (CL / yoyVW) * chartWidth) / ((yoyCW / yoyVW) * chartWidth)))
     const week = Math.round(pct * 51) + 1
     setHsYoyHoveredWeek(week)
     setHsYoyMousePos({ x: e.clientX || e.touches?.[0]?.clientX, y: e.clientY || e.touches?.[0]?.clientY })
@@ -1014,48 +1016,56 @@ export default function RSTrends() {
   const oneYrTicks = computeYTicks(oneYrMax)
   const oneYrMaxVal = oneYrTicks[oneYrTicks.length - 1] || 1
 
+  // Mobile viewBox scaling
+  const yoyVW = isMobile ? MVW_YOY : VW
+  const yoyCR = isMobile ? MVW_YOY - 45 : CR
+  const yoyCW = yoyCR - CL
+  const tlVW = isMobile ? MVW_TL : VW
+  const tlCR = isMobile ? MVW_TL - 40 : CR
+  const tlCW = tlCR - CL
+
   // YoY chart helpers
-  const yoyXPos = (dayOfYear) => CL + (dayOfYear / 364) * CW
+  const yoyXPos = (dayOfYear) => CL + (dayOfYear / 364) * yoyCW
   const yoyYPos = (val) => CB - (val / yoyMax) * CH
 
   // Trendline chart helpers
-  const tlXPos = (i) => CL + (i / (dailyData.length - 1 || 1)) * CW
+  const tlXPos = (i) => CL + (i / (dailyData.length - 1 || 1)) * tlCW
   const tlYPos = (val) => TL_CB - (val / tlMaxVal) * TL_CH
 
-  const fiveYrXPos = (i) => CL + (i / (fiveYrData.length - 1 || 1)) * CW
+  const fiveYrXPos = (i) => CL + (i / (fiveYrData.length - 1 || 1)) * tlCW
   const fiveYrYPos = (val) => TL_CB - (val / fiveYrMaxVal) * TL_CH
 
-  const oneYrXPos = (i) => CL + (i / (oneYrData.length - 1 || 1)) * CW
+  const oneYrXPos = (i) => CL + (i / (oneYrData.length - 1 || 1)) * tlCW
   const oneYrYPos = (val) => TL_CB - (val / oneYrMaxVal) * TL_CH
 
   const sixMoMax = useMemo(() => sixMoData.length ? Math.max(...sixMoData.map(d => d.rs3), 1) : 1, [sixMoData])
   const sixMoTicks = computeYTicks(sixMoMax)
   const sixMoMaxVal = sixMoTicks[sixMoTicks.length - 1] || 1
-  const sixMoXPos = (i) => CL + (i / (sixMoData.length - 1 || 1)) * CW
+  const sixMoXPos = (i) => CL + (i / (sixMoData.length - 1 || 1)) * tlCW
   const sixMoYPos = (val) => TL_CB - (val / sixMoMaxVal) * TL_CH
 
   const threeMoMax = useMemo(() => threeMoData.length ? Math.max(...threeMoData.map(d => d.rs3), 1) : 1, [threeMoData])
   const threeMoTicks = computeYTicks(threeMoMax)
   const threeMoMaxVal = threeMoTicks[threeMoTicks.length - 1] || 1
-  const threeMoXPos = (i) => CL + (i / (threeMoData.length - 1 || 1)) * CW
+  const threeMoXPos = (i) => CL + (i / (threeMoData.length - 1 || 1)) * tlCW
   const threeMoYPos = (val) => TL_CB - (val / threeMoMaxVal) * TL_CH
 
   const oneMoMax = useMemo(() => oneMoData.length ? Math.max(...oneMoData.map(d => d.rs3), 1) : 1, [oneMoData])
   const oneMoTicks = computeYTicks(oneMoMax)
   const oneMoMaxVal = oneMoTicks[oneMoTicks.length - 1] || 1
-  const oneMoXPos = (i) => CL + (i / (oneMoData.length - 1 || 1)) * CW
+  const oneMoXPos = (i) => CL + (i / (oneMoData.length - 1 || 1)) * tlCW
   const oneMoYPos = (val) => TL_CB - (val / oneMoMaxVal) * TL_CH
 
   const peaksMax = useMemo(() => peaksData.length ? Math.max(...peaksData.map(d => d.rs3_peak), 1) : 1, [peaksData])
   const peaksTicks = computeYTicks(peaksMax)
   const peaksMaxVal = peaksTicks[peaksTicks.length - 1] || 1
-  const peaksXPos = (i) => CL + (i / (peaksData.length - 1 || 1)) * CW
+  const peaksXPos = (i) => CL + (i / (peaksData.length - 1 || 1)) * tlCW
   const peaksYPos = (val) => TL_CB - (val / peaksMaxVal) * TL_CH
 
   const troughsMax = useMemo(() => troughsData.length ? Math.max(...troughsData.map(d => d.rs3_min), 1) : 1, [troughsData])
   const troughsTicks = computeYTicks(troughsMax)
   const troughsMaxVal = troughsTicks[troughsTicks.length - 1] || 1
-  const troughsXPos = (i) => CL + (i / (troughsData.length - 1 || 1)) * CW
+  const troughsXPos = (i) => CL + (i / (troughsData.length - 1 || 1)) * tlCW
   const troughsYPos = (val) => TL_CB - (val / troughsMaxVal) * TL_CH
 
   // YoY hover
@@ -1064,8 +1074,8 @@ export default function RSTrends() {
     const rect = yoyChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / yoyVW
+    const endPct = yoyCR / yoyVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1090,8 +1100,8 @@ export default function RSTrends() {
     const rect = trendlineChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1106,8 +1116,8 @@ export default function RSTrends() {
     const rect = fiveYrChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1122,8 +1132,8 @@ export default function RSTrends() {
     const rect = oneYrChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1138,8 +1148,8 @@ export default function RSTrends() {
     const rect = sixMoChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1154,8 +1164,8 @@ export default function RSTrends() {
     const rect = threeMoChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1170,8 +1180,8 @@ export default function RSTrends() {
     const rect = oneMoChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1186,8 +1196,8 @@ export default function RSTrends() {
     const rect = peaksChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1202,8 +1212,8 @@ export default function RSTrends() {
     const rect = troughsChartRef.current.getBoundingClientRect()
     const x = e.clientX - rect.left
     const chartWidth = rect.width
-    const startPct = CL / VW
-    const endPct = CR / VW
+    const startPct = CL / tlVW
+    const endPct = tlCR / tlVW
     const areaWidth = chartWidth * (endPct - startPct)
     const areaStart = chartWidth * startPct
     const relX = x - areaStart
@@ -1298,12 +1308,12 @@ export default function RSTrends() {
                   onMouseMove={handleYoYHover}
                   onMouseLeave={() => setTrendsHoveredDay(-1)}
                 >
-                  <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none">
+                  <svg width="100%" height="100%" viewBox={`0 0 ${yoyVW} ${VH}`} preserveAspectRatio="none">
                     {/* Month grid lines */}
                     {monthStarts.map((day, i) => (
                       <g key={i}>
                         <line x1={yoyXPos(day)} y1={CT} x2={yoyXPos(day)} y2={CB} stroke="#1a1a1a" strokeWidth="1" />
-                        <text x={yoyXPos(day + 15)} y={CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text x={yoyXPos(day + 15)} y={CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {monthLabels[i]}
                         </text>
                       </g>
@@ -1314,8 +1324,8 @@ export default function RSTrends() {
                       const y = yoyYPos(val)
                       return (
                         <g key={i}>
-                          <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                          <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                          <line x1={CL} y1={y} x2={yoyCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                          <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                             {val.toLocaleString()}
                           </text>
                         </g>
@@ -1370,7 +1380,7 @@ export default function RSTrends() {
                     })}
 
                     {/* Legend */}
-                    <g transform={`translate(${VW / 2}, ${CB + 45})`}>
+                    <g transform={`translate(${yoyVW / 2}, ${CB + 45})`}>
                       {yoyYears.map((year, i) => {
                         const cols = isMobile ? 5 : 7
                         const row = Math.floor(i / cols)
@@ -1389,7 +1399,7 @@ export default function RSTrends() {
                             ) : (
                               <line x1={x} y1={y} x2={x + 10} y2={y} stroke={yearColors[year] || '#666'} strokeWidth={year === currentYear ? 3 : 2} />
                             )}
-                            <text x={x + 14} y={y + 4} fill="#fff" fontSize="11">{year}</text>
+                            <text x={x + 14} y={y + 4} fill="#fff" fontSize={isMobile ? '14' : '11'}>{year}</text>
                           </g>
                         )
                       })}
@@ -1581,14 +1591,14 @@ export default function RSTrends() {
                   onMouseLeave={() => setTrendlineHoveredIndex(-1)}
                 >
                   {dailyData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {/* Y-axis ticks */}
                       {tlTicks.map((val, i) => {
                         const y = tlYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -1608,7 +1618,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={tlXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={tlXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -1665,13 +1675,13 @@ export default function RSTrends() {
                       })()}
 
                       {/* Legend */}
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -1751,13 +1761,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setFiveYrHoveredIndex(-1)}
                 >
                   {fiveYrData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {fiveYrTicks.map((val, i) => {
                         const y = fiveYrYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -1773,7 +1783,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={fiveYrXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={fiveYrXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -1823,13 +1833,13 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -1908,13 +1918,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setOneYrHoveredIndex(-1)}
                 >
                   {oneYrData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {oneYrTicks.map((val, i) => {
                         const y = oneYrYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -1934,7 +1944,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().filter((_, i, arr) => i === 0 || i === arr.length - 1 || i % 2 === 0).map((label, i) => (
-                        <text key={i} x={oneYrXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={oneYrXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -1984,13 +1994,13 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">90d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>90d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2069,13 +2079,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setSixMoHoveredIndex(-1)}
                 >
                   {sixMoData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {sixMoTicks.map((val, i) => {
                         const y = sixMoYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -2095,7 +2105,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={sixMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={sixMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -2146,13 +2156,13 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">30d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>30d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2231,13 +2241,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setThreeMoHoveredIndex(-1)}
                 >
                   {threeMoData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {threeMoTicks.map((val, i) => {
                         const y = threeMoYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -2251,7 +2261,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={threeMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={threeMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -2301,13 +2311,13 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">14d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>14d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2386,13 +2396,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setOneMoHoveredIndex(-1)}
                 >
                   {oneMoData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {oneMoTicks.map((val, i) => {
                         const y = oneMoYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -2409,7 +2419,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={oneMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={oneMoXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -2459,13 +2469,13 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-140} y1={0} x2={-115} y2={0} stroke="rgba(96, 165, 250, 0.25)" strokeWidth="2" />
-                        <text x={-110} y={4} fill="#fff" fontSize="11">Daily</text>
+                        <text x={-110} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily</text>
                         <line x1={-50} y1={0} x2={-25} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={-20} y={4} fill="#fff" fontSize="11">7d MA</text>
+                        <text x={-20} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>7d MA</text>
                         <line x1={55} y1={0} x2={80} y2={0} stroke="#ef4444" strokeWidth="2" strokeDasharray="6,3" />
-                        <text x={85} y={4} fill="#fff" fontSize="11">Regression</text>
+                        <text x={85} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -2516,13 +2526,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setPeaksHoveredIndex(-1)}
                 >
                   {peaksData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {peaksTicks.map((val, i) => {
                         const y = peaksYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -2542,7 +2552,7 @@ export default function RSTrends() {
                         }
                         return labels
                       })().map((label, i) => (
-                        <text key={i} x={peaksXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text key={i} x={peaksXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {label.text}
                         </text>
                       ))}
@@ -2580,11 +2590,11 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-80} y1={0} x2={-55} y2={0} stroke="rgba(251, 146, 60, 0.3)" strokeWidth="2" />
-                        <text x={-50} y={4} fill="#fff" fontSize="11">Daily Peak</text>
+                        <text x={-50} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily Peak</text>
                         <line x1={30} y1={0} x2={55} y2={0} stroke="#fb923c" strokeWidth="2.5" />
-                        <text x={60} y={4} fill="#fff" fontSize="11">14d MA</text>
+                        <text x={60} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>14d MA</text>
                       </g>
                     </svg>
                   )}
@@ -2633,13 +2643,13 @@ export default function RSTrends() {
                   onMouseLeave={() => setTroughsHoveredIndex(-1)}
                 >
                   {troughsData.length > 1 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${TL_VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${tlVW} ${TL_VH}`} preserveAspectRatio="none">
                       {troughsTicks.map((val, i) => {
                         const y = troughsYPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -2655,7 +2665,7 @@ export default function RSTrends() {
                           if (label !== lastLabel) { labels.push({ label, index: i }); lastLabel = label }
                         }
                         return labels.map((label, i) => (
-                          <text key={i} x={troughsXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                          <text key={i} x={troughsXPos(label.index)} y={TL_CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                             {label.label}
                           </text>
                         ))
@@ -2695,11 +2705,11 @@ export default function RSTrends() {
                         )
                       })()}
 
-                      <g transform={`translate(${VW / 2}, ${TL_CB + 50})`}>
+                      <g transform={`translate(${tlVW / 2}, ${TL_CB + 50})`}>
                         <line x1={-80} y1={0} x2={-55} y2={0} stroke="rgba(96, 165, 250, 0.3)" strokeWidth="2" />
-                        <text x={-50} y={4} fill="#fff" fontSize="11">Daily Trough</text>
+                        <text x={-50} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>Daily Trough</text>
                         <line x1={40} y1={0} x2={65} y2={0} stroke="#60a5fa" strokeWidth="2.5" />
-                        <text x={70} y={4} fill="#fff" fontSize="11">14d MA</text>
+                        <text x={70} y={4} fill="#fff" fontSize={isMobile ? '14' : '11'}>14d MA</text>
                       </g>
                     </svg>
                   )}
@@ -2764,12 +2774,12 @@ export default function RSTrends() {
                   onMouseLeave={() => setHsYoyHoveredWeek(-1)}
                   onTouchEnd={() => setHsYoyHoveredWeek(-1)}
                 >
-                  <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none">
+                  <svg width="100%" height="100%" viewBox={`0 0 ${yoyVW} ${VH}`} preserveAspectRatio="none">
                     {/* Month grid lines */}
                     {hsMonthWeeks.map((week, i) => (
                       <g key={i}>
                         <line x1={hsYoyXPos(week)} y1={CT} x2={hsYoyXPos(week)} y2={CB} stroke="#1a1a1a" strokeWidth="1" />
-                        <text x={hsYoyXPos(week + 2)} y={CB + 22} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="middle">
+                        <text x={hsYoyXPos(week + 2)} y={CB + 22} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="middle">
                           {monthLabels[i]}
                         </text>
                       </g>
@@ -2780,8 +2790,8 @@ export default function RSTrends() {
                       const y = hsYoyYPos(val)
                       return (
                         <g key={i}>
-                          <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                          <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                          <line x1={CL} y1={y} x2={yoyCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                          <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '16' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                             {val.toLocaleString()}
                           </text>
                         </g>
@@ -2834,7 +2844,7 @@ export default function RSTrends() {
                     })}
 
                     {/* Legend — centered below month labels */}
-                    <g transform={`translate(${VW / 2}, ${CB + 75})`}>
+                    <g transform={`translate(${yoyVW / 2}, ${CB + 75})`}>
                       {hsYoyYears.map((year, i) => {
                         const totalWidth = hsYoyYears.length * 80
                         const startX = -totalWidth / 2
@@ -2842,7 +2852,7 @@ export default function RSTrends() {
                         return (
                           <g key={year}>
                             <line x1={x} y1={0} x2={x + 12} y2={0} stroke={yearColors[year] || '#666'} strokeWidth={year === currentYear ? 3 : 2} />
-                            <text x={x + 16} y={4} fill="#fff" fontSize="12">{year}</text>
+                            <text x={x + 16} y={4} fill="#fff" fontSize={isMobile ? '16' : '12'}>{year}</text>
                           </g>
                         )
                       })}
@@ -3032,7 +3042,7 @@ export default function RSTrends() {
                   onTouchEnd={() => setHiscoresHoveredIndex(-1)}
                 >
                   {hiscoresData.length > 1 && (
-                    <svg viewBox={`0 0 ${VW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
+                    <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
                       {/* Y-axis grid */}
                       {(() => {
                         const ticks = computeYTicks(hiscoresMax)
@@ -3040,8 +3050,8 @@ export default function RSTrends() {
                           const y = hiscoresYPos(v)
                           return (
                             <g key={i}>
-                              <line x1={CL} y1={y} x2={CR} y2={y} stroke="#222" strokeWidth="1" />
-                              <text x={CL - 8} y={y + 4} textAnchor="end" fill="#fff" fontSize="12">
+                              <line x1={CL} y1={y} x2={tlCR} y2={y} stroke="#222" strokeWidth="1" />
+                              <text x={CL - 8} y={y + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '12'}>
                                 {v.toLocaleString()}
                               </text>
                             </g>
@@ -3056,7 +3066,7 @@ export default function RSTrends() {
                         for (let i = 0; i < hiscoresData.length; i += step) {
                           const d = hiscoresData[i].timestamp
                           labels.push(
-                            <text key={i} x={hiscoresXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">
+                            <text key={i} x={hiscoresXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '11'}>
                               {d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })}
                             </text>
                           )
@@ -3087,7 +3097,7 @@ export default function RSTrends() {
                       {hiscoresTrendline.regression && (
                         <line
                           x1={CL} y1={hiscoresYPos(hiscoresTrendline.regression.startY)}
-                          x2={CR} y2={hiscoresYPos(hiscoresTrendline.regression.endY)}
+                          x2={tlCR} y2={hiscoresYPos(hiscoresTrendline.regression.endY)}
                           stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8"
                         />
                       )}
@@ -3109,13 +3119,13 @@ export default function RSTrends() {
                       )}
 
                       {/* Legend */}
-                      <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
+                      <g transform={`translate(${tlVW / 2 - 120}, ${TL_VH - 10})`}>
                         <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                        <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
+                        <text x="25" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Weekly</text>
                         <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                        <text x="105" y="4" fill="#fff" fontSize="11">90d MA</text>
+                        <text x="105" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>90d MA</text>
                         <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                        <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
+                        <text x="175" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                       </g>
                     </svg>
                   )}
@@ -3191,11 +3201,11 @@ export default function RSTrends() {
                 <div ref={hs1yrChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1yrHover} onTouchMove={handleHs1yrHover}
                   onMouseLeave={() => setHs1yrHoveredIndex(-1)} onTouchEnd={() => setHs1yrHoveredIndex(-1)}>
-                  <svg viewBox={`0 0 ${VW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
+                  <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
                     {computeYTicks(hs1yrMax).map((v, i) => (
                       <g key={i}>
-                        <line x1={CL} y1={hs1yrYPos(v)} x2={CR} y2={hs1yrYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs1yrYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                        <line x1={CL} y1={hs1yrYPos(v)} x2={tlCR} y2={hs1yrYPos(v)} stroke="#222" strokeWidth="1" />
+                        <text x={CL - 8} y={hs1yrYPos(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '12'}>
                           {v.toLocaleString()}
                         </text>
                       </g>
@@ -3203,7 +3213,7 @@ export default function RSTrends() {
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs1yrData.length / 12))
                       for (let i = 0; i < hs1yrData.length; i += step) {
-                        labels.push(<text key={i} x={hs1yrXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs1yrData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs1yrXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '11'}>{hs1yrData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3213,7 +3223,7 @@ export default function RSTrends() {
                       <path d={`M ${hs1yrTrendline.movingAvg.map(d => `${hs1yrXPos(d.index)},${hs1yrYPos(d.value)}`).join(' L ')}`} fill="none" stroke="#a855f7" strokeWidth="2.5" />
                     )}
                     {hs1yrTrendline.regression && (
-                      <line x1={CL} y1={hs1yrYPos(hs1yrTrendline.regression.startY)} x2={CR} y2={hs1yrYPos(hs1yrTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
+                      <line x1={CL} y1={hs1yrYPos(hs1yrTrendline.regression.startY)} x2={tlCR} y2={hs1yrYPos(hs1yrTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
                     )}
                     {hs1yrHoveredIndex >= 0 && (
                       <g>
@@ -3221,13 +3231,13 @@ export default function RSTrends() {
                         <circle cx={hs1yrXPos(hs1yrHoveredIndex)} cy={hs1yrYPos(hs1yrData[hs1yrHoveredIndex].total)} r="4" fill="#a855f7" stroke="#fff" strokeWidth="2" />
                       </g>
                     )}
-                    <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
+                    <g transform={`translate(${tlVW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#fff" fontSize="11">90d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>90d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                     </g>
                   </svg>
                   {hs1yrHoveredIndex >= 0 && (() => {
@@ -3285,11 +3295,11 @@ export default function RSTrends() {
                 <div ref={hs6moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs6moHover} onTouchMove={handleHs6moHover}
                   onMouseLeave={() => setHs6moHoveredIndex(-1)} onTouchEnd={() => setHs6moHoveredIndex(-1)}>
-                  <svg viewBox={`0 0 ${VW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
+                  <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
                     {computeYTicks(hs6moMax).map((v, i) => (
                       <g key={i}>
-                        <line x1={CL} y1={hs6moYPos(v)} x2={CR} y2={hs6moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs6moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                        <line x1={CL} y1={hs6moYPos(v)} x2={tlCR} y2={hs6moYPos(v)} stroke="#222" strokeWidth="1" />
+                        <text x={CL - 8} y={hs6moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '12'}>
                           {v.toLocaleString()}
                         </text>
                       </g>
@@ -3297,7 +3307,7 @@ export default function RSTrends() {
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs6moData.length / 10))
                       for (let i = 0; i < hs6moData.length; i += step) {
-                        labels.push(<text key={i} x={hs6moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs6moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs6moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '11'}>{hs6moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3307,7 +3317,7 @@ export default function RSTrends() {
                       <path d={`M ${hs6moTrendline.movingAvg.map(d => `${hs6moXPos(d.index)},${hs6moYPos(d.value)}`).join(' L ')}`} fill="none" stroke="#a855f7" strokeWidth="2.5" />
                     )}
                     {hs6moTrendline.regression && (
-                      <line x1={CL} y1={hs6moYPos(hs6moTrendline.regression.startY)} x2={CR} y2={hs6moYPos(hs6moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
+                      <line x1={CL} y1={hs6moYPos(hs6moTrendline.regression.startY)} x2={tlCR} y2={hs6moYPos(hs6moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
                     )}
                     {hs6moHoveredIndex >= 0 && (
                       <g>
@@ -3315,13 +3325,13 @@ export default function RSTrends() {
                         <circle cx={hs6moXPos(hs6moHoveredIndex)} cy={hs6moYPos(hs6moData[hs6moHoveredIndex].total)} r="4" fill="#a855f7" stroke="#fff" strokeWidth="2" />
                       </g>
                     )}
-                    <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
+                    <g transform={`translate(${tlVW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#fff" fontSize="11">30d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>30d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                     </g>
                   </svg>
                   {hs6moHoveredIndex >= 0 && (() => {
@@ -3379,11 +3389,11 @@ export default function RSTrends() {
                 <div ref={hs3moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs3moHover} onTouchMove={handleHs3moHover}
                   onMouseLeave={() => setHs3moHoveredIndex(-1)} onTouchEnd={() => setHs3moHoveredIndex(-1)}>
-                  <svg viewBox={`0 0 ${VW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
+                  <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
                     {computeYTicks(hs3moMax).map((v, i) => (
                       <g key={i}>
-                        <line x1={CL} y1={hs3moYPos(v)} x2={CR} y2={hs3moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs3moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                        <line x1={CL} y1={hs3moYPos(v)} x2={tlCR} y2={hs3moYPos(v)} stroke="#222" strokeWidth="1" />
+                        <text x={CL - 8} y={hs3moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '12'}>
                           {v.toLocaleString()}
                         </text>
                       </g>
@@ -3391,7 +3401,7 @@ export default function RSTrends() {
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs3moData.length / 6))
                       for (let i = 0; i < hs3moData.length; i += step) {
-                        labels.push(<text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs3moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs3moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '11'}>{hs3moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3401,7 +3411,7 @@ export default function RSTrends() {
                       <path d={`M ${hs3moTrendline.movingAvg.map(d => `${hs3moXPos(d.index)},${hs3moYPos(d.value)}`).join(' L ')}`} fill="none" stroke="#a855f7" strokeWidth="2.5" />
                     )}
                     {hs3moTrendline.regression && (
-                      <line x1={CL} y1={hs3moYPos(hs3moTrendline.regression.startY)} x2={CR} y2={hs3moYPos(hs3moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
+                      <line x1={CL} y1={hs3moYPos(hs3moTrendline.regression.startY)} x2={tlCR} y2={hs3moYPos(hs3moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
                     )}
                     {hs3moHoveredIndex >= 0 && (
                       <g>
@@ -3409,13 +3419,13 @@ export default function RSTrends() {
                         <circle cx={hs3moXPos(hs3moHoveredIndex)} cy={hs3moYPos(hs3moData[hs3moHoveredIndex].total)} r="4" fill="#a855f7" stroke="#fff" strokeWidth="2" />
                       </g>
                     )}
-                    <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
+                    <g transform={`translate(${tlVW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#fff" fontSize="11">14d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>14d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                     </g>
                   </svg>
                   {hs3moHoveredIndex >= 0 && (() => {
@@ -3468,11 +3478,11 @@ export default function RSTrends() {
                 <div ref={hs1moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1moHover} onTouchMove={handleHs1moHover}
                   onMouseLeave={() => setHs1moHoveredIndex(-1)} onTouchEnd={() => setHs1moHoveredIndex(-1)}>
-                  <svg viewBox={`0 0 ${VW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
+                  <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
                     {computeYTicks(hs1moMax).map((v, i) => (
                       <g key={i}>
-                        <line x1={CL} y1={hs1moYPos(v)} x2={CR} y2={hs1moYPos(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={hs1moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize="12">
+                        <line x1={CL} y1={hs1moYPos(v)} x2={tlCR} y2={hs1moYPos(v)} stroke="#222" strokeWidth="1" />
+                        <text x={CL - 8} y={hs1moYPos(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '12'}>
                           {v.toLocaleString()}
                         </text>
                       </g>
@@ -3480,7 +3490,7 @@ export default function RSTrends() {
                     {(() => {
                       const labels = [], step = Math.max(1, Math.floor(hs1moData.length / 5))
                       for (let i = 0; i < hs1moData.length; i += step) {
-                        labels.push(<text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize="11">{hs1moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
+                        labels.push(<text key={i} x={hs1moXPos(i)} y={TL_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '11'}>{hs1moData[i].timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>)
                       }
                       return labels
                     })()}
@@ -3490,7 +3500,7 @@ export default function RSTrends() {
                       <path d={`M ${hs1moTrendline.movingAvg.map(d => `${hs1moXPos(d.index)},${hs1moYPos(d.value)}`).join(' L ')}`} fill="none" stroke="#a855f7" strokeWidth="2.5" />
                     )}
                     {hs1moTrendline.regression && (
-                      <line x1={CL} y1={hs1moYPos(hs1moTrendline.regression.startY)} x2={CR} y2={hs1moYPos(hs1moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
+                      <line x1={CL} y1={hs1moYPos(hs1moTrendline.regression.startY)} x2={tlCR} y2={hs1moYPos(hs1moTrendline.regression.endY)} stroke="#ef4444" strokeWidth="2" strokeDasharray="8,6" opacity="0.8" />
                     )}
                     {hs1moHoveredIndex >= 0 && (
                       <g>
@@ -3498,13 +3508,13 @@ export default function RSTrends() {
                         <circle cx={hs1moXPos(hs1moHoveredIndex)} cy={hs1moYPos(hs1moData[hs1moHoveredIndex].total)} r="4" fill="#a855f7" stroke="#fff" strokeWidth="2" />
                       </g>
                     )}
-                    <g transform={`translate(${VW / 2 - 120}, ${TL_VH - 10})`}>
+                    <g transform={`translate(${tlVW / 2 - 120}, ${TL_VH - 10})`}>
                       <line x1="0" y1="0" x2="20" y2="0" stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.5" />
-                      <text x="25" y="4" fill="#fff" fontSize="11">Weekly</text>
+                      <text x="25" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Weekly</text>
                       <line x1="80" y1="0" x2="100" y2="0" stroke="#a855f7" strokeWidth="2.5" />
-                      <text x="105" y="4" fill="#fff" fontSize="11">7d MA</text>
+                      <text x="105" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>7d MA</text>
                       <line x1="150" y1="0" x2="170" y2="0" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" />
-                      <text x="175" y="4" fill="#fff" fontSize="11">Regression</text>
+                      <text x="175" y="4" fill="#fff" fontSize={isMobile ? '14' : '11'}>Regression</text>
                     </g>
                   </svg>
                   {hs1moHoveredIndex >= 0 && (() => {
