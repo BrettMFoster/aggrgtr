@@ -1171,42 +1171,33 @@ export default function RSPopulation() {
 
                       {/* Legend at bottom of chart */}
                       {(() => {
-                        const areaItems = [
-                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45 },
-                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35 },
-                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60 }] : []),
+                        const items = [
+                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45, mw: 45 },
+                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35, mw: 35 },
+                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60, mw: 60 }] : []),
+                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80, mw: 95 },
+                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72, mw: 85 },
+                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82, mw: 105 },
                         ]
-                        const lineItems = [
-                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80 },
-                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72 },
-                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82 },
-                        ]
-                        const rows = isMobile ? [areaItems, lineItems] : [[...areaItems, ...lineItems]]
                         const itemPad = 16
-                        const gapBetween = isMobile ? 10 : 20
+                        const gapBetween = isMobile ? 6 : 20
                         const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
+                        const totalWidth = items.reduce((s, it) => s + itemPad + (isMobile ? it.mw : it.w), 0) + gapBetween * (items.length - 1)
+                        const startX = (chartCL + chartCR) / 2 - totalWidth / 2
+                        let cx = startX
                         return (
                           <g transform={`translate(0, ${legendY})`}>
-                            {rows.map((rowItems, rowIdx) => {
-                              const totalWidth = rowItems.reduce((s, it) => s + itemPad + it.w, 0) + gapBetween * (rowItems.length - 1)
-                              const startX = (chartCL + chartCR) / 2 - totalWidth / 2
-                              let cx = startX
+                            {items.map((item) => {
+                              const x = cx
+                              cx += itemPad + (isMobile ? item.mw : item.w) + gapBetween
                               return (
-                                <g key={rowIdx} transform={`translate(0, ${rowIdx * 22})`}>
-                                  {rowItems.map((item) => {
-                                    const x = cx
-                                    cx += itemPad + item.w + gapBetween
-                                    return (
-                                      <g key={item.label}>
-                                        {item.type === 'rect' ? (
-                                          <rect x={x} y={-7} width={14} height={14} rx={2} fill={item.color} />
-                                        ) : (
-                                          <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
-                                        )}
-                                        <text x={x + 18} y={5} fill="#fff" fontSize={isMobile ? '16' : '13'} fontWeight="500">{item.label}</text>
-                                      </g>
-                                    )
-                                  })}
+                                <g key={item.label}>
+                                  {item.type === 'rect' ? (
+                                    <rect x={x} y={-7} width={14} height={14} rx={2} fill={item.color} />
+                                  ) : (
+                                    <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
+                                  )}
+                                  <text x={x + 18} y={5} fill="#fff" fontSize={isMobile ? '16' : '13'} fontWeight="500">{item.label}</text>
                                 </g>
                               )
                             })}
