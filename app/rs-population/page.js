@@ -950,7 +950,7 @@ export default function RSPopulation() {
                         return (
                           <g key={i}>
                             <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize="12" fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -962,7 +962,7 @@ export default function RSPopulation() {
                         const y = steamYPos(val)
                         return (
                           <g key={`sy${i}`}>
-                            <text x={CR + 8} y={y + 4} fill="#a855f7" fontSize="12" fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
+                            <text x={CR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
                               {val.toLocaleString()}
                             </text>
                           </g>
@@ -992,7 +992,7 @@ export default function RSPopulation() {
                             x={label.x}
                             y={CB + 22}
                             fill="#fff"
-                            fontSize={isAngled ? '10' : '12'}
+                            fontSize={isMobile ? (isAngled ? '18' : '22') : (isAngled ? '10' : '12')}
                             fontWeight="bold"
                             textAnchor={isAngled ? 'end' : 'middle'}
                             transform={isAngled ? `rotate(-45, ${label.x}, ${CB + 22})` : undefined}
@@ -1164,7 +1164,7 @@ export default function RSPopulation() {
                                   ) : (
                                     <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
                                   )}
-                                  <text x={x + 18} y={5} fill="#fff" fontSize="13" fontWeight="500">{item.label}</text>
+                                  <text x={x + 18} y={5} fill="#fff" fontSize={isMobile ? '22' : '13'} fontWeight="500">{item.label}</text>
                                 </g>
                               )
                             })}
@@ -1346,7 +1346,7 @@ export default function RSPopulation() {
                     {todYTicks.map(v => (
                       <g key={v}>
                         <line x1={CL} y1={todY(v)} x2={CR} y2={todY(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
                           {v.toLocaleString()}
                         </text>
                       </g>
@@ -1354,7 +1354,7 @@ export default function RSPopulation() {
 
                     {/* X-axis labels every 3 hours */}
                     {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
-                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>
+                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
                         {formatHour(h)}
                       </text>
                     ))}
@@ -1392,7 +1392,7 @@ export default function RSPopulation() {
                       x2={todX(todPeakHour?.hour ?? 12)} y2={TOD_CB}
                       stroke="#60a5fa" strokeWidth="1" strokeDasharray="4,4" opacity="0.5"
                     />
-                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize="9" opacity="0.8" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
+                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize={isMobile ? '16' : '9'} opacity="0.8" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
 
                     {/* "Now" indicator */}
                     {(() => {
@@ -1401,7 +1401,7 @@ export default function RSPopulation() {
                       return (
                         <>
                           <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1.5" strokeDasharray="4,4" />
-                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize="9" style={{ fontFamily: 'sans-serif' }}>NOW</text>
+                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize={isMobile ? '16' : '9'} style={{ fontFamily: 'sans-serif' }}>NOW</text>
                         </>
                       )
                     })()}
@@ -1431,9 +1431,9 @@ export default function RSPopulation() {
 
                     {/* Legend */}
                     <rect x={CR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
-                    <text x={CR - 186} y={TOD_CT + 14} fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <text x={CR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
                     <line x1={CR - 105} y1={TOD_CT + 10} x2={CR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
-                    <text x={CR - 76} y={TOD_CT + 14} fill="#fff" fontSize="11" style={{ fontFamily: 'sans-serif' }}>Today</text>
+                    <text x={CR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
                   </svg>
 
                   {/* Tooltip */}
