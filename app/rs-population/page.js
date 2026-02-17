@@ -618,7 +618,7 @@ export default function RSPopulation() {
 
     // On mobile live view, snap labels to even hours for clean display
     if (viewMode === 'live' && isMobile) {
-      const targetHours = [0, 4, 8, 12, 16, 20]
+      const targetHours = [0, 3, 6, 9, 12, 15, 18, 21]
       for (const targetH of targetHours) {
         let bestIdx = -1
         let bestDiff = Infinity
@@ -1389,7 +1389,7 @@ export default function RSPopulation() {
                     ))}
 
                     {/* X-axis labels every 3 hours */}
-                    {[0, 3, 6, 9, 12, 15, 18, 21].map(h => (
+                    {[0, 3, 6, 9, 12, 15, 18, 21, 23].map(h => (
                       <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
                         {isMobile ? fmtHourShort(h) : formatHour(h)}
                       </text>
