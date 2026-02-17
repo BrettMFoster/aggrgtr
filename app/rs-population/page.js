@@ -12,7 +12,6 @@ const fmtK = (v) => {
 // Chart layout constants
 const CL = 55    // chart left edge
 const CR = 900   // chart right edge
-const CW = CR - CL // chart width
 const CT = 15    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
@@ -474,7 +473,13 @@ export default function RSPopulation() {
   const todChartMax = Math.max(...hourlyAverage.map(h => h.avgRs3), ...todayRs3Data.map(d => d.rs3), 1)
   const todYTicks = computeYTicks(todChartMax)
   const todYMax = todYTicks[todYTicks.length - 1] || 1
-  const todX = (h) => CL + (h / 24) * CW
+  const todCR = isMobile ? 960 : CR
+  const todCW = todCR - CL
+  const todX = (h) => CL + (h / 24) * todCW
+
+  // On mobile, shift main chart right so Y-axis labels don't clip off-screen
+  const chartCL = isMobile ? 90 : CL
+  const chartCW = CR - chartCL
   const todY = (v) => TOD_CB - (v / todYMax) * TOD_CH
 
   const handleTodInteraction = (clientX, clientY) => {
@@ -483,7 +488,7 @@ export default function RSPopulation() {
     const x = clientX - rect.left
     const y = clientY - rect.top
     const chartStartPct = CL / VW
-    const chartEndPct = CR / VW
+    const chartEndPct = todCR / VW
     const chartAreaWidth = rect.width * (chartEndPct - chartStartPct)
     const chartAreaStart = rect.width * chartStartPct
     const relativeX = x - chartAreaStart
@@ -541,7 +546,7 @@ export default function RSPopulation() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    const chartStartPct = CL / VW
+    const chartStartPct = chartCL / VW
     const chartEndPct = CR / VW
     const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
     const chartAreaStart = chartWidth * chartStartPct
@@ -611,6 +616,25 @@ export default function RSPopulation() {
       return result
     }
 
+    // On mobile live view, snap labels to even hours for clean display
+    if (viewMode === 'live' && isMobile) {
+      const targetHours = [0, 4, 8, 12, 16, 20]
+      for (const targetH of targetHours) {
+        let bestIdx = -1
+        let bestDiff = Infinity
+        for (let i = 0; i < filteredData.length; i++) {
+          const d = filteredData[i]
+          const totalMin = d.timestamp.getHours() * 60 + d.timestamp.getMinutes()
+          const diff = Math.abs(totalMin - targetH * 60)
+          if (diff < bestDiff) { bestDiff = diff; bestIdx = i }
+        }
+        if (bestIdx >= 0 && bestDiff < 30) {
+          labels.push({ index: bestIdx, text: fmtHourShort(targetH) })
+        }
+      }
+      return labels
+    }
+
     const count = 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (filteredData.length - 1))
@@ -618,7 +642,6 @@ export default function RSPopulation() {
       let text
       if (viewMode === 'live') {
         const time = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        // Add date to first and last labels to distinguish across midnight
         if (i === 0 || i === count - 1) {
           text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + time
         } else {
@@ -666,7 +689,7 @@ export default function RSPopulation() {
   }
 
   // Helper: compute x position for data index
-  const xPos = (i) => CL + (i / (filteredData.length - 1 || 1)) * CW
+  const xPos = (i) => chartCL + (i / (filteredData.length - 1 || 1)) * chartCW
   // Helper: compute y position for value (left axis)
   const yPos = (val) => CB - (val / maxVal) * CH
   // Helper: compute y position for Steam value (right axis)
@@ -961,8 +984,8 @@ export default function RSPopulation() {
                         const y = yPos(val)
                         return (
                           <g key={i}>
-                            <line x1={CL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={CL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={chartCL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={chartCL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '22' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {isMobile ? fmtK(val) : val.toLocaleString()}
                             </text>
                           </g>
@@ -1162,7 +1185,7 @@ export default function RSPopulation() {
                         const itemPad = isMobile ? 28 : 16 // icon width + gap to text
                         const gapBetween = isMobile ? 12 : 20
                         const totalWidth = items.reduce((s, it) => s + itemPad + it.w, 0) + gapBetween * (items.length - 1)
-                        const startX = (CL + CR) / 2 - totalWidth / 2
+                        const startX = (chartCL + CR) / 2 - totalWidth / 2
                         const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
                         let cx = startX
                         return (
@@ -1358,7 +1381,7 @@ export default function RSPopulation() {
                     {/* Y-axis grid lines and labels */}
                     {todYTicks.map(v => (
                       <g key={v}>
-                        <line x1={CL} y1={todY(v)} x2={CR} y2={todY(v)} stroke="#222" strokeWidth="1" />
+                        <line x1={CL} y1={todY(v)} x2={todCR} y2={todY(v)} stroke="#222" strokeWidth="1" />
                         <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>
                           {isMobile ? fmtK(v) : v.toLocaleString()}
                         </text>
@@ -1443,10 +1466,10 @@ export default function RSPopulation() {
                     })()}
 
                     {/* Legend */}
-                    <rect x={CR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
-                    <text x={CR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
-                    <line x1={CR - 105} y1={TOD_CT + 10} x2={CR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
-                    <text x={CR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
+                    <rect x={todCR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
+                    <text x={todCR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <line x1={todCR - 105} y1={TOD_CT + 10} x2={todCR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
+                    <text x={todCR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '20' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
                   </svg>
 
                   {/* Tooltip */}
