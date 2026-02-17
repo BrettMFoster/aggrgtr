@@ -2,6 +2,17 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import useSWR from 'swr'
 
+// Compact number formatter for mobile axis labels
+const fmtK = (v) => {
+  if (v >= 1000000) return (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + 'M'
+  if (v >= 1000) return (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'K'
+  return v.toString()
+}
+
+const VW = 900    // viewBox width (desktop)
+const MVW = 470   // viewBox width (mobile) — matches 375:280 container ratio
+const VH = 350    // viewBox height
+
 const viewModes = [
   { id: 'live', label: 'Live (24h)' },
   { id: 'week', label: 'Week' },
@@ -59,8 +70,8 @@ export default function Hiscores() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    const chartStartPct = 50 / 900
-    const chartEndPct = 888 / 900
+    const chartStartPct = chartLeft / chartVW
+    const chartEndPct = chartRight / chartVW
     const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
     const chartAreaStart = chartWidth * chartStartPct
     const relativeX = x - chartAreaStart
@@ -158,14 +169,15 @@ export default function Hiscores() {
     return bands
   }
 
-  const chartLeft = 50
-  const chartRight = 888
+  const chartVW = isMobile ? MVW : VW
+  const chartLeft = isMobile ? 50 : 50
+  const chartRight = isMobile ? MVW - 12 : 888
   const chartWidth = chartRight - chartLeft
 
   const getY = (val) => 310 - ((val - minVal) / (maxVal - minVal)) * 295
 
   const formatYLabel = (val) => {
-    return Math.round(val).toLocaleString()
+    return isMobile ? fmtK(Math.round(val)) : Math.round(val).toLocaleString()
   }
 
   return (
@@ -274,7 +286,7 @@ export default function Hiscores() {
                   onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1) }}
                 >
                   {chartData.length > 0 && (
-                    <svg width="100%" height="100%" viewBox="0 0 900 350" preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${VH}`} preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
                         const x1 = chartLeft + (band.start / (chartData.length - 1 || 1)) * chartWidth
@@ -297,7 +309,7 @@ export default function Hiscores() {
                         return (
                           <g key={pct}>
                             <line x1={chartLeft} y1={310 - pct * 295} x2={chartRight} y2={310 - pct * 295} stroke="#333" strokeWidth="1" />
-                            <text x={chartLeft - 5} y={315 - pct * 295} fill="#ffffff" fontSize="11" textAnchor="end">{formatYLabel(Math.round(val))}</text>
+                            <text x={chartLeft - 5} y={315 - pct * 295} fill="#ffffff" fontSize={isMobile ? '18' : '11'} textAnchor="end" style={{ fontFamily: 'monospace' }}>{formatYLabel(Math.round(val))}</text>
                           </g>
                         )
                       })}
@@ -322,7 +334,7 @@ export default function Hiscores() {
                           x={label.x}
                           y={335}
                           fill="#ffffff"
-                          fontSize="12"
+                          fontSize={isMobile ? '18' : '12'}
                           textAnchor={i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
                         >
                           {label.text}
