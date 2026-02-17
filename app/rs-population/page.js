@@ -15,7 +15,8 @@ const CR = 900   // chart right edge
 const CT = 15    // chart top
 const CB = 530   // chart bottom
 const CH = CB - CT // chart height
-const VW = 980   // viewBox width
+const VW = 980   // viewBox width (desktop)
+const MVW = 670  // viewBox width (mobile) — matches ~375:350 container ratio
 const VH = 625   // viewBox height
 
 // Time-of-Day chart vertical constants
@@ -473,13 +474,16 @@ export default function RSPopulation() {
   const todChartMax = Math.max(...hourlyAverage.map(h => h.avgRs3), ...todayRs3Data.map(d => d.rs3), 1)
   const todYTicks = computeYTicks(todChartMax)
   const todYMax = todYTicks[todYTicks.length - 1] || 1
-  const todCR = isMobile ? 960 : CR
+  const todVW = isMobile ? MVW : VW
+  const todCR = isMobile ? MVW - 10 : CR  // 660 on mobile, use full width (no right Y-axis)
   const todCW = todCR - CL
   const todX = (h) => CL + (h / 24) * todCW
 
-  // On mobile, shift main chart right so Y-axis labels don't clip off-screen
-  const chartCL = isMobile ? 90 : CL
-  const chartCW = CR - chartCL
+  // Mobile uses narrower viewBox (MVW) so scaling is ~uniform (no stretch)
+  const chartVW = isMobile ? MVW : VW
+  const chartCL = isMobile ? 70 : CL
+  const chartCR = isMobile ? MVW - 40 : CR  // 630 on mobile, room for right labels
+  const chartCW = chartCR - chartCL
   const todY = (v) => TOD_CB - (v / todYMax) * TOD_CH
 
   const handleTodInteraction = (clientX, clientY) => {
@@ -487,8 +491,8 @@ export default function RSPopulation() {
     const rect = todChartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const y = clientY - rect.top
-    const chartStartPct = CL / VW
-    const chartEndPct = todCR / VW
+    const chartStartPct = CL / todVW
+    const chartEndPct = todCR / todVW
     const chartAreaWidth = rect.width * (chartEndPct - chartStartPct)
     const chartAreaStart = rect.width * chartStartPct
     const relativeX = x - chartAreaStart
@@ -546,8 +550,8 @@ export default function RSPopulation() {
     const rect = chartRef.current.getBoundingClientRect()
     const x = clientX - rect.left
     const chartWidth = rect.width
-    const chartStartPct = chartCL / VW
-    const chartEndPct = CR / VW
+    const chartStartPct = chartCL / chartVW
+    const chartEndPct = chartCR / chartVW
     const chartAreaWidth = chartWidth * (chartEndPct - chartStartPct)
     const chartAreaStart = chartWidth * chartStartPct
     const relativeX = x - chartAreaStart
@@ -956,7 +960,7 @@ export default function RSPopulation() {
                   onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
                   {filteredData.length > 0 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${VW} ${(viewMode === 'year' || viewMode === 'all') ? VH : VH - 25}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${(viewMode === 'year' || viewMode === 'all') ? VH : VH - 25}`} preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
                         const x1 = xPos(band.start)
@@ -978,8 +982,8 @@ export default function RSPopulation() {
                         const y = yPos(val)
                         return (
                           <g key={i}>
-                            <line x1={chartCL} y1={y} x2={CR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-                            <text x={chartCL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '30' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
+                            <line x1={chartCL} y1={y} x2={chartCR} y2={y} stroke="#2a2a2a" strokeWidth="1" />
+                            <text x={chartCL - 8} y={y + 4} fill="#fff" fontSize={isMobile ? '18' : '12'} fontWeight="bold" textAnchor="end" style={{ fontFamily: 'monospace' }}>
                               {isMobile ? fmtK(val) : val.toLocaleString()}
                             </text>
                           </g>
@@ -991,7 +995,7 @@ export default function RSPopulation() {
                         const y = steamYPos(val)
                         return (
                           <g key={`sy${i}`}>
-                            <text x={CR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '30' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
+                            <text x={chartCR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '18' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
                               {isMobile ? fmtK(val) : val.toLocaleString()}
                             </text>
                           </g>
@@ -1021,7 +1025,7 @@ export default function RSPopulation() {
                             x={label.x}
                             y={CB + 22}
                             fill="#fff"
-                            fontSize={isMobile ? (isAngled ? '24' : '30') : (isAngled ? '10' : '12')}
+                            fontSize={isMobile ? (isAngled ? '14' : '16') : (isAngled ? '10' : '12')}
                             fontWeight="bold"
                             textAnchor={isAngled ? 'end' : 'middle'}
                             transform={isAngled ? `rotate(-45, ${label.x}, ${CB + 22})` : undefined}
@@ -1167,19 +1171,18 @@ export default function RSPopulation() {
 
                       {/* Legend at bottom of chart */}
                       {(() => {
-                        const s = isMobile ? 2.2 : 1
                         const items = [
-                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 50 * s },
-                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 40 * s },
-                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 65 * s }] : []),
-                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 88 * s },
-                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 80 * s },
-                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 90 * s },
+                          { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45 },
+                          { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35 },
+                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60 }] : []),
+                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80 },
+                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72 },
+                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82 },
                         ]
-                        const itemPad = isMobile ? 32 : 16 // icon width + gap to text
-                        const gapBetween = isMobile ? 8 : 20
+                        const itemPad = 16
+                        const gapBetween = isMobile ? 10 : 20
                         const totalWidth = items.reduce((s, it) => s + itemPad + it.w, 0) + gapBetween * (items.length - 1)
-                        const startX = (chartCL + CR) / 2 - totalWidth / 2
+                        const startX = (chartCL + chartCR) / 2 - totalWidth / 2
                         const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
                         let cx = startX
                         return (
@@ -1190,11 +1193,11 @@ export default function RSPopulation() {
                               return (
                                 <g key={item.label}>
                                   {item.type === 'rect' ? (
-                                    <rect x={x} y={isMobile ? -12 : -7} width={isMobile ? 22 : 14} height={isMobile ? 22 : 14} rx={2} fill={item.color} />
+                                    <rect x={x} y={-7} width={14} height={14} rx={2} fill={item.color} />
                                   ) : (
-                                    <line x1={x} y1={0} x2={x + (isMobile ? 22 : 14)} y2={0} stroke={item.color} strokeWidth={isMobile ? '5' : '3'} strokeDasharray="6,3" />
+                                    <line x1={x} y1={0} x2={x + 14} y2={0} stroke={item.color} strokeWidth="3" strokeDasharray="6,3" />
                                   )}
-                                  <text x={x + (isMobile ? 28 : 18)} y={5} fill="#fff" fontSize={isMobile ? '28' : '13'} fontWeight="500">{item.label}</text>
+                                  <text x={x + 18} y={5} fill="#fff" fontSize={isMobile ? '16' : '13'} fontWeight="500">{item.label}</text>
                                 </g>
                               )
                             })}
@@ -1364,7 +1367,7 @@ export default function RSPopulation() {
                   <div style={{ position: 'relative', width: '100%', height: isMobile ? '350px' : '550px', overflow: 'hidden' }}>
                   <svg
                     ref={todChartRef}
-                    viewBox={`0 0 ${VW} ${TOD_VH}`}
+                    viewBox={`0 0 ${todVW} ${TOD_VH}`}
                     preserveAspectRatio="none"
                     style={{ width: '100%', height: '100%', display: 'block' }}
                     onMouseMove={(e) => handleTodInteraction(e.clientX, e.clientY)}
@@ -1376,7 +1379,7 @@ export default function RSPopulation() {
                     {todYTicks.map(v => (
                       <g key={v}>
                         <line x1={CL} y1={todY(v)} x2={todCR} y2={todY(v)} stroke="#222" strokeWidth="1" />
-                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '28' : '11'} style={{ fontFamily: 'sans-serif' }}>
+                        <text x={CL - 8} y={todY(v) + 4} textAnchor="end" fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>
                           {isMobile ? fmtK(v) : v.toLocaleString()}
                         </text>
                       </g>
@@ -1384,7 +1387,7 @@ export default function RSPopulation() {
 
                     {/* X-axis labels every 3 hours */}
                     {[0, 3, 6, 9, 12, 15, 18, 21, 23].map(h => (
-                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '28' : '11'} style={{ fontFamily: 'sans-serif' }}>
+                      <text key={h} x={todX(h)} y={TOD_CB + 20} textAnchor="middle" fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>
                         {isMobile ? fmtHourShort(h) : formatHour(h)}
                       </text>
                     ))}
@@ -1422,7 +1425,7 @@ export default function RSPopulation() {
                       x2={todX(todPeakHour?.hour ?? 12)} y2={TOD_CB}
                       stroke="#60a5fa" strokeWidth="1" strokeDasharray="4,4" opacity="0.5"
                     />
-                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize={isMobile ? '22' : '9'} opacity="0.8" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
+                    <text x={todX(todPeakHour?.hour ?? 12)} y={TOD_CT - 2} textAnchor="middle" fill="#60a5fa" fontSize={isMobile ? '14' : '9'} opacity="0.8" style={{ fontFamily: 'sans-serif' }}>PEAK</text>
 
                     {/* "Now" indicator */}
                     {(() => {
@@ -1431,7 +1434,7 @@ export default function RSPopulation() {
                       return (
                         <>
                           <line x1={todX(fh)} y1={TOD_CT} x2={todX(fh)} y2={TOD_CB} stroke="#fff" strokeWidth="1.5" strokeDasharray="4,4" />
-                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize={isMobile ? '22' : '9'} style={{ fontFamily: 'sans-serif' }}>NOW</text>
+                          <text x={todX(fh)} y={TOD_CT - 2} textAnchor="middle" fill="#fff" fontSize={isMobile ? '14' : '9'} style={{ fontFamily: 'sans-serif' }}>NOW</text>
                         </>
                       )
                     })()}
@@ -1461,9 +1464,9 @@ export default function RSPopulation() {
 
                     {/* Legend */}
                     <rect x={todCR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
-                    <text x={todCR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '28' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <text x={todCR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
                     <line x1={todCR - 105} y1={TOD_CT + 10} x2={todCR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
-                    <text x={todCR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '28' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
+                    <text x={todCR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
                   </svg>
 
                   {/* Tooltip */}
