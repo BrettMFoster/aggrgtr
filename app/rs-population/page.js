@@ -618,7 +618,7 @@ export default function RSPopulation() {
 
     // On mobile live view, snap labels to even hours for clean display
     if (viewMode === 'live' && isMobile) {
-      const targetHours = [0, 3, 6, 9, 12, 15, 18, 21]
+      const targetHours = Array.from({ length: 24 }, (_, i) => i)
       for (const targetH of targetHours) {
         let bestIdx = -1
         let bestDiff = Infinity
