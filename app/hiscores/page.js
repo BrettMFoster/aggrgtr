@@ -266,7 +266,7 @@ export default function Hiscores() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: isMobile ? '280px' : '420px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                  style={{ height: isMobile ? undefined : '420px', aspectRatio: isMobile ? '900 / 350' : undefined, position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1) }}
                   onTouchMove={handleTouchMove}
