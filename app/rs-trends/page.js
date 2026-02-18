@@ -2716,8 +2716,6 @@ export default function RSTrends() {
                 )}
               </div>
               </div>
-            </>
-          )}
 
           {/* ============ SECTION 10: Hiscores ============ */}
           {hiscoresData.length > 0 && (
@@ -3428,6 +3426,8 @@ export default function RSTrends() {
               })()}
 
             </div>
+          )}
+            </>
           )}
         </main>
       </div>
