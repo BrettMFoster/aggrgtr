@@ -24,7 +24,7 @@ const VH = 620
 // Trendline chart (shorter)
 const TL_CB = 380
 const TL_CH = TL_CB - CT
-const TL_VH = 435
+const TL_VH = 442
 
 const yearColors = {
   2013: '#6366f1',
@@ -203,6 +203,8 @@ export default function RSTrends() {
   const [hs1moMousePos, setHs1moMousePos] = useState({ x: 0, y: 0 })
   const [hsYoyHoveredWeek, setHsYoyHoveredWeek] = useState(-1)
   const [hsYoyMousePos, setHsYoyMousePos] = useState({ x: 0, y: 0 })
+  const [expanded, setExpanded] = useState({})
+  const toggleSection = (key) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }))
   const yoyChartRef = useRef(null)
   const trendlineChartRef = useRef(null)
   const fiveYrChartRef = useRef(null)
@@ -675,6 +677,24 @@ export default function RSTrends() {
       if (i >= window - 1) movingAvg.push({ timestamp: troughsData[i].timestamp, value: Math.round(windowSum / window), index: i })
     }
     return { movingAvg }
+  }, [troughsData])
+
+  const peaksSummary = useMemo(() => {
+    if (peaksData.length < 2) return null
+    const highest = Math.max(...peaksData.map(d => d.rs3_peak))
+    const current = peaksData[peaksData.length - 1].rs3_peak
+    const delta = current - highest
+    const pct = (delta / highest) * 100
+    return { highest, current, delta, pct }
+  }, [peaksData])
+
+  const troughsSummary = useMemo(() => {
+    if (troughsData.length < 2) return null
+    const lowest = Math.min(...troughsData.map(d => d.rs3_min))
+    const current = troughsData[troughsData.length - 1].rs3_min
+    const delta = current - lowest
+    const pct = (delta / lowest) * 100
+    return { lowest, current, delta, pct }
   }, [troughsData])
 
   // Hiscores data
@@ -1268,7 +1288,7 @@ export default function RSTrends() {
         {/* Main */}
         <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 20px' }}>
           <h1 style={{ fontSize: isMobile ? '24px' : '36px', fontWeight: '600', letterSpacing: '-1px', color: '#fff', margin: '0 0 4px 0' }}>RS3 Population Trends</h1>
-          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#999', margin: '0 0 20px 0' }}>Year-over-year analysis, peak tracking, and long-term trendlines</p>
+          <p style={{ fontSize: isMobile ? '14px' : '16px', color: '#bbb', margin: '0 0 20px 0' }}>Year-over-year analysis, peak tracking, and long-term trendlines</p>
 
           {loading ? (
             <div style={{ color: '#fff', padding: '40px', textAlign: 'center' }}>Loading...</div>
@@ -1276,6 +1296,10 @@ export default function RSTrends() {
             <div style={{ color: '#ff4444', padding: '40px', textAlign: 'center' }}>Error: {error?.message || 'Failed to load data'}</div>
           ) : (
             <>
+              {/* ============ RS3 Year-over-Year Container ============ */}
+              <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '10px' : '16px', marginBottom: '12px' }}>
+                <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>RS3 Year-over-Year</h2>
+
               {/* ============ SECTION 1: YoY Comparison ============ */}
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
                 <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>
@@ -1496,10 +1520,10 @@ export default function RSTrends() {
                           </div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '13px' }}>
-                          <div><span style={{ color: '#999' }}>Avg: </span><span style={{ color: '#60a5fa', fontWeight: '600' }}>{ys.avg.toLocaleString()}</span></div>
-                          <div><span style={{ color: '#999' }}>Peak: </span><span style={{ color: '#fff', fontWeight: '600' }}>{ys.peak.toLocaleString()}</span></div>
-                          <div><span style={{ color: '#999' }}>Peak: </span><span style={{ color: '#999' }}>{ys.peakDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span></div>
-                          <div><span style={{ color: '#999' }}>Days: </span><span style={{ color: '#666' }}>{ys.dataPoints}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Avg: </span><span style={{ color: '#60a5fa', fontWeight: '600' }}>{ys.avg.toLocaleString()}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Peak: </span><span style={{ color: '#fff', fontWeight: '600' }}>{ys.peak.toLocaleString()}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Peak: </span><span style={{ color: '#bbb' }}>{ys.peakDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Days: </span><span style={{ color: '#aaa' }}>{ys.dataPoints}</span></div>
                         </div>
                       </div>
                     ))}
@@ -1550,48 +1574,32 @@ export default function RSTrends() {
                   </div>
                 )}
               </div>
+              </div>
 
               {/* ============ TRENDLINES SECTION ============ */}
               <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '10px' : '16px', marginBottom: '12px' }}>
                 <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>RS3 Trendlines</h2>
 
               {/* ============ SECTION 3: Long-term Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>Long-term</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!trendlineData.regression ? '#333' : trendlineData.regression.pctChange > 1 ? '#4ade80' : trendlineData.regression.pctChange < -1 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('longterm')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.longterm ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.longterm ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>Long-term{dailyData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({dailyData[0].timestamp.getUTCFullYear()} - {dailyData[dailyData.length-1].timestamp.getUTCFullYear()})</span>}</h2>
+                  </div>
                   {trendlineData.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: trendlineData.regression.pctChange > 1 ? '#4ade80'
-                          : trendlineData.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: trendlineData.regression.pctChange > 1 ? '#4ade80' : trendlineData.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
                         {Math.round(trendlineData.regression.slope * 365) > 0 ? '+' : ''}{Math.round(trendlineData.regression.slope * 365).toLocaleString()} players/year
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: trendlineData.regression.pctChange > 1 ? '#052e16'
-                          : trendlineData.regression.pctChange < -1 ? '#450a0a'
-                          : '#422006',
-                        color: trendlineData.regression.pctChange > 1 ? '#4ade80'
-                          : trendlineData.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {trendlineData.regression.pctChange > 1 ? 'Growing'
-                          : trendlineData.regression.pctChange < -1 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: trendlineData.regression.pctChange > 1 ? '#052e16' : trendlineData.regression.pctChange < -1 ? '#450a0a' : '#422006', color: trendlineData.regression.pctChange > 1 ? '#4ade80' : trendlineData.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
+                        {trendlineData.regression.pctChange > 1 ? 'Growing' : trendlineData.regression.pctChange < -1 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.longterm && (<div
                   ref={trendlineChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleTrendlineHover}
@@ -1709,13 +1717,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             90d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -1723,45 +1731,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* ============ SECTION 4: 5-Year Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>5-Year</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!fiveYrTrendline.regression ? '#333' : fiveYrTrendline.regression.pctChange > 1 ? '#4ade80' : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('fiveyr')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.fiveyr ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.fiveyr ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>5-Year{fiveYrData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({fiveYrData[0].timestamp.getUTCFullYear()} - {fiveYrData[fiveYrData.length-1].timestamp.getUTCFullYear()})</span>}</h2>
+                  </div>
                   {fiveYrTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: fiveYrTrendline.regression.pctChange > 1 ? '#4ade80'
-                          : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: fiveYrTrendline.regression.pctChange > 1 ? '#4ade80' : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
                         {Math.round(fiveYrTrendline.regression.slope * 365) > 0 ? '+' : ''}{Math.round(fiveYrTrendline.regression.slope * 365).toLocaleString()} players/year
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: fiveYrTrendline.regression.pctChange > 1 ? '#052e16'
-                          : fiveYrTrendline.regression.pctChange < -1 ? '#450a0a'
-                          : '#422006',
-                        color: fiveYrTrendline.regression.pctChange > 1 ? '#4ade80'
-                          : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {fiveYrTrendline.regression.pctChange > 1 ? 'Growing'
-                          : fiveYrTrendline.regression.pctChange < -1 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: fiveYrTrendline.regression.pctChange > 1 ? '#052e16' : fiveYrTrendline.regression.pctChange < -1 ? '#450a0a' : '#422006', color: fiveYrTrendline.regression.pctChange > 1 ? '#4ade80' : fiveYrTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
+                        {fiveYrTrendline.regression.pctChange > 1 ? 'Growing' : fiveYrTrendline.regression.pctChange < -1 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.fiveyr && (<div
                   ref={fiveYrChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleFiveYrHover}
@@ -1866,13 +1858,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             90d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -1880,45 +1872,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* ============ SECTION 5: 1-Year Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Year</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!oneYrTrendline.regression ? '#333' : oneYrTrendline.regression.pctChange > 3 ? '#4ade80' : oneYrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('oneyr')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.oneyr ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.oneyr ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Year{oneYrData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({oneYrData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {oneYrData[oneYrData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {oneYrTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: oneYrTrendline.regression.pctChange > 3 ? '#4ade80'
-                          : oneYrTrendline.regression.pctChange < -3 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: oneYrTrendline.regression.pctChange > 3 ? '#4ade80' : oneYrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308' }}>
                         {Math.round(oneYrTrendline.regression.slope * 365) > 0 ? '+' : ''}{Math.round(oneYrTrendline.regression.slope * 365).toLocaleString()} players/year
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: oneYrTrendline.regression.pctChange > 3 ? '#052e16'
-                          : oneYrTrendline.regression.pctChange < -3 ? '#450a0a'
-                          : '#422006',
-                        color: oneYrTrendline.regression.pctChange > 3 ? '#4ade80'
-                          : oneYrTrendline.regression.pctChange < -3 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {oneYrTrendline.regression.pctChange > 3 ? 'Growing'
-                          : oneYrTrendline.regression.pctChange < -3 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: oneYrTrendline.regression.pctChange > 3 ? '#052e16' : oneYrTrendline.regression.pctChange < -3 ? '#450a0a' : '#422006', color: oneYrTrendline.regression.pctChange > 3 ? '#4ade80' : oneYrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308' }}>
+                        {oneYrTrendline.regression.pctChange > 3 ? 'Growing' : oneYrTrendline.regression.pctChange < -3 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.oneyr && (<div
                   ref={oneYrChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleOneYrHover}
@@ -2027,13 +2003,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             90d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2041,45 +2017,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* ============ SECTION 6: 6-Month Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>6-Month</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!sixMoTrendline.regression ? '#333' : sixMoTrendline.regression.pctChange > 5 ? '#4ade80' : sixMoTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('sixmo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.sixmo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.sixmo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>6-Month{sixMoData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({sixMoData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {sixMoData[sixMoData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {sixMoTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: sixMoTrendline.regression.pctChange > 5 ? '#4ade80'
-                          : sixMoTrendline.regression.pctChange < -5 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: sixMoTrendline.regression.pctChange > 5 ? '#4ade80' : sixMoTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308' }}>
                         {sixMoTrendline.regression.monthlyChange > 0 ? '+' : ''}{sixMoTrendline.regression.monthlyChange.toLocaleString()} players/mo
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: sixMoTrendline.regression.pctChange > 5 ? '#052e16'
-                          : sixMoTrendline.regression.pctChange < -5 ? '#450a0a'
-                          : '#422006',
-                        color: sixMoTrendline.regression.pctChange > 5 ? '#4ade80'
-                          : sixMoTrendline.regression.pctChange < -5 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {sixMoTrendline.regression.pctChange > 5 ? 'Growing'
-                          : sixMoTrendline.regression.pctChange < -5 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: sixMoTrendline.regression.pctChange > 5 ? '#052e16' : sixMoTrendline.regression.pctChange < -5 ? '#450a0a' : '#422006', color: sixMoTrendline.regression.pctChange > 5 ? '#4ade80' : sixMoTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308' }}>
+                        {sixMoTrendline.regression.pctChange > 5 ? 'Growing' : sixMoTrendline.regression.pctChange < -5 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.sixmo && (<div
                   ref={sixMoChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleSixMoHover}
@@ -2189,13 +2149,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             30d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2203,45 +2163,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* ============ SECTION 7: 3-Month Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>3-Month</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!threeMoTrendline.regression ? '#333' : threeMoTrendline.regression.pctChange > 7 ? '#4ade80' : threeMoTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('threemo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.threemo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.threemo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>3-Month{threeMoData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({threeMoData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {threeMoData[threeMoData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {threeMoTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: threeMoTrendline.regression.pctChange > 7 ? '#4ade80'
-                          : threeMoTrendline.regression.pctChange < -7 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: threeMoTrendline.regression.pctChange > 7 ? '#4ade80' : threeMoTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308' }}>
                         {threeMoTrendline.regression.monthlyChange > 0 ? '+' : ''}{threeMoTrendline.regression.monthlyChange.toLocaleString()} players/mo
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: threeMoTrendline.regression.pctChange > 7 ? '#052e16'
-                          : threeMoTrendline.regression.pctChange < -7 ? '#450a0a'
-                          : '#422006',
-                        color: threeMoTrendline.regression.pctChange > 7 ? '#4ade80'
-                          : threeMoTrendline.regression.pctChange < -7 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {threeMoTrendline.regression.pctChange > 7 ? 'Growing'
-                          : threeMoTrendline.regression.pctChange < -7 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: threeMoTrendline.regression.pctChange > 7 ? '#052e16' : threeMoTrendline.regression.pctChange < -7 ? '#450a0a' : '#422006', color: threeMoTrendline.regression.pctChange > 7 ? '#4ade80' : threeMoTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308' }}>
+                        {threeMoTrendline.regression.pctChange > 7 ? 'Growing' : threeMoTrendline.regression.pctChange < -7 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.threemo && (<div
                   ref={threeMoChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleThreeMoHover}
@@ -2344,13 +2288,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             14d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2358,45 +2302,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* ============ SECTION 8: 1-Month Trendline ============ */}
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '0' }}>
-                <div style={{ position: 'relative', marginBottom: '12px', textAlign: 'center', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Month</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!oneMoTrendline.regression ? '#333' : oneMoTrendline.regression.pctChange > 10 ? '#4ade80' : oneMoTrendline.regression.pctChange < -10 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '0' }}>
+                <div onClick={() => toggleSection('onemo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.onemo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.onemo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Month{oneMoData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({oneMoData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {oneMoData[oneMoData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {oneMoTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: oneMoTrendline.regression.pctChange > 10 ? '#4ade80'
-                          : oneMoTrendline.regression.pctChange < -10 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: oneMoTrendline.regression.pctChange > 10 ? '#4ade80' : oneMoTrendline.regression.pctChange < -10 ? '#ef4444' : '#eab308' }}>
                         {oneMoTrendline.regression.dailyChange > 0 ? '+' : ''}{oneMoTrendline.regression.dailyChange.toLocaleString()} players/day
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: oneMoTrendline.regression.pctChange > 10 ? '#052e16'
-                          : oneMoTrendline.regression.pctChange < -10 ? '#450a0a'
-                          : '#422006',
-                        color: oneMoTrendline.regression.pctChange > 10 ? '#4ade80'
-                          : oneMoTrendline.regression.pctChange < -10 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {oneMoTrendline.regression.pctChange > 10 ? 'Growing'
-                          : oneMoTrendline.regression.pctChange < -10 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: oneMoTrendline.regression.pctChange > 10 ? '#052e16' : oneMoTrendline.regression.pctChange < -10 ? '#450a0a' : '#422006', color: oneMoTrendline.regression.pctChange > 10 ? '#4ade80' : oneMoTrendline.regression.pctChange < -10 ? '#ef4444' : '#eab308' }}>
+                        {oneMoTrendline.regression.pctChange > 10 ? 'Growing' : oneMoTrendline.regression.pctChange < -10 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.onemo && (<div
                   ref={oneMoChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleOneMoHover}
@@ -2502,13 +2430,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>RS3:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             7d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2516,6 +2444,7 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
               </div>
 
@@ -2523,10 +2452,25 @@ export default function RSTrends() {
               <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '10px' : '16px', marginBottom: '12px' }}>
                 <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>RS3 3-Month Peaks & Troughs</h2>
 
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0', textAlign: 'center' }}>Peaks</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!peaksSummary ? '#333' : peaksSummary.pct >= -2 ? '#4ade80' : peaksSummary.pct >= -5 ? '#eab308' : '#ef4444'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
+                <div onClick={() => toggleSection('peaks')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.peaks ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.peaks ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>Peaks{peaksData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({peaksData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {peaksData[peaksData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
+                  {peaksSummary && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: peaksSummary.pct >= -2 ? '#4ade80' : peaksSummary.pct >= -5 ? '#eab308' : '#ef4444' }}>
+                        {peaksSummary.delta === 0 ? `At peak: ${peaksSummary.current.toLocaleString()}` : `${peaksSummary.delta.toLocaleString()} from peak`}
+                      </span>
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: peaksSummary.pct >= -2 ? '#052e16' : peaksSummary.pct >= -5 ? '#422006' : '#450a0a', color: peaksSummary.pct >= -2 ? '#4ade80' : peaksSummary.pct >= -5 ? '#eab308' : '#ef4444' }}>
+                        {peaksSummary.pct >= -2 ? 'At Peak' : peaksSummary.pct >= -5 ? 'Near Peak' : 'Off Peak'}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                <div
+                {expanded.peaks && (<div
                   ref={peaksChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handlePeaksHover}
@@ -2621,7 +2565,7 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#fb923c', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>Peak:</span> {d.rs3_peak.toLocaleString()}
@@ -2630,7 +2574,7 @@ export default function RSTrends() {
                           <span style={{ fontWeight: '600' }}>Avg:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             14d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2638,12 +2582,28 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
-              <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '0' }}>
-                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0', textAlign: 'center' }}>Troughs</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!troughsSummary ? '#333' : troughsSummary.pct >= 5 ? '#4ade80' : troughsSummary.pct >= 2 ? '#eab308' : '#ef4444'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginBottom: '0' }}>
+                <div onClick={() => toggleSection('troughs')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.troughs ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.troughs ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>Troughs{troughsData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({troughsData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {troughsData[troughsData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
+                  {troughsSummary && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: troughsSummary.pct >= 5 ? '#4ade80' : troughsSummary.pct >= 2 ? '#eab308' : '#ef4444' }}>
+                        {troughsSummary.delta === 0 ? `At low: ${troughsSummary.current.toLocaleString()}` : `+${troughsSummary.delta.toLocaleString()} from low`}
+                      </span>
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: troughsSummary.pct >= 5 ? '#052e16' : troughsSummary.pct >= 2 ? '#422006' : '#450a0a', color: troughsSummary.pct >= 5 ? '#4ade80' : troughsSummary.pct >= 2 ? '#eab308' : '#ef4444' }}>
+                        {troughsSummary.pct >= 5 ? 'Above Low' : troughsSummary.pct >= 2 ? 'Near Low' : 'At Low'}
+                      </span>
+                    </div>
+                  )}
+                </div>
 
-                <div
+                {expanded.troughs && (<div
                   ref={troughsChartRef}
                   style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleTroughsHover}
@@ -2736,7 +2696,7 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '160px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#60a5fa', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>Trough:</span> {d.rs3_min.toLocaleString()}
@@ -2745,7 +2705,7 @@ export default function RSTrends() {
                           <span style={{ fontWeight: '600' }}>Avg:</span> {d.rs3.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             14d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -2753,6 +2713,7 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
               </div>
             </>
@@ -2760,9 +2721,9 @@ export default function RSTrends() {
 
           {/* ============ SECTION 10: Hiscores ============ */}
           {hiscoresData.length > 0 && (
-            <div style={{ background: '#0a0a0a', borderRadius: '12px', padding: '20px', marginTop: '20px' }}>
-              <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>RS3 Hiscores</h2>
-              <p style={{ fontSize: '13px', color: '#888', margin: '-8px 0 12px 0' }}>Unique accounts gaining XP each week on the RS3 hiscores</p>
+            <div style={{ background: '#0a0a0a', border: '1px solid #222', borderRadius: '8px', padding: isMobile ? '10px' : '16px', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: isMobile ? '18px' : '22px', fontWeight: '700', color: '#fff', margin: '0 0 4px 0' }}>RS3 Hiscores</h2>
+              <p style={{ fontSize: '13px', color: '#bbb', margin: '0 0 12px 0' }}>Unique accounts gaining XP each week on the RS3 hiscores</p>
 
               {/* Hiscores YoY Chart */}
               {hsYoyYears.length > 0 && (() => {
@@ -2771,8 +2732,7 @@ export default function RSTrends() {
                 const hsYoyYPos = (v) => CB - (v / hsYoyMax) * CH
                 return (
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Year-over-Year Hiscores</h2>
-
+                <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Year-over-Year{hsYoyYears.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hsYoyYears[0]} - {hsYoyYears[hsYoyYears.length-1]})</span>}</h2>
                 <div
                   ref={hsYoyChartRef}
                   style={{ height: isMobile ? '350px' : '550px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
@@ -2931,8 +2891,7 @@ export default function RSTrends() {
               {/* Hiscores Yearly Summary */}
               {hsYearlySummary.length > 0 && (
               <div style={{ background: '#111', border: '1px solid #222', borderRadius: '6px', padding: isMobile ? '10px' : '12px 16px', marginBottom: '12px' }}>
-                <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Hiscores Yearly Summary</h2>
-
+                <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Yearly Summary</h2>
                 {isMobile ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {[...hsYearlySummary].reverse().map(ys => (
@@ -2953,10 +2912,10 @@ export default function RSTrends() {
                           </div>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '13px' }}>
-                          <div><span style={{ color: '#999' }}>Avg: </span><span style={{ color: '#a855f7', fontWeight: '600' }}>{ys.avg.toLocaleString()}</span></div>
-                          <div><span style={{ color: '#999' }}>Peak: </span><span style={{ color: '#fff', fontWeight: '600' }}>{ys.peak.toLocaleString()}</span></div>
-                          <div><span style={{ color: '#999' }}>Peak: </span><span style={{ color: '#999' }}>{ys.peakMonth}</span></div>
-                          <div><span style={{ color: '#999' }}>Months: </span><span style={{ color: '#666' }}>{ys.months}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Avg: </span><span style={{ color: '#a855f7', fontWeight: '600' }}>{ys.avg.toLocaleString()}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Peak: </span><span style={{ color: '#fff', fontWeight: '600' }}>{ys.peak.toLocaleString()}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Peak: </span><span style={{ color: '#bbb' }}>{ys.peakMonth}</span></div>
+                          <div><span style={{ color: '#bbb' }}>Months: </span><span style={{ color: '#aaa' }}>{ys.months}</span></div>
                         </div>
                       </div>
                     ))}
@@ -3005,42 +2964,25 @@ export default function RSTrends() {
               )}
 
               {/* Hiscores Trendlines */}
-              <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e' }}>
-                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>Total Ranked Accounts</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!hiscoresTrendline.regression ? '#333' : hiscoresTrendline.regression.pctChange > 1 ? '#4ade80' : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px' }}>
+                <div onClick={() => toggleSection('hstotal')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.hstotal ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.hstotal ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>Total Ranked Accounts{hiscoresData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hiscoresData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {hiscoresData[hiscoresData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {hiscoresTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: hiscoresTrendline.regression.pctChange > 1 ? '#4ade80'
-                          : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: hiscoresTrendline.regression.pctChange > 1 ? '#4ade80' : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
                         {Math.round(hiscoresTrendline.regression.slope * 52) > 0 ? '+' : ''}{Math.round(hiscoresTrendline.regression.slope * 52).toLocaleString()}/yr
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: hiscoresTrendline.regression.pctChange > 1 ? '#052e16'
-                          : hiscoresTrendline.regression.pctChange < -1 ? '#450a0a'
-                          : '#422006',
-                        color: hiscoresTrendline.regression.pctChange > 1 ? '#4ade80'
-                          : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {hiscoresTrendline.regression.pctChange > 1 ? 'Growing'
-                          : hiscoresTrendline.regression.pctChange < -1 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: hiscoresTrendline.regression.pctChange > 1 ? '#052e16' : hiscoresTrendline.regression.pctChange < -1 ? '#450a0a' : '#422006', color: hiscoresTrendline.regression.pctChange > 1 ? '#4ade80' : hiscoresTrendline.regression.pctChange < -1 ? '#ef4444' : '#eab308' }}>
+                        {hiscoresTrendline.regression.pctChange > 1 ? 'Growing' : hiscoresTrendline.regression.pctChange < -1 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div
+                {expanded.hstotal && (<div
                   ref={hiscoresChartRef}
                   style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHiscoresHover}
@@ -3153,13 +3095,13 @@ export default function RSTrends() {
                         padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '180px'
                       }}>
                         <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>
-                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
                         </div>
                         <div style={{ fontSize: '14px', color: '#a855f7', marginBottom: '2px' }}>
                           <span style={{ fontWeight: '700' }}>Accounts:</span> {d.total.toLocaleString()}
                         </div>
                         {ma && (
-                          <div style={{ fontSize: '13px', color: '#999' }}>
+                          <div style={{ fontSize: '13px', color: '#bbb' }}>
                             90d MA: {ma.value.toLocaleString()}
                           </div>
                         )}
@@ -3167,45 +3109,29 @@ export default function RSTrends() {
                     )
                   })()}
                 </div>
+                )}
               </div>
 
               {/* 1-Year Hiscores */}
               {hs1yrData.length > 1 && (
-              <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>1-Year</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!hs1yrTrendline.regression ? '#333' : hs1yrTrendline.regression.pctChange > 3 ? '#4ade80' : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginTop: '12px' }}>
+                <div onClick={() => toggleSection('hs1yr')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.hs1yr ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.hs1yr ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Year{hs1yrData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hs1yrData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {hs1yrData[hs1yrData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {hs1yrTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: hs1yrTrendline.regression.pctChange > 3 ? '#4ade80'
-                          : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: hs1yrTrendline.regression.pctChange > 3 ? '#4ade80' : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308' }}>
                         {Math.round(hs1yrTrendline.regression.slope * 52) > 0 ? '+' : ''}{Math.round(hs1yrTrendline.regression.slope * 52).toLocaleString()}/yr
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: hs1yrTrendline.regression.pctChange > 3 ? '#052e16'
-                          : hs1yrTrendline.regression.pctChange < -3 ? '#450a0a'
-                          : '#422006',
-                        color: hs1yrTrendline.regression.pctChange > 3 ? '#4ade80'
-                          : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {hs1yrTrendline.regression.pctChange > 3 ? 'Growing'
-                          : hs1yrTrendline.regression.pctChange < -3 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: hs1yrTrendline.regression.pctChange > 3 ? '#052e16' : hs1yrTrendline.regression.pctChange < -3 ? '#450a0a' : '#422006', color: hs1yrTrendline.regression.pctChange > 3 ? '#4ade80' : hs1yrTrendline.regression.pctChange < -3 ? '#ef4444' : '#eab308' }}>
+                        {hs1yrTrendline.regression.pctChange > 3 ? 'Growing' : hs1yrTrendline.regression.pctChange < -3 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
-                <div ref={hs1yrChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                {expanded.hs1yr && (<div ref={hs1yrChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1yrHover} onTouchMove={handleHs1yrHover}
                   onMouseLeave={() => setHs1yrHoveredIndex(-1)} onTouchEnd={() => setHs1yrHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3253,53 +3179,37 @@ export default function RSTrends() {
                     const left = (screenWidth - hs1yrMousePos.x) < tooltipWidth + 30 ? hs1yrMousePos.x - tooltipWidth - 15 : hs1yrMousePos.x + 15
                     return (
                       <div style={{ position: 'fixed', left, top: hs1yrMousePos.y - 60, background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '180px' }}>
-                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</div>
                         <div style={{ fontSize: '14px', color: '#a855f7', marginBottom: '2px' }}><span style={{ fontWeight: '700' }}>Accounts:</span> {d.total.toLocaleString()}</div>
-                        {ma && <div style={{ fontSize: '13px', color: '#999' }}>90d MA: {ma.value.toLocaleString()}</div>}
+                        {ma && <div style={{ fontSize: '13px', color: '#bbb' }}>90d MA: {ma.value.toLocaleString()}</div>}
                       </div>
                     )
                   })()}
                 </div>
+                )}
               </div>
               )}
 
               {/* 6-Month Hiscores */}
               {hs6moData.length > 1 && (
-              <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>6-Month</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!hs6moTrendline.regression ? '#333' : hs6moTrendline.regression.pctChange > 5 ? '#4ade80' : hs6moTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginTop: '12px' }}>
+                <div onClick={() => toggleSection('hs6mo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.hs6mo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.hs6mo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>6-Month{hs6moData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hs6moData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {hs6moData[hs6moData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {hs6moTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: hs6moTrendline.regression.pctChange > 5 ? '#4ade80'
-                          : hs6moTrendline.regression.pctChange < -5 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: hs6moTrendline.regression.pctChange > 5 ? '#4ade80' : hs6moTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308' }}>
                         {Math.round(hs6moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs6moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: hs6moTrendline.regression.pctChange > 5 ? '#052e16'
-                          : hs6moTrendline.regression.pctChange < -5 ? '#450a0a'
-                          : '#422006',
-                        color: hs6moTrendline.regression.pctChange > 5 ? '#4ade80'
-                          : hs6moTrendline.regression.pctChange < -5 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {hs6moTrendline.regression.pctChange > 5 ? 'Growing'
-                          : hs6moTrendline.regression.pctChange < -5 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: hs6moTrendline.regression.pctChange > 5 ? '#052e16' : hs6moTrendline.regression.pctChange < -5 ? '#450a0a' : '#422006', color: hs6moTrendline.regression.pctChange > 5 ? '#4ade80' : hs6moTrendline.regression.pctChange < -5 ? '#ef4444' : '#eab308' }}>
+                        {hs6moTrendline.regression.pctChange > 5 ? 'Growing' : hs6moTrendline.regression.pctChange < -5 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
-                <div ref={hs6moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                {expanded.hs6mo && (<div ref={hs6moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs6moHover} onTouchMove={handleHs6moHover}
                   onMouseLeave={() => setHs6moHoveredIndex(-1)} onTouchEnd={() => setHs6moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3347,53 +3257,37 @@ export default function RSTrends() {
                     const left = (screenWidth - hs6moMousePos.x) < tooltipWidth + 30 ? hs6moMousePos.x - tooltipWidth - 15 : hs6moMousePos.x + 15
                     return (
                       <div style={{ position: 'fixed', left, top: hs6moMousePos.y - 60, background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '180px' }}>
-                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</div>
                         <div style={{ fontSize: '14px', color: '#a855f7', marginBottom: '2px' }}><span style={{ fontWeight: '700' }}>Accounts:</span> {d.total.toLocaleString()}</div>
-                        {ma && <div style={{ fontSize: '13px', color: '#999' }}>30d MA: {ma.value.toLocaleString()}</div>}
+                        {ma && <div style={{ fontSize: '13px', color: '#bbb' }}>30d MA: {ma.value.toLocaleString()}</div>}
                       </div>
                     )
                   })()}
                 </div>
+                )}
               </div>
               )}
 
               {/* 3-Month Hiscores */}
               {hs3moData.length > 1 && (
-              <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>3-Month</h2>
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!hs3moTrendline.regression ? '#333' : hs3moTrendline.regression.pctChange > 7 ? '#4ade80' : hs3moTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginTop: '12px' }}>
+                <div onClick={() => toggleSection('hs3mo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.hs3mo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.hs3mo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>3-Month{hs3moData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hs3moData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {hs3moData[hs3moData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
                   {hs3moTrendline.regression && (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: hs3moTrendline.regression.pctChange > 7 ? '#4ade80'
-                          : hs3moTrendline.regression.pctChange < -7 ? '#ef4444'
-                          : '#eab308'
-                      }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: hs3moTrendline.regression.pctChange > 7 ? '#4ade80' : hs3moTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308' }}>
                         {Math.round(hs3moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs3moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: hs3moTrendline.regression.pctChange > 7 ? '#052e16'
-                          : hs3moTrendline.regression.pctChange < -7 ? '#450a0a'
-                          : '#422006',
-                        color: hs3moTrendline.regression.pctChange > 7 ? '#4ade80'
-                          : hs3moTrendline.regression.pctChange < -7 ? '#ef4444'
-                          : '#eab308'
-                      }}>
-                        {hs3moTrendline.regression.pctChange > 7 ? 'Growing'
-                          : hs3moTrendline.regression.pctChange < -7 ? 'Declining'
-                          : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: hs3moTrendline.regression.pctChange > 7 ? '#052e16' : hs3moTrendline.regression.pctChange < -7 ? '#450a0a' : '#422006', color: hs3moTrendline.regression.pctChange > 7 ? '#4ade80' : hs3moTrendline.regression.pctChange < -7 ? '#ef4444' : '#eab308' }}>
+                        {hs3moTrendline.regression.pctChange > 7 ? 'Growing' : hs3moTrendline.regression.pctChange < -7 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
                   )}
                 </div>
-                <div ref={hs3moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                {expanded.hs3mo && (<div ref={hs3moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs3moHover} onTouchMove={handleHs3moHover}
                   onMouseLeave={() => setHs3moHoveredIndex(-1)} onTouchEnd={() => setHs3moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3441,48 +3335,39 @@ export default function RSTrends() {
                     const left = (screenWidth - hs3moMousePos.x) < tooltipWidth + 30 ? hs3moMousePos.x - tooltipWidth - 15 : hs3moMousePos.x + 15
                     return (
                       <div style={{ position: 'fixed', left, top: hs3moMousePos.y - 60, background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '180px' }}>
-                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</div>
                         <div style={{ fontSize: '14px', color: '#a855f7', marginBottom: '2px' }}><span style={{ fontWeight: '700' }}>Accounts:</span> {d.total.toLocaleString()}</div>
-                        {ma && <div style={{ fontSize: '13px', color: '#999' }}>14d MA: {ma.value.toLocaleString()}</div>}
+                        {ma && <div style={{ fontSize: '13px', color: '#bbb' }}>14d MA: {ma.value.toLocaleString()}</div>}
                       </div>
                     )
                   })()}
                 </div>
+                )}
               </div>
               )}
 
               {/* 1-Month Hiscores */}
-              {hs1moData.length > 1 && (
-              <div style={{ background: '#111', borderRadius: '12px', padding: isMobile ? '12px' : '20px', border: '1px solid #1e1e1e', marginTop: '16px' }}>
-                <div style={{ position: 'relative', marginBottom: '8px', ...(isMobile ? { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' } : {}) }}>
-                  <h2 style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '700', color: '#fff', textAlign: 'center' }}>1-Month</h2>
-                  {hs1moTrendline.regression && (() => {
-                    const moPct = hs1moTrendline.regression.startY ? (hs1moTrendline.regression.slope * 4.33 / hs1moTrendline.regression.startY) * 100 : 0
-                    return (
-                    <div style={{
-                      background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: '6px',
-                      padding: isMobile ? '3px 6px' : '6px 14px', display: 'flex', alignItems: 'center', gap: isMobile ? '4px' : '12px',
-                      ...(isMobile ? {} : { position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' })
-                    }}>
-                      <span style={{
-                        fontSize: isMobile ? '10px' : '14px', fontWeight: '700',
-                        color: moPct > 10 ? '#4ade80' : moPct < -10 ? '#ef4444' : '#eab308'
-                      }}>
+              {hs1moData.length > 1 && (() => {
+                const hs1moPct = hs1moTrendline.regression?.startY ? (hs1moTrendline.regression.slope * 4.33 / hs1moTrendline.regression.startY) * 100 : 0
+                return (
+              <div style={{ background: '#111', border: '1px solid #222', borderLeft: `3px solid ${!hs1moTrendline.regression ? '#333' : hs1moPct > 10 ? '#4ade80' : hs1moPct < -10 ? '#ef4444' : '#eab308'}`, borderRadius: '6px', overflow: 'hidden', padding: isMobile ? '10px' : '12px 16px', marginTop: '12px' }}>
+                <div onClick={() => toggleSection('hs1mo')} onMouseEnter={e => e.currentTarget.style.background = '#1a1a1a'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', marginBottom: expanded.hs1mo ? '12px' : 0, transition: 'background 0.15s', borderRadius: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ transform: expanded.hs1mo ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}><path d="M4 2l4 4-4 4" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: 0 }}>1-Month{hs1moData.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hs1moData[0].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })} - {hs1moData[hs1moData.length-1].timestamp.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })})</span>}</h2>
+                  </div>
+                  {hs1moTrendline.regression && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '12px' }}>
+                      <span style={{ fontSize: isMobile ? '10px' : '14px', fontWeight: '700', color: hs1moPct > 10 ? '#4ade80' : hs1moPct < -10 ? '#ef4444' : '#eab308' }}>
                         {Math.round(hs1moTrendline.regression.slope * 4.33) > 0 ? '+' : ''}{Math.round(hs1moTrendline.regression.slope * 4.33).toLocaleString()}/mo
                       </span>
-                      <span style={{
-                        fontSize: isMobile ? '9px' : '12px', fontWeight: '600',
-                        padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px',
-                        background: moPct > 10 ? '#052e16' : moPct < -10 ? '#450a0a' : '#422006',
-                        color: moPct > 10 ? '#4ade80' : moPct < -10 ? '#ef4444' : '#eab308'
-                      }}>
-                        {moPct > 10 ? 'Growing' : moPct < -10 ? 'Declining' : 'Flat'}
+                      <span style={{ fontSize: isMobile ? '9px' : '12px', fontWeight: '600', padding: isMobile ? '1px 5px' : '2px 8px', borderRadius: '4px', background: hs1moPct > 10 ? '#052e16' : hs1moPct < -10 ? '#450a0a' : '#422006', color: hs1moPct > 10 ? '#4ade80' : hs1moPct < -10 ? '#ef4444' : '#eab308' }}>
+                        {hs1moPct > 10 ? 'Growing' : hs1moPct < -10 ? 'Declining' : 'Flat'}
                       </span>
                     </div>
-                    )
-                  })()}
+                  )}
                 </div>
-                <div ref={hs1moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                {expanded.hs1mo && (<div ref={hs1moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1moHover} onTouchMove={handleHs1moHover}
                   onMouseLeave={() => setHs1moHoveredIndex(-1)} onTouchEnd={() => setHs1moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3530,15 +3415,17 @@ export default function RSTrends() {
                     const left = (screenWidth - hs1moMousePos.x) < tooltipWidth + 30 ? hs1moMousePos.x - tooltipWidth - 15 : hs1moMousePos.x + 15
                     return (
                       <div style={{ position: 'fixed', left, top: hs1moMousePos.y - 60, background: '#1a1a1a', border: '1px solid #444', borderRadius: '8px', padding: '10px 14px', zIndex: 1000, pointerEvents: 'none', minWidth: '180px' }}>
-                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600', marginBottom: '6px', borderBottom: '1px solid #333', paddingBottom: '6px' }}>{d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</div>
                         <div style={{ fontSize: '14px', color: '#a855f7', marginBottom: '2px' }}><span style={{ fontWeight: '700' }}>Accounts:</span> {d.total.toLocaleString()}</div>
-                        {ma && <div style={{ fontSize: '13px', color: '#999' }}>7d MA: {ma.value.toLocaleString()}</div>}
+                        {ma && <div style={{ fontSize: '13px', color: '#bbb' }}>7d MA: {ma.value.toLocaleString()}</div>}
                       </div>
                     )
                   })()}
                 </div>
+                )}
               </div>
-              )}
+                )
+              })()}
 
             </div>
           )}
