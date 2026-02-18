@@ -97,10 +97,10 @@ export async function GET(request) {
       `
     } else if (view === 'all') {
       query = `
-        SELECT UNIX_SECONDS(TIMESTAMP_TRUNC(timestamp, WEEK)) as ts,
-          CAST(ROUND(AVG(IF(game_name='osrs', player_count, NULL))) AS INT64) as osrs,
-          CAST(ROUND(AVG(IF(game_name='rs3', player_count, NULL))) AS INT64) as rs3,
-          CAST(ROUND(AVG(IF(game_name='dragonwilds', player_count, NULL))) AS INT64) as dragonwilds
+        SELECT UNIX_SECONDS(TIMESTAMP_TRUNC(timestamp, DAY)) as ts,
+          MAX(IF(game_name='osrs', player_count, NULL)) as osrs,
+          MAX(IF(game_name='rs3', player_count, NULL)) as rs3,
+          MAX(IF(game_name='dragonwilds', player_count, NULL)) as dragonwilds
         FROM ${table}
         GROUP BY ts ORDER BY ts ASC
       `
