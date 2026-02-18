@@ -11,49 +11,46 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const datasets = [
+  const rsDatasets = [
     {
       id: 'rs-population',
-      title: 'RuneScape Population',
-      category: 'gaming',
+      title: 'Population',
       status: 'live',
-      desc: 'Live player counts for OSRS and RS3.',
-      stats: ['3-min intervals', 'Per-world data'],
+      desc: 'Live OSRS and RS3 player counts with Steam overlay. Historical data back to 2002.',
+      stats: ['3-min intervals', '20+ years of data'],
       link: '/rs-population'
     },
-    // Hidden from public view for now
-    // {
-    //   id: 'fbi',
-    //   title: 'FBI Crime Statistics',
-    //   category: 'government',
-    //   status: 'live',
-    //   desc: 'Violent and property crime from FBI NIBRS. Agency, county, and state level data.',
-    //   stats: ['13,000+ agencies', '2020-2024'],
-    //   link: '/fbi-crime'
-    // },
-    // {
-    //   id: 'census',
-    //   title: 'Census Demographics',
-    //   category: 'government',
-    //   status: 'available',
-    //   desc: 'Population, income, age distribution, housing. County, tract, and ZIP level.',
-    //   stats: ['All US geographies', '100+ variables']
-    // },
-    // {
-    //   id: 'schools',
-    //   title: 'School District Data',
-    //   category: 'government',
-    //   status: 'coming',
-    //   desc: 'Test scores, graduation rates, student-teacher ratios, per-pupil spending.',
-    //   stats: ['13,000+ districts', '20+ metrics']
-    // },
+    {
+      id: 'rs-trends',
+      title: 'Trends & YoY',
+      status: 'live',
+      desc: 'Year-over-year comparisons with regression trendlines and day-of-week filters.',
+      stats: ['Seasonal analysis', 'Trendlines'],
+      link: '/rs-trends'
+    },
+    {
+      id: 'hiscores',
+      title: 'Hiscores',
+      status: 'live',
+      desc: 'RS3 active account tracking from the official hiscores. Weekly and monthly snapshots.',
+      stats: ['Weekly snapshots', 'Monthly totals'],
+      link: '/hiscores'
+    },
+    {
+      id: 'osrs-worlds',
+      title: 'OSRS Worlds',
+      status: 'live',
+      desc: 'Live world population data. Sort and filter by region, type, and player count.',
+      stats: ['Per-world data', 'Historical charts'],
+      link: '/osrs-worlds'
+    },
   ]
 
 
   return (
     <main style={styles.main}>
       {/* Navigation */}
-      <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '16px 32px', display: 'flex', justifyContent: 'space-between' }}>
+      <nav style={{ borderBottom: '1px solid #222', padding: isMobile ? '12px 16px' : '14px 48px', display: 'flex', justifyContent: 'space-between' }}>
         <a href="/" style={{ color: '#fff', textDecoration: 'none', fontWeight: '600', fontSize: isMobile ? '16px' : '18px' }}>aggrgtr</a>
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           <a href="/about" style={{ color: '#fff', textDecoration: 'none' }}>About</a>
@@ -62,51 +59,58 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero - minimal */}
-      <section style={{ ...styles.hero, padding: isMobile ? '40px 16px 20px' : '80px 32px 40px' }}>
-        <h1 style={{ ...styles.h1, fontSize: isMobile ? '24px' : '36px' }}>Open datasets, cleaned and documented</h1>
-        <p style={styles.subtitle}>
-          Public data from government sources and live APIs.
-          Download directly or access via API.
+      {/* Hero */}
+      <section style={{ padding: isMobile ? '32px 16px 12px' : '24px 48px 8px', maxWidth: '900px' }}>
+        <h1 style={{ ...styles.h1, fontSize: isMobile ? '24px' : '32px', textAlign: isMobile ? 'center' : 'left' }}>Open datasets, cleaned and documented</h1>
+        <p style={{ ...styles.subtitle, textAlign: isMobile ? 'center' : 'left' }}>
+          Live dashboards and datasets. Download directly or access via API.
         </p>
       </section>
 
-
-      {/* Data Catalog */}
-      <section id="datasets" style={{ ...styles.section, padding: isMobile ? '16px 16px 32px' : '32px 32px 64px' }}>
-        <div style={{ ...styles.dataGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-          {datasets.map(dataset => (
-            <div key={dataset.id} style={styles.dataCard}>
-              <div style={styles.cardTop}>
-                <div style={styles.cardHeader}>
-                  <h3 style={styles.cardTitle}>{dataset.title}</h3>
-                  {dataset.status === 'live' && <span style={styles.badgeLive}>Live</span>}
-                  {dataset.status === 'coming' && <span style={styles.badgeComing}>Coming Soon</span>}
+      {/* RuneScape Section */}
+      <section id="runescape" style={{ padding: isMobile ? '12px 16px 24px' : '0 48px 32px', maxWidth: '900px' }}>
+        <div style={{ border: '1px solid #222', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ padding: '12px 16px', background: '#111', borderBottom: '1px solid #222' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#fff', margin: 0 }}>RuneScape</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '1px', background: '#222' }}>
+            {rsDatasets.map(dataset => (
+              <a key={dataset.id} href={dataset.link} style={{ textDecoration: 'none', color: 'inherit', background: '#0a0a0a', padding: '14px 16px', transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#141414'}
+                onMouseLeave={e => e.currentTarget.style.background = '#0a0a0a'}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>{dataset.title}</h3>
+                  <span style={styles.badgeLive}>Live</span>
                 </div>
-                <p style={styles.cardDesc}>{dataset.desc}</p>
-                <div style={styles.cardMeta}>
-                  {dataset.stats.map((stat, i) => (
-                    <span key={i}>{stat}</span>
-                  ))}
-                </div>
+                <p style={{ fontSize: '14px', color: '#aaa', margin: 0, lineHeight: '1.4' }}>{dataset.desc}</p>
+              </a>
+            ))}
+            {/* Data - left */}
+            <div style={{ background: '#0a0a0a', padding: '14px 16px', opacity: 0.5 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>Data</h3>
+                <span style={{ fontSize: '10px', background: '#1a1a1a', color: '#999', padding: '3px 8px', borderRadius: '4px', fontWeight: '500' }}>Coming Soon</span>
               </div>
-              <div style={styles.cardBottom}>
-                {dataset.link ? (
-                  <a href={dataset.link} style={styles.viewBtn}>View Dashboard</a>
-                ) : dataset.status === 'available' ? (
-                  <span style={styles.apiSoon}>API Coming Soon</span>
-                ) : (
-                  <button style={styles.notifyBtn}>Notify Me</button>
-                )}
-              </div>
+              <p style={{ fontSize: '14px', color: '#aaa', margin: 0, lineHeight: '1.4' }}>Downloadable datasets and API access.</p>
             </div>
-          ))}
+            {/* Blog - right */}
+            <a href="/blog" style={{ textDecoration: 'none', color: 'inherit', background: '#0a0a0a', padding: '14px 16px', transition: 'background 0.15s' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#141414'}
+              onMouseLeave={e => e.currentTarget.style.background = '#0a0a0a'}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fff', margin: 0 }}>Blog</h3>
+              </div>
+              <p style={{ fontSize: '14px', color: '#aaa', margin: 0, lineHeight: '1.4' }}>Updates, analysis, and development notes.</p>
+            </a>
+          </div>
         </div>
       </section>
 
       {/* About / Updates */}
-      <section id="about" style={{ ...styles.aboutSection, padding: isMobile ? '32px 16px' : '64px 32px' }}>
-        <div style={{ ...styles.aboutGrid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <section id="about" style={{ ...styles.aboutSection, padding: isMobile ? '24px 16px' : '32px 48px', maxWidth: '900px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '24px' }}>
           <div style={styles.aboutCard}>
             <h3 style={styles.aboutTitle}>What is this?</h3>
             <p style={styles.aboutText}>
@@ -137,7 +141,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid #222', padding: isMobile ? '16px' : '24px 32px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+      <footer style={{ borderTop: '1px solid #222', padding: isMobile ? '16px' : '20px 48px', maxWidth: '900px', fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ display: 'flex', gap: '16px' }}>
           <a href="/about" style={{ color: '#666', textDecoration: 'none' }}>About</a>
           <a href="/privacy" style={{ color: '#666', textDecoration: 'none' }}>Privacy Policy</a>
@@ -191,21 +195,18 @@ const styles = {
   },
   hero: {
     padding: '80px 32px 40px',
-    maxWidth: '700px',
-    margin: '0 auto',
-    textAlign: 'center',
   },
   h1: {
     fontSize: '36px',
     fontWeight: '600',
     letterSpacing: '-1px',
     lineHeight: '1.2',
-    marginBottom: '16px',
+    marginBottom: '10px',
     color: '#fff',
   },
   subtitle: {
     fontSize: '16px',
-    color: '#999',
+    color: '#ccc',
     lineHeight: '1.6',
     margin: 0,
   },
@@ -359,8 +360,6 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
     gap: '32px',
-    maxWidth: '800px',
-    margin: '0 auto',
   },
   aboutCard: {
     padding: '0',
@@ -373,7 +372,7 @@ const styles = {
   },
   aboutText: {
     fontSize: '14px',
-    color: '#999',
+    color: '#ccc',
     lineHeight: '1.6',
     marginBottom: '16px',
   },
