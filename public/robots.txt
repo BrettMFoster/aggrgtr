@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /csv/
+Disallow: /fbi-crime
+Disallow: /data
+
+Sitemap: https://www.aggrgtr.com/sitemap.xml
