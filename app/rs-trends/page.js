@@ -1121,6 +1121,22 @@ export default function RSTrends() {
     setTrendsMousePos({ x: e.clientX, y: e.clientY })
   }
 
+  // "Current" button — select latest data point on YoY chart
+  const handleCurrentClick = () => {
+    if (!yoyData[currentYear] || !yoyChartRef.current) return
+    const days = Object.keys(yoyData[currentYear]).map(Number)
+    if (days.length === 0) return
+    const latestDay = Math.max(...days)
+    setTrendsHoveredDay(latestDay)
+    const rect = yoyChartRef.current.getBoundingClientRect()
+    const svgX = yoyXPos(latestDay)
+    const val = yoyData[currentYear][latestDay]
+    const svgY = yoyYPos(val)
+    const screenX = rect.left + (svgX / yoyVW) * rect.width
+    const screenY = rect.top + (svgY / VH) * rect.height
+    setTrendsMousePos({ x: screenX, y: screenY })
+  }
+
   // Trendline hover
   const handleTrendlineHover = (e) => {
     if (!trendlineChartRef.current || dailyData.length === 0) return
@@ -1331,11 +1347,34 @@ export default function RSTrends() {
                       {f.label}
                     </button>
                   ))}
+                  <button
+                    onClick={handleCurrentClick}
+                    title="Jump to latest data point"
+                    style={{
+                      background: 'transparent',
+                      color: '#4ade80',
+                      border: '1px solid #4ade80',
+                      borderRadius: '50%',
+                      width: '28px',
+                      height: '28px',
+                      padding: '0',
+                      fontSize: '16px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      marginLeft: '6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: '1',
+                    }}
+                  >
+                    ⊕
+                  </button>
                 </div>
 
                 <div
                   ref={yoyChartRef}
-                  style={{ height: isMobile ? '350px' : '650px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '350px' : '650px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleYoYHover}
                   onMouseLeave={() => setTrendsHoveredDay(-1)}
                 >
@@ -1601,7 +1640,7 @@ export default function RSTrends() {
 
                 {expanded.longterm && (<div
                   ref={trendlineChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleTrendlineHover}
                   onMouseLeave={() => setTrendlineHoveredIndex(-1)}
                 >
@@ -1755,7 +1794,7 @@ export default function RSTrends() {
 
                 {expanded.fiveyr && (<div
                   ref={fiveYrChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleFiveYrHover}
                   onMouseLeave={() => setFiveYrHoveredIndex(-1)}
                 >
@@ -1896,7 +1935,7 @@ export default function RSTrends() {
 
                 {expanded.oneyr && (<div
                   ref={oneYrChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleOneYrHover}
                   onMouseLeave={() => setOneYrHoveredIndex(-1)}
                 >
@@ -2041,7 +2080,7 @@ export default function RSTrends() {
 
                 {expanded.sixmo && (<div
                   ref={sixMoChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleSixMoHover}
                   onMouseLeave={() => setSixMoHoveredIndex(-1)}
                 >
@@ -2187,7 +2226,7 @@ export default function RSTrends() {
 
                 {expanded.threemo && (<div
                   ref={threeMoChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleThreeMoHover}
                   onMouseLeave={() => setThreeMoHoveredIndex(-1)}
                 >
@@ -2326,7 +2365,7 @@ export default function RSTrends() {
 
                 {expanded.onemo && (<div
                   ref={oneMoChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleOneMoHover}
                   onMouseLeave={() => setOneMoHoveredIndex(-1)}
                 >
@@ -2472,7 +2511,7 @@ export default function RSTrends() {
 
                 {expanded.peaks && (<div
                   ref={peaksChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handlePeaksHover}
                   onMouseLeave={() => setPeaksHoveredIndex(-1)}
                 >
@@ -2605,7 +2644,7 @@ export default function RSTrends() {
 
                 {expanded.troughs && (<div
                   ref={troughsChartRef}
-                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '300px' : '450px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleTroughsHover}
                   onMouseLeave={() => setTroughsHoveredIndex(-1)}
                 >
@@ -2733,7 +2772,7 @@ export default function RSTrends() {
                 <h2 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '700', color: '#fff', margin: '0 0 12px 0' }}>Year-over-Year{hsYoyYears.length > 0 && <span style={{ fontWeight: '400', color: '#bbb', fontSize: isMobile ? '12px' : '14px', marginLeft: '8px' }}>({hsYoyYears[0]} - {hsYoyYears[hsYoyYears.length-1]})</span>}</h2>
                 <div
                   ref={hsYoyChartRef}
-                  style={{ height: isMobile ? '350px' : '550px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '350px' : '550px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHsYoyHover}
                   onTouchMove={handleHsYoyHover}
                   onMouseLeave={() => setHsYoyHoveredWeek(-1)}
@@ -2982,7 +3021,7 @@ export default function RSTrends() {
 
                 {expanded.hstotal && (<div
                   ref={hiscoresChartRef}
-                  style={{ position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHiscoresHover}
                   onTouchMove={handleHiscoresHover}
                   onMouseLeave={() => setHiscoresHoveredIndex(-1)}
@@ -3129,7 +3168,7 @@ export default function RSTrends() {
                     </div>
                   )}
                 </div>
-                {expanded.hs1yr && (<div ref={hs1yrChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                {expanded.hs1yr && (<div ref={hs1yrChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1yrHover} onTouchMove={handleHs1yrHover}
                   onMouseLeave={() => setHs1yrHoveredIndex(-1)} onTouchEnd={() => setHs1yrHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3207,7 +3246,7 @@ export default function RSTrends() {
                     </div>
                   )}
                 </div>
-                {expanded.hs6mo && (<div ref={hs6moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                {expanded.hs6mo && (<div ref={hs6moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs6moHover} onTouchMove={handleHs6moHover}
                   onMouseLeave={() => setHs6moHoveredIndex(-1)} onTouchEnd={() => setHs6moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3285,7 +3324,7 @@ export default function RSTrends() {
                     </div>
                   )}
                 </div>
-                {expanded.hs3mo && (<div ref={hs3moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                {expanded.hs3mo && (<div ref={hs3moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs3moHover} onTouchMove={handleHs3moHover}
                   onMouseLeave={() => setHs3moHoveredIndex(-1)} onTouchEnd={() => setHs3moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>
@@ -3365,7 +3404,7 @@ export default function RSTrends() {
                     </div>
                   )}
                 </div>
-                {expanded.hs1mo && (<div ref={hs1moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                {expanded.hs1mo && (<div ref={hs1moChartRef} style={{ position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleHs1moHover} onTouchMove={handleHs1moHover}
                   onMouseLeave={() => setHs1moHoveredIndex(-1)} onTouchEnd={() => setHs1moHoveredIndex(-1)}>
                   <svg viewBox={`0 0 ${tlVW} ${TL_VH}`} style={{ width: '100%', height: 'auto' }}>

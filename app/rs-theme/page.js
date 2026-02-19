@@ -572,7 +572,7 @@ export default function RSThemeDashboard() {
                 {/* Chart */}
                 <div
                   ref={chartRef}
-                  style={{ height: isMobile ? '350px' : '520px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '350px' : '520px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={(e) => handleInteraction(e.clientX, e.clientY)}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1) }}
                   onTouchMove={(e) => { if (e.touches?.[0]) { e.preventDefault(); handleInteraction(e.touches[0].clientX, e.touches[0].clientY) } }}

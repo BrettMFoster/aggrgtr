@@ -953,7 +953,7 @@ export default function RSPopulation() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: isMobile ? '350px' : '690px', position: 'relative', cursor: 'crosshair', touchAction: 'pinch-zoom' }}
+                  style={{ height: isMobile ? '350px' : '690px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                   onTouchMove={handleTouchMove}
