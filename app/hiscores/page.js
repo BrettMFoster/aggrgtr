@@ -150,12 +150,11 @@ export default function Hiscores() {
     // For week view, anchor labels to actual day boundaries (every day)
     if (viewMode === 'week') {
       let lastDate = -1
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       for (let i = 0; i < chartData.length; i++) {
         const d = chartData[i].timestamp
         const date = d.getDate()
         if (date !== lastDate) {
-          labels.push({ index: i, text: date + ' ' + dayNames[d.getDay()] })
+          labels.push({ index: i, text: monthNames[d.getMonth()] + ' ' + date })
           lastDate = date
         }
       }

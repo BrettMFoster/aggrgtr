@@ -642,7 +642,7 @@ export default function RSPopulation() {
       if (viewMode === 'live') {
         text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric' })
       } else if (viewMode === 'week') {
-        text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       } else {
         text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       }
