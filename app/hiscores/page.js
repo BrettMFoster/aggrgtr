@@ -394,7 +394,7 @@ export default function Hiscores() {
                       {(() => {
                         const allLabels = getXAxisLabels()
                         const isAngled = isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live' || viewMode === 'all_weekly' || viewMode === 'all_monthly')
-                        const minGap = isAngled ? 25 : isMobile ? 90 : 55
+                        const minGap = isAngled ? 25 : isMobile ? 90 : (viewMode === 'all_weekly' || viewMode === 'all_monthly') ? 40 : 55
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -429,7 +429,7 @@ export default function Hiscores() {
                             fill="#ffffff"
                             fontSize={isAngled ? '14' : isMobile ? '18' : '12'}
                             fontWeight="bold"
-                            textAnchor={isAngled ? 'end' : i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
+                            textAnchor={isAngled ? 'end' : i === arr.length - 1 ? 'end' : i === 0 ? 'start' : (!isMobile && (viewMode === 'all_weekly' || viewMode === 'all_monthly')) ? 'start' : 'middle'}
                             transform={isAngled ? `rotate(-45, ${label.x}, 325)` : undefined}
                           >
                             {label.text}
