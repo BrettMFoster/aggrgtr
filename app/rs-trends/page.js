@@ -1121,8 +1121,12 @@ export default function RSTrends() {
     setTrendsMousePos({ x: e.clientX, y: e.clientY })
   }
 
-  // "Current" button — select latest data point on YoY chart
+  // "Current" button — select/deselect latest data point on YoY chart
   const handleCurrentClick = () => {
+    if (trendsHoveredDay >= 0) {
+      setTrendsHoveredDay(-1)
+      return
+    }
     if (!yoyData[currentYear] || !yoyChartRef.current) return
     const days = Object.keys(yoyData[currentYear]).map(Number)
     if (days.length === 0) return
@@ -1355,10 +1359,10 @@ export default function RSTrends() {
                       color: '#4ade80',
                       border: '1px solid #4ade80',
                       borderRadius: '50%',
-                      width: '28px',
-                      height: '28px',
+                      width: '24px',
+                      height: '24px',
                       padding: '0',
-                      fontSize: '16px',
+                      fontSize: '14px',
                       fontWeight: '600',
                       cursor: 'pointer',
                       marginLeft: '6px',
