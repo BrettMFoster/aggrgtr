@@ -91,19 +91,17 @@ export default function Hiscores() {
     }
   }
 
-  const fmtHourShort = (h) => {
-    if (h === 0 || h === 24) return '12a'
-    if (h === 12) return '12p'
-    return h < 12 ? `${h}a` : `${h - 12}p`
-  }
-
   const getXAxisLabels = () => {
     if (chartData.length === 0) return []
     const labels = []
 
+    // Use UTC for year/all views (monthly/weekly data stored as midnight UTC dates)
+    const utcOpts = { timeZone: 'UTC' }
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
     if (viewMode === 'all_monthly' || viewMode === 'all_weekly') {
-      // Quarterly labels (Jan, Apr, Jul, Oct) for clean spacing
-      const quarterMonths = [0, 3, 6, 9]
+      // Use consistent quarterly labels (Jan, Apr, Jul, Oct)
+      const quarterMonths = [0, 3, 6, 9] // JS month indices
       const result = []
       const seen = new Set()
       for (let i = 0; i < chartData.length; i++) {
@@ -113,38 +111,19 @@ export default function Hiscores() {
         const key = `${y}-${m}`
         if (quarterMonths.includes(m) && !seen.has(key)) {
           seen.add(key)
-          const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
           result.push({ index: i, text: monthNames[m] + " '" + y.toString().slice(-2) })
         }
       }
       return result
     }
 
-    // Mobile live view: label at each hour boundary
-    if (viewMode === 'live' && isMobile) {
-      let lastHour = -1
-      for (let i = 0; i < chartData.length; i++) {
-        const h = chartData[i].timestamp.getHours()
-        if (h !== lastHour) {
-          labels.push({ index: i, text: fmtHourShort(h) })
-          lastHour = h
-        }
-      }
-      return labels
-    }
-
-    const count = isMobile ? (viewMode === 'month' ? 5 : 4) : (viewMode === 'month' ? 8 : 6)
+    const count = viewMode === 'month' ? 8 : 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (chartData.length - 1))
       const d = chartData[idx]
       let text
       if (viewMode === 'live') {
-        const time = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        if (i === 0 || i === count - 1) {
-          text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + time
-        } else {
-          text = time
-        }
+        text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
       } else {
@@ -330,7 +309,7 @@ export default function Hiscores() {
                         return (
                           <g key={pct}>
                             <line x1={chartLeft} y1={310 - pct * 295} x2={chartRight} y2={310 - pct * 295} stroke="#333" strokeWidth="1" />
-                            <text x={chartLeft - 5} y={315 - pct * 295} fill="#ffffff" fontSize={isMobile ? '12' : '11'} textAnchor="end" style={{ fontFamily: 'monospace' }}>{formatYLabel(Math.round(val))}</text>
+                            <text x={chartLeft - 5} y={315 - pct * 295} fill="#ffffff" fontSize={isMobile ? '18' : '11'} textAnchor="end" style={{ fontFamily: 'monospace' }}>{formatYLabel(Math.round(val))}</text>
                           </g>
                         )
                       })}
@@ -338,8 +317,7 @@ export default function Hiscores() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const isAngled = viewMode === 'all_monthly' || viewMode === 'all_weekly'
-                        const minGap = isMobile ? (isAngled ? 35 : 55) : (isAngled ? 45 : 55)
+                        const minGap = 55
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -350,24 +328,18 @@ export default function Hiscores() {
                           }
                         }
                         return visible
-                      })().map((label, i) => {
-                        const isAngled = viewMode === 'all_monthly' || viewMode === 'all_weekly'
-                        const labelY = isAngled ? 325 : 335
-                        return (
-                          <text
-                            key={i}
-                            x={label.x}
-                            y={labelY}
-                            fill="#fff"
-                            fontSize={isMobile ? '11' : (isAngled ? '10' : '12')}
-                            fontWeight="bold"
-                            textAnchor={isAngled ? 'end' : 'middle'}
-                            transform={isAngled ? `rotate(-45, ${label.x}, ${labelY})` : undefined}
-                          >
-                            {label.text}
-                          </text>
-                        )
-                      })}
+                      })().map((label, i, arr) => (
+                        <text
+                          key={i}
+                          x={label.x}
+                          y={335}
+                          fill="#ffffff"
+                          fontSize={isMobile ? '18' : '12'}
+                          textAnchor={i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
+                        >
+                          {label.text}
+                        </text>
+                      ))}
 
                       {/* Area fill */}
                       <path
