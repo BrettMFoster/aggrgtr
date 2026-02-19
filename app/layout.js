@@ -1,8 +1,6 @@
 import './globals.css'
-import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/react'
 import { Providers } from './providers'
-import AdBanner from './components/AdBanner'
 
 export const metadata = {
   title: {
@@ -36,18 +34,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5708927690150651"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body>
         <Providers>
           {children}
         </Providers>
-        <AdBanner />
         <Analytics />
       </body>
     </html>
