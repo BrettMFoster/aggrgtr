@@ -2,6 +2,13 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import useSWR from 'swr'
 
+// Compact hour formatter: 8a, 12p, 2a
+const fmtHourShort = (h) => {
+  if (h === 0 || h === 24) return '12a'
+  if (h === 12) return '12p'
+  return h < 12 ? `${h}a` : `${h - 12}p`
+}
+
 // Compact number formatter for mobile axis labels
 const fmtK = (v) => {
   if (v >= 1000000) return (v / 1000000).toFixed(v % 1000000 === 0 ? 0 : 1) + 'M'
@@ -100,8 +107,8 @@ export default function Hiscores() {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
     if (viewMode === 'all_monthly' || viewMode === 'all_weekly') {
-      // Use consistent quarterly labels (Jan, Apr, Jul, Oct)
-      const quarterMonths = [0, 3, 6, 9] // JS month indices
+      // Label every other month (Feb, Apr, Jun, Aug, Oct, Dec)
+      const biMonths = [1, 3, 5, 7, 9, 11] // JS month indices
       const result = []
       const seen = new Set()
       for (let i = 0; i < chartData.length; i++) {
@@ -109,26 +116,72 @@ export default function Hiscores() {
         const m = d.timestamp.getUTCMonth()
         const y = d.timestamp.getUTCFullYear()
         const key = `${y}-${m}`
-        if (quarterMonths.includes(m) && !seen.has(key)) {
+        if (biMonths.includes(m) && !seen.has(key)) {
           seen.add(key)
           result.push({ index: i, text: monthNames[m] + " '" + y.toString().slice(-2) })
         }
       }
+      // Always include the most recent month so current data is labeled
+      const lastPt = chartData[chartData.length - 1]
+      const lastM = lastPt.timestamp.getUTCMonth()
+      const lastY = lastPt.timestamp.getUTCFullYear()
+      const lastKey = `${lastY}-${lastM}`
+      if (!seen.has(lastKey)) {
+        result.push({ index: chartData.length - 1, text: monthNames[lastM] + " '" + lastY.toString().slice(-2) })
+      }
       return result
     }
 
-    const count = viewMode === 'month' ? 8 : 6
+    // For live view, anchor labels to actual hour boundaries
+    if (viewMode === 'live') {
+      let lastHour = -1
+      for (let i = 0; i < chartData.length; i++) {
+        const h = chartData[i].timestamp.getHours()
+        if (h !== lastHour) {
+          const hr = h % 12 || 12
+          const ampm = h < 12 ? ' AM' : ' PM'
+          labels.push({ index: i, text: isMobile ? fmtHourShort(h) : hr + ampm })
+          lastHour = h
+        }
+      }
+      return labels
+    }
+
+    // For week view, anchor labels to actual day boundaries (every day)
+    if (viewMode === 'week') {
+      let lastDate = -1
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      for (let i = 0; i < chartData.length; i++) {
+        const d = chartData[i].timestamp
+        const date = d.getDate()
+        if (date !== lastDate) {
+          labels.push({ index: i, text: date + ' ' + dayNames[d.getDay()] })
+          lastDate = date
+        }
+      }
+      return labels
+    }
+
+    // For month view, anchor labels to actual day boundaries
+    if (viewMode === 'month') {
+      let lastDate = -1
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      for (let i = 0; i < chartData.length; i++) {
+        const d = chartData[i].timestamp
+        const date = d.getDate()
+        if (date !== lastDate) {
+          labels.push({ index: i, text: monthNames[d.getMonth()] + ' ' + date })
+          lastDate = date
+        }
+      }
+      return labels
+    }
+
+    const count = 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (chartData.length - 1))
       const d = chartData[idx]
-      let text
-      if (viewMode === 'live') {
-        text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-      } else if (viewMode === 'week') {
-        text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
-      } else {
-        text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      }
+      const text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       labels.push({ index: idx, text })
     }
     return labels
@@ -177,7 +230,14 @@ export default function Hiscores() {
   const getY = (val) => 310 - ((val - minVal) / (maxVal - minVal)) * 295
 
   const formatYLabel = (val) => {
-    return isMobile ? fmtK(Math.round(val)) : Math.round(val).toLocaleString()
+    // Round to nice numbers based on magnitude
+    const abs = Math.abs(val)
+    let rounded
+    if (abs >= 100000) rounded = Math.round(val / 10000) * 10000
+    else if (abs >= 10000) rounded = Math.round(val / 1000) * 1000
+    else if (abs >= 1000) rounded = Math.round(val / 100) * 100
+    else rounded = Math.round(val / 10) * 10
+    return isMobile ? fmtK(rounded) : rounded.toLocaleString()
   }
 
   return (
@@ -278,7 +338,7 @@ export default function Hiscores() {
 
                 <div
                   ref={chartRef}
-                  style={{ height: isMobile ? '280px' : '420px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
+                  style={{ height: isMobile ? '320px' : '420px', position: 'relative', cursor: 'crosshair', touchAction: 'none' }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={() => { setHoveredPoint(null); setHoveredIndex(-1) }}
                   onTouchMove={handleTouchMove}
@@ -286,22 +346,38 @@ export default function Hiscores() {
                   onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1) }}
                 >
                   {chartData.length > 0 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${VH}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${(isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'all_weekly' || viewMode === 'all_monthly')) ? VH + 30 : VH}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                       {/* Time period bands */}
-                      {getTimeBands().map((band, i) => {
-                        const x1 = chartLeft + (band.start / (chartData.length - 1 || 1)) * chartWidth
-                        const x2 = chartLeft + (band.end / (chartData.length - 1 || 1)) * chartWidth
-                        return (
-                          <rect
-                            key={i}
-                            x={x1}
-                            y={15}
-                            width={x2 - x1}
-                            height={295}
-                            fill={i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'}
-                          />
-                        )
-                      })}
+                      {(() => {
+                        const bands = getTimeBands()
+                        const n = chartData.length - 1 || 1
+                        return bands.map((band, i) => {
+                          // For single-point bands (daily data), extend to fill the gap
+                          const rawX1 = band.start / n
+                          const rawX2 = band.end / n
+                          const prevEnd = i > 0 ? bands[i - 1].end / n : rawX1
+                          const nextStart = i < bands.length - 1 ? bands[i + 1].start / n : rawX2
+                          const x1 = chartLeft + (band.start === band.end
+                            ? Math.max(0, (rawX1 + prevEnd) / 2) * chartWidth
+                            : rawX1 * chartWidth)
+                          const x2 = chartLeft + (band.start === band.end
+                            ? Math.min(1, (rawX2 + nextStart) / 2) * chartWidth
+                            : rawX2 * chartWidth)
+                          // For first/last single-point bands, extend to chart edge
+                          const finalX1 = i === 0 ? chartLeft : x1
+                          const finalX2 = i === bands.length - 1 ? chartLeft + chartWidth : x2
+                          return (
+                            <rect
+                              key={i}
+                              x={finalX1}
+                              y={15}
+                              width={finalX2 - finalX1}
+                              height={295}
+                              fill={i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)'}
+                            />
+                          )
+                        })
+                      })()}
 
                       {/* Y-axis grid and labels */}
                       {[0, 0.25, 0.5, 0.75, 1].map(pct => {
@@ -317,7 +393,8 @@ export default function Hiscores() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const minGap = 55
+                        const isAngled = isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live' || viewMode === 'all_weekly' || viewMode === 'all_monthly')
+                        const minGap = isAngled ? 25 : isMobile ? 90 : 55
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -327,19 +404,38 @@ export default function Hiscores() {
                             lastX = x
                           }
                         }
+                        // Always show the last label (current period)
+                        if (allLabels.length > 0) {
+                          const last = allLabels[allLabels.length - 1]
+                          const lastLabelX = chartLeft + (last.index / (chartData.length - 1 || 1)) * chartWidth
+                          const alreadyShown = visible.length > 0 && visible[visible.length - 1].index === last.index
+                          if (!alreadyShown) {
+                            // Use tighter gap for forced last label so nearby labels (e.g. Jan + Feb) can coexist
+                            const lastGap = isAngled ? minGap * 0.5 : minGap
+                            if (visible.length > 0 && lastLabelX - visible[visible.length - 1].x < lastGap) {
+                              visible.pop()
+                            }
+                            visible.push({ ...last, x: lastLabelX })
+                          }
+                        }
                         return visible
-                      })().map((label, i, arr) => (
-                        <text
-                          key={i}
-                          x={label.x}
-                          y={335}
-                          fill="#ffffff"
-                          fontSize={isMobile ? '18' : '12'}
-                          textAnchor={i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
-                        >
-                          {label.text}
-                        </text>
-                      ))}
+                      })().map((label, i, arr) => {
+                        const isAngled = isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live' || viewMode === 'all_weekly' || viewMode === 'all_monthly')
+                        return (
+                          <text
+                            key={i}
+                            x={label.x}
+                            y={isAngled ? 325 : 335}
+                            fill="#ffffff"
+                            fontSize={isAngled ? '14' : isMobile ? '18' : '12'}
+                            fontWeight="bold"
+                            textAnchor={isAngled ? 'end' : i === arr.length - 1 ? 'end' : i === 0 ? 'start' : 'middle'}
+                            transform={isAngled ? `rotate(-45, ${label.x}, 325)` : undefined}
+                          >
+                            {label.text}
+                          </text>
+                        )
+                      })}
 
                       {/* Area fill */}
                       <path

@@ -634,18 +634,13 @@ export default function RSPopulation() {
       return labels
     }
 
-    const count = 6
+    const count = viewMode === 'live' ? 9 : viewMode === 'week' ? 8 : viewMode === 'month' ? 15 : 6
     for (let i = 0; i < count; i++) {
       const idx = Math.floor((i / (count - 1)) * (filteredData.length - 1))
       const d = filteredData[idx]
       let text
       if (viewMode === 'live') {
-        const time = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        if (i === 0 || i === count - 1) {
-          text = d.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + time
-        } else {
-          text = time
-        }
+        text = d.timestamp.toLocaleTimeString('en-US', { hour: 'numeric' })
       } else if (viewMode === 'week') {
         text = d.timestamp.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
       } else {
@@ -961,7 +956,7 @@ export default function RSPopulation() {
                   onTouchEnd={() => { setHoveredPoint(null); setHoveredIndex(-1); }}
                 >
                   {filteredData.length > 0 && (
-                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${(viewMode === 'year' || viewMode === 'all') ? VH : VH - 25}`} preserveAspectRatio="none">
+                    <svg width="100%" height="100%" viewBox={`0 0 ${chartVW} ${(viewMode === 'year' || viewMode === 'all' || viewMode === 'month') ? VH : VH - 25}`} preserveAspectRatio="none">
                       {/* Time period bands */}
                       {getTimeBands().map((band, i) => {
                         const x1 = xPos(band.start)
@@ -1006,8 +1001,9 @@ export default function RSPopulation() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const isAngled = viewMode === 'all' || viewMode === 'year'
-                        const minGap = isAngled ? 20 : 40
+                        const isAngled = viewMode === 'all' || viewMode === 'year' || viewMode === 'month'
+                        const mobileAngle = isMobile && viewMode === 'live'
+                        const minGap = isAngled ? 20 : mobileAngle ? 30 : 40
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -1017,19 +1013,33 @@ export default function RSPopulation() {
                             lastX = x
                           }
                         }
+                        // Always show the last label (current hour for live view)
+                        if (allLabels.length > 0 && viewMode === 'live') {
+                          const last = allLabels[allLabels.length - 1]
+                          const lastLabelX = xPos(last.index)
+                          const alreadyShown = visible.length > 0 && visible[visible.length - 1].index === last.index
+                          if (!alreadyShown) {
+                            if (visible.length > 0 && lastLabelX - visible[visible.length - 1].x < minGap) {
+                              visible.pop()
+                            }
+                            visible.push({ ...last, x: lastLabelX })
+                          }
+                        }
                         return visible
                       })().map((label, i) => {
-                        const isAngled = viewMode === 'all' || viewMode === 'year'
+                        const isAngled = viewMode === 'all' || viewMode === 'year' || viewMode === 'month'
+                        const mobileAngle = isMobile && viewMode === 'live'
+                        const useAngle = isAngled || mobileAngle
                         return (
                           <text
                             key={i}
                             x={label.x}
                             y={CB + 22}
                             fill="#fff"
-                            fontSize={isMobile ? (isAngled ? '14' : '16') : (isAngled ? '10' : '12')}
+                            fontSize={isMobile ? (useAngle ? '14' : '16') : (isAngled ? '10' : '12')}
                             fontWeight="bold"
-                            textAnchor={isAngled ? 'end' : 'middle'}
-                            transform={isAngled ? `rotate(-45, ${label.x}, ${CB + 22})` : undefined}
+                            textAnchor={useAngle ? 'end' : 'middle'}
+                            transform={useAngle ? `rotate(-45, ${label.x}, ${CB + 22})` : undefined}
                           >
                             {label.text}
                           </text>
@@ -1182,7 +1192,7 @@ export default function RSPopulation() {
                         ]
                         const itemPad = 16
                         const gapBetween = isMobile ? 6 : 20
-                        const legendY = (viewMode === 'year' || viewMode === 'all') ? CB + 85 : CB + 55
+                        const legendY = (viewMode === 'year' || viewMode === 'all' || viewMode === 'month') ? CB + 85 : CB + 55
                         const totalWidth = items.reduce((s, it) => s + itemPad + (isMobile ? it.mw : it.w), 0) + gapBetween * (items.length - 1)
                         const startX = (chartCL + chartCR) / 2 - totalWidth / 2
                         let cx = startX
