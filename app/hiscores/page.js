@@ -393,8 +393,8 @@ export default function Hiscores() {
                       {/* X-axis labels */}
                       {(() => {
                         const allLabels = getXAxisLabels()
-                        const isAngled = isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live' || viewMode === 'all_weekly' || viewMode === 'all_monthly')
-                        const minGap = isAngled ? 25 : isMobile ? 90 : (viewMode === 'all_weekly' || viewMode === 'all_monthly') ? 40 : 55
+                        const isAngled = (viewMode === 'all_weekly' || viewMode === 'all_monthly') || (isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live'))
+                        const minGap = isAngled ? (isMobile ? 25 : 35) : isMobile ? 90 : 55
                         const visible = []
                         let lastX = -Infinity
                         for (const label of allLabels) {
@@ -420,16 +420,16 @@ export default function Hiscores() {
                         }
                         return visible
                       })().map((label, i, arr) => {
-                        const isAngled = isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live' || viewMode === 'all_weekly' || viewMode === 'all_monthly')
+                        const isAngled = (viewMode === 'all_weekly' || viewMode === 'all_monthly') || (isMobile && (viewMode === 'week' || viewMode === 'month' || viewMode === 'live'))
                         return (
                           <text
                             key={i}
                             x={label.x}
                             y={isAngled ? 325 : 335}
                             fill="#ffffff"
-                            fontSize={isAngled ? '14' : isMobile ? '18' : '12'}
+                            fontSize={isAngled ? (isMobile ? '14' : '10') : isMobile ? '18' : '12'}
                             fontWeight="bold"
-                            textAnchor={isAngled ? 'end' : i === arr.length - 1 ? 'end' : i === 0 ? 'start' : (!isMobile && (viewMode === 'all_weekly' || viewMode === 'all_monthly')) ? 'start' : 'middle'}
+                            textAnchor={isAngled ? 'end' : i === arr.length - 1 ? 'end' : 'middle'}
                             transform={isAngled ? `rotate(-45, ${label.x}, 325)` : undefined}
                           >
                             {label.text}
