@@ -1175,7 +1175,7 @@ export default function RSPopulation() {
                         const items = [
                           { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45, mw: 45 },
                           { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35, mw: 35 },
-                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60, mw: 60 }] : []),
+                          ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60, mw: 78 }] : []),
                           { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80, mw: 95 },
                           { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72, mw: 85 },
                           { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82, mw: 105 },
@@ -1464,8 +1464,8 @@ export default function RSPopulation() {
                     })()}
 
                     {/* Legend */}
-                    <rect x={todCR - 200} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
-                    <text x={todCR - 186} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
+                    <rect x={todCR - (isMobile ? 215 : 200)} y={TOD_CT + 5} width="10" height="10" fill="rgba(96, 165, 250, 0.15)" stroke="rgba(96, 165, 250, 0.4)" strokeWidth="1" />
+                    <text x={todCR - (isMobile ? 197 : 186)} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>Average</text>
                     <line x1={todCR - 105} y1={TOD_CT + 10} x2={todCR - 80} y2={TOD_CT + 10} stroke="#60a5fa" strokeWidth="3" />
                     <text x={todCR - 76} y={TOD_CT + 14} fill="#fff" fontSize={isMobile ? '16' : '11'} style={{ fontFamily: 'sans-serif' }}>Today</text>
                   </svg>
