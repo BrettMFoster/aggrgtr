@@ -46,6 +46,7 @@ export default function RSPopulation() {
   const [todHoverMode, setTodHoverMode] = useState('avg')
   const [todNearestToday, setTodNearestToday] = useState(null)
   const [todFilter, setTodFilter] = useState('dow3m')
+  const [overlayMode, setOverlayMode] = useState(null) // null, 'bots', or 'rwt'
 
   // SWR for data fetching with caching
   const { data: historicalJson, error: historicalError } = useSWR(
@@ -64,6 +65,13 @@ export default function RSPopulation() {
     `/api/steam-data?view=${viewMode}`,
     { refreshInterval: 3 * 60 * 1000, keepPreviousData: true }
   )
+
+  // Player support overlay data (bots/RWT)
+  const { data: playerSupportData } = useSWR(
+    (viewMode === 'year' || viewMode === 'all') ? '/api/player-support' : null,
+    { refreshInterval: 3600000 }
+  )
+  const psRows = playerSupportData?.rows || []
 
   // Prefetch all steam views so tab switching is instant
   useSWR(viewMode !== 'live' ? '/api/steam-data?view=live' : null, { refreshInterval: 3 * 60 * 1000 })
@@ -164,6 +172,33 @@ export default function RSPopulation() {
       }
     }
     return result
+  }
+
+  // Player support overlay: convert month strings to Date objects for time alignment
+  const psOverlayData = useMemo(() => {
+    if (!psRows.length) return []
+    return psRows.map(r => {
+      // month field is like "2025-04-01"
+      const ts = new Date(r.month + 'T00:00:00')
+      return { ...r, timestamp: ts }
+    })
+  }, [psRows])
+
+  const getNearestPSValues = (timestamp) => {
+    if (!psOverlayData.length || !overlayMode) return null
+    const t = timestamp.getTime()
+    let nearest = null, minDiff = Infinity
+    for (const d of psOverlayData) {
+      const diff = Math.abs(t - d.timestamp.getTime())
+      if (diff < minDiff) { minDiff = diff; nearest = d }
+    }
+    // Only show if within ~20 days of a data point
+    if (!nearest || minDiff > 20 * 24 * 60 * 60 * 1000) return null
+    if (overlayMode === 'bots') {
+      return { osrs: nearest.macro_bans_osrs || 0, rs3: nearest.macro_bans_rs3 || 0, month: nearest.month_name }
+    } else {
+      return { osrs: nearest.rwt_bans_osrs || 0, rs3: nearest.rwt_bans_rs3 || 0, month: nearest.month_name }
+    }
   }
 
   useEffect(() => {
@@ -372,6 +407,15 @@ export default function RSPopulation() {
     ? [0, 5000, 10000, 15000, 20000, 25000, 30000]
     : computeYTicks(steamVisibleMax)
   const steamMaxVal = steamYTicks[steamYTicks.length - 1] || 30000
+
+  // Overlay Y-axis: right axis for OSRS overlay, RS3 overlay maps to left Y-axis (population scale)
+  const overlayMax = (() => {
+    if (!overlayMode || !psOverlayData.length) return 1
+    const field1 = overlayMode === 'bots' ? 'macro_bans_osrs' : 'rwt_bans_osrs'
+    return Math.max(...psOverlayData.map(d => d[field1] || 0), 1)
+  })()
+  const overlayYTicks = overlayMode ? computeYTicks(overlayMax) : []
+  const overlayMaxVal = overlayYTicks.length > 0 ? overlayYTicks[overlayYTicks.length - 1] : 1
 
   const avgTotal = filteredData.length > 0
     ? Math.round(filteredData.reduce((sum, d) => sum + d.total, 0) / filteredData.length)
@@ -688,6 +732,7 @@ export default function RSPopulation() {
   const yPos = (val) => CB - (val / maxVal) * CH
   // Helper: compute y position for Steam value (right axis)
   const steamYPos = (val) => CB - (val / steamMaxVal) * CH
+  const overlayYPos = (val) => CB - (val / overlayMaxVal) * CH
 
   return (
     <div style={{ minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
@@ -717,6 +762,7 @@ export default function RSPopulation() {
               <a href="/hiscores" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Hiscores Counts</a>
               <a href="/rs-trends" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Trends</a>
               <a href="/osrs-worlds" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>OSRS Worlds</a>
+              <a href="/player-support" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Player Support</a>
               <a href="/blog" style={{ background: 'transparent', border: '1px solid #333', color: '#fff', padding: isMobile ? '6px 8px' : '6px 8px', borderRadius: '4px', fontSize: isMobile ? '11px' : '16px', textDecoration: 'none', fontWeight: '400' }}>Blog</a>
             </div>
           </div>
@@ -842,6 +888,40 @@ export default function RSPopulation() {
                         }}
                       >
                         Filter
+                      </button>
+                    )}
+                    {(viewMode === 'year' || viewMode === 'all') && (
+                      <button
+                        onClick={() => setOverlayMode(overlayMode === 'bots' ? null : 'bots')}
+                        style={{
+                          background: overlayMode === 'bots' ? '#1a1a1a' : 'transparent',
+                          border: overlayMode === 'bots' ? '1px solid #ef4444' : '1px solid #333',
+                          color: overlayMode === 'bots' ? '#ef4444' : '#666',
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                        }}
+                        title="Overlay monthly macro ban data"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <circle cx="12" cy="5" r="2" />
+                          <line x1="12" y1="7" x2="12" y2="11" />
+                          <line x1="8" y1="16" x2="8" y2="16" strokeWidth="3" strokeLinecap="round" />
+                          <line x1="16" y1="16" x2="16" y2="16" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    )}
+                    {(viewMode === 'year' || viewMode === 'all') && (
+                      <button
+                        onClick={() => setOverlayMode(overlayMode === 'rwt' ? null : 'rwt')}
+                        style={{
+                          background: overlayMode === 'rwt' ? '#1a1a1a' : 'transparent',
+                          border: overlayMode === 'rwt' ? '1px solid #f59e0b' : '1px solid #333',
+                          color: overlayMode === 'rwt' ? '#f59e0b' : '#666',
+                          padding: '4px 10px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer'
+                        }}
+                        title="Overlay monthly RWT ban data"
+                      >
+                        RWT
                       </button>
                     )}
                     {viewMode === 'all' && allFilterOn && !isMobile && (
@@ -986,17 +1066,31 @@ export default function RSPopulation() {
                         )
                       })}
 
-                      {/* Right Y-axis labels (Steam) */}
-                      {steamChartData.length > 0 && steamYTicks.map((val, i) => {
-                        const y = steamYPos(val)
-                        return (
-                          <g key={`sy${i}`}>
-                            <text x={chartCR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '18' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
-                              {isMobile ? fmtK(val) : val.toLocaleString()}
-                            </text>
-                          </g>
-                        )
-                      })}
+                      {/* Right Y-axis labels (Steam or Overlay) */}
+                      {overlayMode && overlayYTicks.length > 0 ? (
+                        overlayYTicks.map((val, i) => {
+                          const y = overlayYPos(val)
+                          return (
+                            <g key={`oy${i}`}>
+                              <line x1={chartCL} y1={y} x2={chartCR} y2={y} stroke={overlayMode === 'bots' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)'} strokeWidth="1" strokeDasharray="4,4" />
+                              <text x={chartCR + 8} y={y + 4} fill={overlayMode === 'bots' ? '#ef4444' : '#f59e0b'} fontSize={isMobile ? '18' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
+                                {isMobile ? fmtK(val) : val.toLocaleString()}
+                              </text>
+                            </g>
+                          )
+                        })
+                      ) : (
+                        steamChartData.length > 0 && steamYTicks.map((val, i) => {
+                          const y = steamYPos(val)
+                          return (
+                            <g key={`sy${i}`}>
+                              <text x={chartCR + 8} y={y + 4} fill="#a855f7" fontSize={isMobile ? '18' : '12'} fontWeight="bold" textAnchor="start" style={{ fontFamily: 'monospace' }}>
+                                {isMobile ? fmtK(val) : val.toLocaleString()}
+                              </text>
+                            </g>
+                          )
+                        })
+                      )}
 
                       {/* X-axis labels */}
                       {(() => {
@@ -1111,8 +1205,8 @@ export default function RSPopulation() {
                         )
                       })()}
 
-                      {/* Steam time-series lines */}
-                      {steamChartData.length > 1 && filteredData.length > 1 && (() => {
+                      {/* Steam time-series lines (hidden when overlay active) */}
+                      {!overlayMode && steamChartData.length > 1 && filteredData.length > 1 && (() => {
                         const minTime = filteredData[0].timestamp.getTime()
                         const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
                         // Map steam timestamp to RS data index for aligned X positioning
@@ -1163,10 +1257,60 @@ export default function RSPopulation() {
                         )
                       })()}
 
+                      {/* Player support overlay lines (Bots/RWT) */}
+                      {overlayMode && psOverlayData.length > 1 && filteredData.length > 1 && (() => {
+                        const minTime = filteredData[0].timestamp.getTime()
+                        const maxTime = filteredData[filteredData.length - 1].timestamp.getTime()
+                        const psToX = (t) => {
+                          const ts = t.getTime()
+                          if (ts <= minTime) return xPos(0)
+                          if (ts >= maxTime) return xPos(filteredData.length - 1)
+                          let lo = 0, hi = filteredData.length - 1
+                          while (lo < hi - 1) {
+                            const mid = (lo + hi) >> 1
+                            if (filteredData[mid].timestamp.getTime() <= ts) lo = mid
+                            else hi = mid
+                          }
+                          const t0 = filteredData[lo].timestamp.getTime()
+                          const t1 = filteredData[hi].timestamp.getTime()
+                          const frac = (ts - t0) / (t1 - t0 || 1)
+                          return xPos(lo + frac)
+                        }
+                        const f1 = overlayMode === 'bots' ? 'macro_bans_osrs' : 'rwt_bans_osrs'
+                        const f2 = overlayMode === 'bots' ? 'macro_bans_rs3' : 'rwt_bans_rs3'
+                        const c1 = overlayMode === 'bots' ? '#ef4444' : '#f59e0b'
+                        const c2 = overlayMode === 'bots' ? '#fb923c' : '#fbbf24'
+                        const osrsPoints = psOverlayData.filter(d => d[f1] > 0)
+                        const rs3Points = psOverlayData.filter(d => d[f2] > 0)
+                        return (
+                          <>
+                            {osrsPoints.length > 1 && (
+                              <path
+                                d={`M ${osrsPoints.map((d, i) => `${i > 0 ? 'L ' : ''}${psToX(d.timestamp)},${overlayYPos(d[f1])}`).join(' ')}`}
+                                fill="none" stroke={c1} strokeWidth="3" strokeDasharray="8,4"
+                              />
+                            )}
+                            {osrsPoints.map((d, i) => (
+                              <circle key={`po${i}`} cx={psToX(d.timestamp)} cy={overlayYPos(d[f1])} r="4" fill={c1} stroke="#111" strokeWidth="1.5" />
+                            ))}
+                            {rs3Points.length > 1 && (
+                              <path
+                                d={`M ${rs3Points.map((d, i) => `${i > 0 ? 'L ' : ''}${psToX(d.timestamp)},${yPos(d[f2])}`).join(' ')}`}
+                                fill="none" stroke={c2} strokeWidth="3" strokeDasharray="8,4"
+                              />
+                            )}
+                            {rs3Points.map((d, i) => (
+                              <circle key={`pr${i}`} cx={psToX(d.timestamp)} cy={yPos(d[f2])} r="4" fill={c2} stroke="#111" strokeWidth="1.5" />
+                            ))}
+                          </>
+                        )
+                      })()}
+
                       {/* Hover indicator */}
                       {hoveredPoint && hoveredIndex >= 0 && (() => {
                         const x = xPos(hoveredIndex)
-                        const sp = getNearestSteamValues(hoveredPoint.timestamp)
+                        const sp = !overlayMode ? getNearestSteamValues(hoveredPoint.timestamp) : null
+                        const ps = overlayMode ? getNearestPSValues(hoveredPoint.timestamp) : null
                         return (
                           <>
                             <line x1={x} y1={CT} x2={x} y2={CB} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
@@ -1176,6 +1320,8 @@ export default function RSPopulation() {
                             {sp?.osrs > 0 && <circle cx={x} cy={steamYPos(sp.osrs)} r="5" fill="#f59e0b" stroke="#111" strokeWidth="1.5" />}
                             {sp?.rs3 > 0 && <circle cx={x} cy={steamYPos(sp.rs3)} r="5" fill="#22d3ee" stroke="#111" strokeWidth="1.5" />}
                             {sp?.dragonwilds > 0 && <circle cx={x} cy={steamYPos(sp.dragonwilds)} r="5" fill="#a855f7" stroke="#111" strokeWidth="1.5" />}
+                            {ps?.osrs > 0 && <circle cx={x} cy={overlayYPos(ps.osrs)} r="5" fill={overlayMode === 'bots' ? '#ef4444' : '#f59e0b'} stroke="#111" strokeWidth="1.5" />}
+                            {ps?.rs3 > 0 && <circle cx={x} cy={yPos(ps.rs3)} r="5" fill={overlayMode === 'bots' ? '#fb923c' : '#fbbf24'} stroke="#111" strokeWidth="1.5" />}
                           </>
                         )
                       })()}
@@ -1186,9 +1332,17 @@ export default function RSPopulation() {
                           { type: 'rect', color: '#4ade80', label: 'OSRS', w: 45, mw: 45 },
                           { type: 'rect', color: '#60a5fa', label: 'RS3', w: 35, mw: 35 },
                           ...(viewMode === 'all' ? [{ type: 'rect', color: '#d4d4d4', label: 'Pre-2013', w: 60, mw: 78 }] : []),
-                          { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80, mw: 95 },
-                          { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72, mw: 85 },
-                          { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82, mw: 105 },
+                          ...(overlayMode === 'bots' ? [
+                            { type: 'line', color: '#ef4444', label: 'OSRS Bans', w: 75, mw: 90 },
+                            { type: 'line', color: '#fb923c', label: 'RS3 Bans', w: 65, mw: 80 },
+                          ] : overlayMode === 'rwt' ? [
+                            { type: 'line', color: '#f59e0b', label: 'OSRS RWT', w: 72, mw: 88 },
+                            { type: 'line', color: '#fbbf24', label: 'RS3 RWT', w: 62, mw: 78 },
+                          ] : [
+                            { type: 'line', color: '#f59e0b', label: 'OSRS Steam', w: 80, mw: 95 },
+                            { type: 'line', color: '#22d3ee', label: 'RS3 Steam', w: 72, mw: 85 },
+                            { type: 'line', color: '#a855f7', label: 'Dragonwilds', w: 82, mw: 105 },
+                          ]),
                         ]
                         const itemPad = 16
                         const gapBetween = isMobile ? 6 : 20
@@ -1261,6 +1415,20 @@ export default function RSPopulation() {
                         </div>
                       )}
                       {(() => {
+                        if (overlayMode) {
+                          const ps = getNearestPSValues(hoveredPoint.timestamp)
+                          if (!ps) return null
+                          const label = overlayMode === 'bots' ? 'Macro Bans' : 'RWT Bans'
+                          const c1 = overlayMode === 'bots' ? '#ef4444' : '#f59e0b'
+                          const c2 = overlayMode === 'bots' ? '#fb923c' : '#fbbf24'
+                          return (
+                            <div style={{ marginTop: '8px', borderTop: '1px solid #333', paddingTop: '6px', fontSize: '12px' }}>
+                              <div style={{ color: '#fff', marginBottom: '4px', fontWeight: '600' }}>{label} ({ps.month})</div>
+                              {ps.osrs > 0 && <div style={{ color: c1 }}>OSRS: {ps.osrs.toLocaleString()}</div>}
+                              {ps.rs3 > 0 && <div style={{ color: c2 }}>RS3: {ps.rs3.toLocaleString()}</div>}
+                            </div>
+                          )
+                        }
                         const sp = getNearestSteamValues(hoveredPoint.timestamp)
                         if (!sp) return null
                         return (

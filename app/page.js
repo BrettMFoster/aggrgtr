@@ -44,6 +44,14 @@ export default function Home() {
       stats: ['Per-world data', 'Historical charts'],
       link: '/osrs-worlds'
     },
+    {
+      id: 'player-support',
+      title: 'Player Support',
+      status: 'live',
+      desc: 'Monthly anti-cheating statistics from Jagex. Macro bans, GP removed, RWT bans.',
+      stats: ['Monthly data', 'OSRS & RS3'],
+      link: '/player-support'
+    },
   ]
 
 
