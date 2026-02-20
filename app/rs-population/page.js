@@ -195,9 +195,9 @@ export default function RSPopulation() {
     // Only show if within ~20 days of a data point
     if (!nearest || minDiff > 20 * 24 * 60 * 60 * 1000) return null
     if (overlayMode === 'bots') {
-      return { osrs: nearest.macro_bans_osrs || 0, rs3: nearest.macro_bans_rs3 || 0, month: nearest.month_name }
+      return { osrs: nearest.macro_bans_osrs || 0, rs3: nearest.macro_bans_rs3 || 0, month: nearest.month_name, timestamp: nearest.timestamp }
     } else {
-      return { osrs: nearest.rwt_bans_osrs || 0, rs3: nearest.rwt_bans_rs3 || 0, month: nearest.month_name }
+      return { osrs: nearest.rwt_bans_osrs || 0, rs3: nearest.rwt_bans_rs3 || 0, month: nearest.month_name, timestamp: nearest.timestamp }
     }
   }
 
@@ -1290,7 +1290,15 @@ export default function RSPopulation() {
                                 fill="none" stroke={c1} strokeWidth="3" strokeDasharray="8,4"
                               />
                             )}
-                            {osrsPoints.map((d, i) => (
+                            {osrsPoints.map((d, i) => overlayMode === 'bots' ? (
+                              <g key={`po${i}`} transform={`translate(${psToX(d.timestamp) - 9},${overlayYPos(d[f1]) - 10})`}>
+                                <rect x="1.5" y="8" width="15" height="9" rx="1.5" fill={c1} stroke="#111" strokeWidth="1" />
+                                <circle cx="9" cy="4" r="2.5" fill={c1} stroke="#111" strokeWidth="1" />
+                                <line x1="9" y1="6.5" x2="9" y2="8" stroke={c1} strokeWidth="1.5" />
+                                <circle cx="6" cy="12.5" r="1.2" fill="#111" />
+                                <circle cx="12" cy="12.5" r="1.2" fill="#111" />
+                              </g>
+                            ) : (
                               <circle key={`po${i}`} cx={psToX(d.timestamp)} cy={overlayYPos(d[f1])} r="4" fill={c1} stroke="#111" strokeWidth="1.5" />
                             ))}
                             {rs3Points.length > 1 && (
@@ -1299,7 +1307,15 @@ export default function RSPopulation() {
                                 fill="none" stroke={c2} strokeWidth="3" strokeDasharray="8,4"
                               />
                             )}
-                            {rs3Points.map((d, i) => (
+                            {rs3Points.map((d, i) => overlayMode === 'bots' ? (
+                              <g key={`pr${i}`} transform={`translate(${psToX(d.timestamp) - 9},${yPos(d[f2]) - 10})`}>
+                                <rect x="1.5" y="8" width="15" height="9" rx="1.5" fill={c2} stroke="#111" strokeWidth="1" />
+                                <circle cx="9" cy="4" r="2.5" fill={c2} stroke="#111" strokeWidth="1" />
+                                <line x1="9" y1="6.5" x2="9" y2="8" stroke={c2} strokeWidth="1.5" />
+                                <circle cx="6" cy="12.5" r="1.2" fill="#111" />
+                                <circle cx="12" cy="12.5" r="1.2" fill="#111" />
+                              </g>
+                            ) : (
                               <circle key={`pr${i}`} cx={psToX(d.timestamp)} cy={yPos(d[f2])} r="4" fill={c2} stroke="#111" strokeWidth="1.5" />
                             ))}
                           </>
@@ -1311,6 +1327,27 @@ export default function RSPopulation() {
                         const x = xPos(hoveredIndex)
                         const sp = !overlayMode ? getNearestSteamValues(hoveredPoint.timestamp) : null
                         const ps = overlayMode ? getNearestPSValues(hoveredPoint.timestamp) : null
+                        // Compute X for overlay data point from its actual timestamp
+                        let psX = x
+                        if (ps?.timestamp && filteredData.length > 1) {
+                          const ts = ps.timestamp.getTime()
+                          const minT = filteredData[0].timestamp.getTime()
+                          const maxT = filteredData[filteredData.length - 1].timestamp.getTime()
+                          if (ts <= minT) psX = xPos(0)
+                          else if (ts >= maxT) psX = xPos(filteredData.length - 1)
+                          else {
+                            let lo = 0, hi = filteredData.length - 1
+                            while (lo < hi - 1) {
+                              const mid = (lo + hi) >> 1
+                              if (filteredData[mid].timestamp.getTime() <= ts) lo = mid
+                              else hi = mid
+                            }
+                            const t0 = filteredData[lo].timestamp.getTime()
+                            const t1 = filteredData[hi].timestamp.getTime()
+                            const frac = (ts - t0) / (t1 - t0 || 1)
+                            psX = xPos(lo + frac)
+                          }
+                        }
                         return (
                           <>
                             <line x1={x} y1={CT} x2={x} y2={CB} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
@@ -1320,8 +1357,24 @@ export default function RSPopulation() {
                             {sp?.osrs > 0 && <circle cx={x} cy={steamYPos(sp.osrs)} r="5" fill="#f59e0b" stroke="#111" strokeWidth="1.5" />}
                             {sp?.rs3 > 0 && <circle cx={x} cy={steamYPos(sp.rs3)} r="5" fill="#22d3ee" stroke="#111" strokeWidth="1.5" />}
                             {sp?.dragonwilds > 0 && <circle cx={x} cy={steamYPos(sp.dragonwilds)} r="5" fill="#a855f7" stroke="#111" strokeWidth="1.5" />}
-                            {ps?.osrs > 0 && <circle cx={x} cy={overlayYPos(ps.osrs)} r="5" fill={overlayMode === 'bots' ? '#ef4444' : '#f59e0b'} stroke="#111" strokeWidth="1.5" />}
-                            {ps?.rs3 > 0 && <circle cx={x} cy={yPos(ps.rs3)} r="5" fill={overlayMode === 'bots' ? '#fb923c' : '#fbbf24'} stroke="#111" strokeWidth="1.5" />}
+                            {ps?.osrs > 0 && (overlayMode === 'bots' ? (
+                              <g transform={`translate(${psX - 9},${overlayYPos(ps.osrs) - 10})`}>
+                                <rect x="1.5" y="8" width="15" height="9" rx="1.5" fill="#ef4444" stroke="#111" strokeWidth="1" />
+                                <circle cx="9" cy="4" r="2.5" fill="#ef4444" stroke="#111" strokeWidth="1" />
+                                <line x1="9" y1="6.5" x2="9" y2="8" stroke="#ef4444" strokeWidth="1.5" />
+                                <circle cx="6" cy="12.5" r="1.2" fill="#111" />
+                                <circle cx="12" cy="12.5" r="1.2" fill="#111" />
+                              </g>
+                            ) : <circle cx={psX} cy={overlayYPos(ps.osrs)} r="5" fill="#f59e0b" stroke="#111" strokeWidth="1.5" />)}
+                            {ps?.rs3 > 0 && (overlayMode === 'bots' ? (
+                              <g transform={`translate(${psX - 9},${yPos(ps.rs3) - 10})`}>
+                                <rect x="1.5" y="8" width="15" height="9" rx="1.5" fill="#fb923c" stroke="#111" strokeWidth="1" />
+                                <circle cx="9" cy="4" r="2.5" fill="#fb923c" stroke="#111" strokeWidth="1" />
+                                <line x1="9" y1="6.5" x2="9" y2="8" stroke="#fb923c" strokeWidth="1.5" />
+                                <circle cx="6" cy="12.5" r="1.2" fill="#111" />
+                                <circle cx="12" cy="12.5" r="1.2" fill="#111" />
+                              </g>
+                            ) : <circle cx={psX} cy={yPos(ps.rs3)} r="5" fill="#fbbf24" stroke="#111" strokeWidth="1.5" />)}
                           </>
                         )
                       })()}
