@@ -23,8 +23,17 @@ const shortMonth = (name) => {
   return name.split(' ')[0].substring(0, 3)
 }
 
+const niceRound = (val, dir) => {
+  if (val <= 0) return 0
+  const mag = Math.pow(10, Math.floor(Math.log10(val)))
+  const step = mag / 5
+  if (dir === 'floor') return Math.floor(val / step) * step
+  return Math.ceil(val / step) * step
+}
+
 // Dual-axis line chart: left axis for series[0], right axis for series[1]
-function DualChart({ rows, title, series, formatter, isMobile }) {
+// secondaryHeight: fraction of chart height for series[1] (e.g., 0.35 = bottom 35%)
+function DualChart({ rows, title, series, formatter, isMobile, secondaryHeight }) {
   const [hovered, setHovered] = useState(-1)
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
 
@@ -38,17 +47,25 @@ function DualChart({ rows, title, series, formatter, isMobile }) {
   const chartH = bottom - top
 
   // Compute separate scales per series
-  const scales = series.map(s => {
+  // If secondaryHeight is set, inflate the right axis so its data sits in the lower portion
+  const scales = series.map((s, si) => {
+    if (s.fixedScale) return s.fixedScale
     let max = 0, min = Infinity
     for (const r of rows) {
       const v = r[s.field]
       if (v != null) { if (v > max) max = v; if (v < min) min = v }
     }
     if (min === Infinity) min = 0
-    const range = max - min
+    const range = max - min || 1
+    if (secondaryHeight) {
+      if (si === 1) {
+        return { max: niceRound(max / secondaryHeight, 'ceil'), min: 0 }
+      }
+      return { max: niceRound(max + range * 0.1, 'ceil'), min: 0 }
+    }
     return {
-      max: max + range * 0.1,
-      min: Math.max(0, min - range * 0.15),
+      max: niceRound(max + range * 0.1, 'ceil'),
+      min: 0,
     }
   })
 
@@ -90,7 +107,7 @@ function DualChart({ rows, title, series, formatter, isMobile }) {
           })}
 
           {/* Left Y-axis labels (series[0]) */}
-          {scales[0] && [0, 0.5, 1].map(pct => {
+          {scales[0] && [0, 0.25, 0.5, 0.75, 1].map(pct => {
             const val = scales[0].min + pct * (scales[0].max - scales[0].min)
             const y = bottom - pct * chartH
             return (
@@ -99,7 +116,7 @@ function DualChart({ rows, title, series, formatter, isMobile }) {
           })}
 
           {/* Right Y-axis labels (series[1]) */}
-          {series.length > 1 && scales[1] && [0, 0.5, 1].map(pct => {
+          {series.length > 1 && scales[1] && [0, 0.25, 0.5, 0.75, 1].map(pct => {
             const val = scales[1].min + pct * (scales[1].max - scales[1].min)
             const y = bottom - pct * chartH
             return (
@@ -223,21 +240,23 @@ export default function PlayerSupport() {
         { field: 'macro_bans_osrs', label: 'OSRS', color: '#4ade80' },
         { field: 'macro_bans_rs3', label: 'RS3', color: '#60a5fa' },
       ],
-    },
-    {
-      title: 'GP Removed',
-      series: [
-        { field: 'gp_removed_osrs', label: 'OSRS', color: '#f59e0b' },
-        { field: 'gp_removed_rs3', label: 'RS3', color: '#c084fc' },
-      ],
-      formatter: fmtGP,
+      secondaryHeight: 0.35,
     },
     {
       title: 'RWT Bans',
       series: [
-        { field: 'rwt_bans_osrs', label: 'OSRS', color: '#f87171' },
-        { field: 'rwt_bans_rs3', label: 'RS3', color: '#fb923c' },
+        { field: 'rwt_bans_osrs', label: 'OSRS', color: '#4ade80' },
+        { field: 'rwt_bans_rs3', label: 'RS3', color: '#60a5fa' },
       ],
+      secondaryHeight: 0.35,
+    },
+    {
+      title: 'GP Removed',
+      series: [
+        { field: 'gp_removed_osrs', label: 'OSRS', color: '#4ade80' },
+        { field: 'gp_removed_rs3', label: 'RS3', color: '#60a5fa' },
+      ],
+      formatter: fmtGP,
     },
     {
       title: 'Support Volume',
@@ -252,13 +271,15 @@ export default function PlayerSupport() {
         { field: 'report_action_msgs', label: 'Report Actions', color: '#fbbf24' },
         { field: 'chat_spam_mutes', label: 'Chat Spam Mutes', color: '#34d399' },
       ],
+      secondaryHeight: 0.25,
     },
     {
       title: 'Response Time & Satisfaction',
       series: [
         { field: 'avg_response_time_hrs', label: 'Hours', color: '#f87171' },
-        { field: 'ticket_satisfaction_pct', label: 'Satisfaction %', color: '#4ade80' },
+        { field: 'ticket_satisfaction_pct', label: 'Satisfaction %', color: '#4ade80', fixedScale: { min: 0, max: 100 } },
       ],
+      secondaryHeight: 0.35,
     },
   ]
 
@@ -338,7 +359,7 @@ export default function PlayerSupport() {
               {/* Chart Grid - 2x2 */}
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '10px', marginBottom: '16px' }}>
                 {charts.map((c, i) => (
-                  <DualChart key={i} rows={rows} title={c.title} series={c.series} formatter={c.formatter} isMobile={isMobile} />
+                  <DualChart key={i} rows={rows} title={c.title} series={c.series} formatter={c.formatter} isMobile={isMobile} secondaryHeight={c.secondaryHeight} />
                 ))}
               </div>
 
@@ -352,10 +373,10 @@ export default function PlayerSupport() {
                         <th style={{ padding: '8px 6px', textAlign: 'left', color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Month</th>
                         <th style={{ padding: '8px 6px', textAlign: 'right', color: '#4ade80', fontWeight: '600', whiteSpace: 'nowrap' }}>OSRS Macro</th>
                         <th style={{ padding: '8px 6px', textAlign: 'right', color: '#60a5fa', fontWeight: '600', whiteSpace: 'nowrap' }}>RS3 Macro</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#f59e0b', fontWeight: '600', whiteSpace: 'nowrap' }}>OSRS GP</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#c084fc', fontWeight: '600', whiteSpace: 'nowrap' }}>RS3 GP</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#f87171', fontWeight: '600', whiteSpace: 'nowrap' }}>RWT OSRS</th>
-                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#fb923c', fontWeight: '600', whiteSpace: 'nowrap' }}>RWT RS3</th>
+                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#4ade80', fontWeight: '600', whiteSpace: 'nowrap' }}>OSRS GP</th>
+                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#60a5fa', fontWeight: '600', whiteSpace: 'nowrap' }}>RS3 GP</th>
+                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#4ade80', fontWeight: '600', whiteSpace: 'nowrap' }}>RWT OSRS</th>
+                        <th style={{ padding: '8px 6px', textAlign: 'right', color: '#60a5fa', fontWeight: '600', whiteSpace: 'nowrap' }}>RWT RS3</th>
                         {!isMobile && <th style={{ padding: '8px 6px', textAlign: 'right', color: '#38bdf8', fontWeight: '600', whiteSpace: 'nowrap' }}>Queries</th>}
                         {!isMobile && <th style={{ padding: '8px 6px', textAlign: 'right', color: '#a78bfa', fontWeight: '600', whiteSpace: 'nowrap' }}>Center Views</th>}
                         {!isMobile && <th style={{ padding: '8px 6px', textAlign: 'right', color: '#fbbf24', fontWeight: '600', whiteSpace: 'nowrap' }}>Report Actions</th>}
